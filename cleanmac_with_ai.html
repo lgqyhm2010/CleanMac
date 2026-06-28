@@ -1,5 +1,13 @@
 
 <meta charset="UTF-8">
+<script>
+(function(){
+  var theme=new URLSearchParams(location.search).get('theme');
+  if(theme==='light'||theme==='dark'){
+    document.documentElement.dataset.theme=theme;
+  }
+})();
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
@@ -37,11 +45,26 @@
 
 :root{
   --ink:#221e34;
-  --chrome:#171717;
+  --chrome:#efe7d6;
+  --chrome-text:#262237;
+  --chrome-chip:#fffaf1;
+  --chrome-chip-text:#221e34;
   --paper:#fffdf6;
   --warm:#fbf6eb;
   --line:#241f36;
   --shadow:#e7decd;
+  --desk-bg:#edf1f4;
+  --app-ring:#d8cab1;
+  --app-shadow:rgba(88,72,44,.2);
+  --sidebar-bg:#f2e8d8;
+  --sidebar-section:#877aa1;
+  --sidebar-text:#2a2538;
+  --sidebar-sub:#746d82;
+  --nav-hover:rgba(255,255,255,.58);
+  --nav-active-shadow:#dfd1b8;
+  --brand-shadow:#dfd1b8;
+  --page-header-bg:rgba(255,253,246,.94);
+  --mobile-divider:#d9cbb4;
   --blue:#5daee7;
   --green:#74c6a6;
   --yellow:#f6c94e;
@@ -52,7 +75,7 @@
 
 html,body{
   min-height:100%;
-  background:#151515;
+  background:var(--desk-bg);
 }
 body{
   display:flex;
@@ -61,6 +84,10 @@ body{
   padding:18px;
   font-family:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,sans-serif;
   color:var(--ink);
+  background:
+    radial-gradient(circle at 18% 8%,rgba(93,174,231,.18),transparent 28rem),
+    radial-gradient(circle at 86% 22%,rgba(246,201,78,.18),transparent 24rem),
+    linear-gradient(135deg,#f7f1e7 0%,var(--desk-bg) 48%,#e8f2f6 100%);
 }
 
 .cleanmac-app{
@@ -70,7 +97,7 @@ body{
   border:0 !important;
   border-radius:30px !important;
   background:var(--paper) !important;
-  box-shadow:0 0 0 2px #0d0d0f,0 18px 45px rgba(0,0,0,.42) !important;
+  box-shadow:0 0 0 2px var(--app-ring),0 18px 42px var(--app-shadow) !important;
 }
 
 .cleanmac-titlebar{
@@ -88,7 +115,7 @@ body{
 }
 #win-title{
   text-align:left !important;
-  color:#f7f3eb !important;
+  color:var(--chrome-text) !important;
   font-size:15px !important;
   font-weight:800 !important;
   letter-spacing:0 !important;
@@ -101,14 +128,15 @@ body{
   padding:0 12px;
   margin-right:10px;
   border-radius:13px;
-  background:#3b3b3b;
-  color:#fffaf2;
+  background:var(--chrome-chip);
+  color:var(--chrome-chip-text);
   font-weight:800;
+  box-shadow:0 1px 0 rgba(255,255,255,.48) inset,0 1px 2px rgba(36,31,54,.12);
 }
 
 .cleanmac-sidebar{
   width:250px !important;
-  background:var(--chrome) !important;
+  background:var(--sidebar-bg) !important;
   border-right:0 !important;
   padding:10px 8px 12px !important;
   scrollbar-width:thin;
@@ -120,7 +148,7 @@ body{
   border:3px solid var(--line) !important;
   border-radius:26px !important;
   background:var(--paper) !important;
-  box-shadow:0 7px 0 rgba(255,255,255,.12) !important;
+  box-shadow:0 7px 0 var(--brand-shadow) !important;
 }
 .cleanmac-brand div[style*="font-size:14px"]{
   color:var(--ink) !important;
@@ -129,7 +157,7 @@ body{
 .cleanmac-brand div[style*="font-size:10px"]{color:#7f7890 !important}
 
 #sect-overview,#sect-protools,#sect-ai,#sect-system{
-  color:#9188b8 !important;
+  color:var(--sidebar-section) !important;
   font-weight:800 !important;
   letter-spacing:.13em !important;
 }
@@ -141,12 +169,12 @@ body{
   background:transparent !important;
 }
 .nav-item:hover{
-  background:rgba(255,253,246,.08) !important;
+  background:var(--nav-hover) !important;
 }
 .nav-item.active-nav{
   background:var(--paper) !important;
   border-color:var(--line) !important;
-  box-shadow:4px 5px 0 rgba(255,255,255,.16) !important;
+  box-shadow:4px 5px 0 var(--nav-active-shadow) !important;
   transform:rotate(-.2deg);
 }
 .nav-item svg{
@@ -154,11 +182,11 @@ body{
   filter:drop-shadow(1.5px 2px 0 rgba(0,0,0,.16));
 }
 .nav-item [id^="lbl-"]{
-  color:#f4efe5 !important;
+  color:var(--sidebar-text) !important;
   font-weight:800 !important;
 }
 .nav-item.active-nav [id^="lbl-"]{color:var(--ink) !important}
-.nav-item div[style*="font-size:10px"]{color:#9c94ad !important}
+.nav-item div[style*="font-size:10px"]{color:var(--sidebar-sub) !important}
 .nav-item.active-nav div[style*="font-size:10px"]{color:#6f6b7f !important}
 .nav-item>span{
   font-weight:900 !important;
@@ -193,7 +221,7 @@ body{
   padding:24px !important;
 }
 .page>div:first-child{
-  background:rgba(255,253,246,.94) !important;
+  background:var(--page-header-bg) !important;
   border:3px solid var(--line) !important;
   border-radius:28px !important;
   box-shadow:0 8px 0 var(--shadow) !important;
@@ -304,7 +332,7 @@ body{
   .cleanmac-sidebar{
     width:100% !important;
     max-height:230px;
-    border-bottom:2px solid #2d2939 !important;
+    border-bottom:2px solid var(--mobile-divider) !important;
   }
   .cleanmac-brand{display:none !important}
   .cleanmac-content{
@@ -320,6 +348,94 @@ body{
   #page-disk>div:nth-of-type(3) .card{
     aspect-ratio:auto;
     min-height:210px;
+  }
+}
+
+html[data-theme="dark"]{
+  --ink:#221e34;
+  --chrome:#282631;
+  --chrome-text:#fff7e8;
+  --chrome-chip:#3c3945;
+  --chrome-chip-text:#fff9ec;
+  --paper:#fff8ea;
+  --warm:#302d35;
+  --line:#241f36;
+  --shadow:rgba(0,0,0,.34);
+  --desk-bg:#28292f;
+  --app-ring:#18171e;
+  --app-shadow:rgba(0,0,0,.38);
+  --sidebar-bg:#2c2934;
+  --sidebar-section:#aaa0cf;
+  --sidebar-text:#f5efe5;
+  --sidebar-sub:#b9b1c3;
+  --nav-hover:rgba(255,248,234,.08);
+  --nav-active-shadow:rgba(255,248,234,.14);
+  --brand-shadow:rgba(255,248,234,.12);
+  --page-header-bg:rgba(255,248,234,.96);
+  --mobile-divider:#1d1b24;
+}
+
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(circle at 18% 8%,rgba(93,174,231,.16),transparent 27rem),
+    radial-gradient(circle at 86% 22%,rgba(166,133,223,.16),transparent 25rem),
+    linear-gradient(135deg,#34313a 0%,var(--desk-bg) 54%,#24242b 100%);
+}
+
+html[data-theme="dark"] .cleanmac-app{
+  box-shadow:0 0 0 2px var(--app-ring),0 22px 48px var(--app-shadow) !important;
+}
+
+html[data-theme="dark"] .cleanmac-titlebar>div:first-child>div{
+  box-shadow:0 0 0 1px rgba(255,255,255,.18) inset !important;
+}
+
+html[data-theme="dark"] .cleanmac-brand{
+  box-shadow:0 7px 0 var(--brand-shadow) !important;
+}
+
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#221e34;
+    --chrome:#282631;
+    --chrome-text:#fff7e8;
+    --chrome-chip:#3c3945;
+    --chrome-chip-text:#fff9ec;
+    --paper:#fff8ea;
+    --warm:#302d35;
+    --line:#241f36;
+    --shadow:rgba(0,0,0,.34);
+    --desk-bg:#28292f;
+    --app-ring:#18171e;
+    --app-shadow:rgba(0,0,0,.38);
+    --sidebar-bg:#2c2934;
+    --sidebar-section:#aaa0cf;
+    --sidebar-text:#f5efe5;
+    --sidebar-sub:#b9b1c3;
+    --nav-hover:rgba(255,248,234,.08);
+    --nav-active-shadow:rgba(255,248,234,.14);
+    --brand-shadow:rgba(255,248,234,.12);
+    --page-header-bg:rgba(255,248,234,.96);
+    --mobile-divider:#1d1b24;
+  }
+
+  html:not([data-theme="light"]) body{
+    background:
+      radial-gradient(circle at 18% 8%,rgba(93,174,231,.16),transparent 27rem),
+      radial-gradient(circle at 86% 22%,rgba(166,133,223,.16),transparent 25rem),
+      linear-gradient(135deg,#34313a 0%,var(--desk-bg) 54%,#24242b 100%);
+  }
+
+  html:not([data-theme="light"]) .cleanmac-app{
+    box-shadow:0 0 0 2px var(--app-ring),0 22px 48px var(--app-shadow) !important;
+  }
+
+  html:not([data-theme="light"]) .cleanmac-titlebar>div:first-child>div{
+    box-shadow:0 0 0 1px rgba(255,255,255,.18) inset !important;
+  }
+
+  html:not([data-theme="light"]) .cleanmac-brand{
+    box-shadow:0 7px 0 var(--brand-shadow) !important;
   }
 }
 </style>
@@ -847,24 +963,7 @@ body{
         <div class="card">
           <div id="settings-sect-lang" style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:4px">Language</div>
           <div id="settings-lang-desc" style="font-size:11px;color:#8AAAC8;margin-bottom:14px">Select display language</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="lang-grid">
-            <button class="lang-btn" data-lang="en" onclick="setLang('en')" style="height:52px;border-radius:10px 6px 10px 6px;border:2.5px solid #9E70E8;background:#F0E8FF;box-shadow:3px 3px 0 #1E1A2E;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
-              <span style="font-size:18px">🇺🇸</span>
-              <span style="font-size:11px;font-weight:500;color:#3A1A7E">English</span>
-            </button>
-            <button class="lang-btn" data-lang="zh" onclick="setLang('zh')" style="height:52px;border-radius:10px 6px 10px 6px;border:2.5px solid #1E1A2E;background:#F8F8F8;box-shadow:3px 3px 0 #1E1A2E;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
-              <span style="font-size:18px">🇨🇳</span>
-              <span style="font-size:11px;font-weight:500;color:#4A4060">中文（简体）</span>
-            </button>
-            <button class="lang-btn" data-lang="ja" onclick="setLang('ja')" style="height:52px;border-radius:10px 6px 10px 6px;border:2.5px solid #1E1A2E;background:#F8F8F8;box-shadow:3px 3px 0 #1E1A2E;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
-              <span style="font-size:18px">🇯🇵</span>
-              <span style="font-size:11px;font-weight:500;color:#4A4060">日本語</span>
-            </button>
-            <button class="lang-btn" data-lang="ko" onclick="setLang('ko')" style="height:52px;border-radius:10px 6px 10px 6px;border:2.5px solid #1E1A2E;background:#F8F8F8;box-shadow:3px 3px 0 #1E1A2E;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
-              <span style="font-size:18px">🇰🇷</span>
-              <span style="font-size:11px;font-weight:500;color:#4A4060">한국어</span>
-            </button>
-          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="lang-grid"></div>
         </div>
 
         <!-- About -->
@@ -937,6 +1036,8 @@ var folders=[
 
 // === INIT ===
 function init(){
+  buildLanguageGrid();
+  setLang(currentLang);
   buildStartupList();
   buildCleanList();
   buildLargeFiles();
@@ -1306,6 +1407,20 @@ function resetAI(){
 }
 
 // ===== I18N =====
+var LANGUAGES=[
+  {code:'en',mark:'EN',label:'English'},
+  {code:'zh',mark:'简',label:'中文（简体）'},
+  {code:'zh-Hant',mark:'繁',label:'中文（繁體）'},
+  {code:'ja',mark:'あ',label:'日本語'},
+  {code:'es',mark:'ES',label:'Español'},
+  {code:'fr',mark:'FR',label:'Français'},
+  {code:'ar',mark:'ع',label:'العربية'},
+  {code:'hi',mark:'ह',label:'हिन्दी'},
+  {code:'pt-BR',mark:'PT',label:'Português'},
+  {code:'ru',mark:'RU',label:'Русский'},
+  {code:'bn',mark:'ব',label:'বাংলা'}
+];
+
 var I18N={
   en:{
     sectOverview:'Overview',sectProtools:'Pro tools',sectAI:'AI · Local',sectSystem:'System',
@@ -1337,6 +1452,21 @@ var I18N={
     settingsTitle:'设置 ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'磁盘概览',speed:'加速 Mac',clean:'清理 Mac',manage:'管理空间',dupes:'查找重复文件',uninstall:'卸载应用',analyze:'空间分析',ai:'AI 分析',settings:'设置'}
   },
+  'zh-Hant':{
+    sectOverview:'概覽',sectProtools:'專業工具',sectAI:'AI · 本機',sectSystem:'系統',
+    lblDisk:'磁碟概覽',lblDiskSub:'Macintosh HD',
+    lblSpeed:'加速 Mac',lblSpeedSub:'效能',
+    lblClean:'清理 Mac',lblCleanSub:'垃圾檔案',
+    lblManage:'管理空間',lblManageSub:'使用者檔案',
+    lblDupes:'尋找重複檔案',lblDupesSub:'完全相同',
+    lblUninstall:'解除安裝應用程式',lblUninstallSub:'App 清理器',
+    lblAnalyze:'分析空間',lblAnalyzeSub:'空間地圖',
+    lblAI:'AI 分析',
+    lblSettings:'設定',lblSettingsSub:'語言與更多',
+    sectLang:'語言',langDesc:'選擇顯示語言',
+    settingsTitle:'設定 ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'磁碟概覽',speed:'加速 Mac',clean:'清理 Mac',manage:'管理空間',dupes:'尋找重複檔案',uninstall:'解除安裝應用程式',analyze:'分析空間',ai:'AI 分析',settings:'設定'}
+  },
   ja:{
     sectOverview:'概要',sectProtools:'プロツール',sectAI:'AI · ローカル',sectSystem:'システム',
     lblDisk:'ディスク概要',lblDiskSub:'Macintosh HD',
@@ -1352,25 +1482,131 @@ var I18N={
     settingsTitle:'設定 ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'ディスク概要',speed:'Macを高速化',clean:'Macをクリーン',manage:'容量管理',dupes:'重複を検索',uninstall:'アプリをアンインストール',analyze:'容量を分析',ai:'AI分析',settings:'設定'}
   },
-  ko:{
-    sectOverview:'개요',sectProtools:'전문 도구',sectAI:'AI · 로컬',sectSystem:'시스템',
-    lblDisk:'디스크 개요',lblDiskSub:'Macintosh HD',
-    lblSpeed:'Mac 속도 향상',lblSpeedSub:'성능',
-    lblClean:'Mac 청소',lblCleanSub:'불필요한 파일',
-    lblManage:'저장 공간 관리',lblManageSub:'사용자 파일',
-    lblDupes:'중복 파일 찾기',lblDupesSub:'동일 파일',
-    lblUninstall:'앱 삭제',lblUninstallSub:'앱 클리너',
-    lblAnalyze:'공간 분석',lblAnalyzeSub:'공간 맵',
-    lblAI:'AI 분석',
-    lblSettings:'설정',lblSettingsSub:'언어 및 기타',
-    sectLang:'언어',langDesc:'표시 언어 선택',
-    settingsTitle:'설정 ⚙️',settingsSub:'CleanMac v1.0',
-    winTitles:{disk:'디스크 개요',speed:'Mac 속도 향상',clean:'Mac 청소',manage:'저장 공간 관리',dupes:'중복 파일 찾기',uninstall:'앱 삭제',analyze:'공간 분석',ai:'AI 분석',settings:'설정'}
+  es:{
+    sectOverview:'Resumen',sectProtools:'Herramientas pro',sectAI:'AI · Local',sectSystem:'Sistema',
+    lblDisk:'Resumen de disco',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Acelerar Mac',lblSpeedSub:'Rendimiento',
+    lblClean:'Limpiar Mac',lblCleanSub:'Archivos basura',
+    lblManage:'Gestionar espacio',lblManageSub:'Archivos de usuario',
+    lblDupes:'Buscar duplicados',lblDupesSub:'Coincidencias exactas',
+    lblUninstall:'Desinstalar apps',lblUninstallSub:'Limpiador de apps',
+    lblAnalyze:'Analizar espacio',lblAnalyzeSub:'Mapa de espacio',
+    lblAI:'Análisis de AI',
+    lblSettings:'Ajustes',lblSettingsSub:'Idioma y más',
+    sectLang:'Idioma',langDesc:'Selecciona idioma de pantalla',
+    settingsTitle:'Ajustes ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Resumen de disco',speed:'Acelerar Mac',clean:'Limpiar Mac',manage:'Gestionar espacio',dupes:'Buscar duplicados',uninstall:'Desinstalar apps',analyze:'Analizar espacio',ai:'Análisis de AI',settings:'Ajustes'}
+  },
+  fr:{
+    sectOverview:'Vue générale',sectProtools:'Outils pro',sectAI:'AI · Local',sectSystem:'Système',
+    lblDisk:'Vue du disque',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Accélérer Mac',lblSpeedSub:'Performance',
+    lblClean:'Nettoyer Mac',lblCleanSub:'Fichiers inutiles',
+    lblManage:'Gérer espace',lblManageSub:'Fichiers utilisateur',
+    lblDupes:'Trouver doublons',lblDupesSub:'Correspondances exactes',
+    lblUninstall:'Désinstaller apps',lblUninstallSub:'Nettoyeur apps',
+    lblAnalyze:'Analyser espace',lblAnalyzeSub:'Carte espace',
+    lblAI:'Analyse AI',
+    lblSettings:'Réglages',lblSettingsSub:'Langue et plus',
+    sectLang:'Langue',langDesc:'Choisir la langue affichée',
+    settingsTitle:'Réglages ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Vue du disque',speed:'Accélérer Mac',clean:'Nettoyer Mac',manage:'Gérer espace',dupes:'Trouver doublons',uninstall:'Désinstaller apps',analyze:'Analyser espace',ai:'Analyse AI',settings:'Réglages'}
+  },
+  ar:{
+    sectOverview:'نظرة عامة',sectProtools:'أدوات متقدمة',sectAI:'AI · محلي',sectSystem:'النظام',
+    lblDisk:'نظرة القرص',lblDiskSub:'Macintosh HD',
+    lblSpeed:'تسريع Mac',lblSpeedSub:'الأداء',
+    lblClean:'تنظيف Mac',lblCleanSub:'ملفات غير ضرورية',
+    lblManage:'إدارة المساحة',lblManageSub:'ملفات المستخدم',
+    lblDupes:'البحث عن التكرارات',lblDupesSub:'تطابقات تامة',
+    lblUninstall:'إزالة التطبيقات',lblUninstallSub:'منظف التطبيقات',
+    lblAnalyze:'تحليل المساحة',lblAnalyzeSub:'خريطة المساحة',
+    lblAI:'تحليل AI',
+    lblSettings:'الإعدادات',lblSettingsSub:'اللغة والمزيد',
+    sectLang:'اللغة',langDesc:'اختر لغة العرض',
+    settingsTitle:'الإعدادات ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'نظرة القرص',speed:'تسريع Mac',clean:'تنظيف Mac',manage:'إدارة المساحة',dupes:'البحث عن التكرارات',uninstall:'إزالة التطبيقات',analyze:'تحليل المساحة',ai:'تحليل AI',settings:'الإعدادات'}
+  },
+  hi:{
+    sectOverview:'अवलोकन',sectProtools:'प्रो टूल्स',sectAI:'AI · स्थानीय',sectSystem:'सिस्टम',
+    lblDisk:'डिस्क अवलोकन',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Mac तेज करें',lblSpeedSub:'प्रदर्शन',
+    lblClean:'Mac साफ करें',lblCleanSub:'जंक फाइलें',
+    lblManage:'स्थान प्रबंधित करें',lblManageSub:'उपयोगकर्ता फाइलें',
+    lblDupes:'डुप्लिकेट खोजें',lblDupesSub:'सटीक मिलान',
+    lblUninstall:'ऐप हटाएं',lblUninstallSub:'ऐप क्लीनर',
+    lblAnalyze:'स्थान विश्लेषण',lblAnalyzeSub:'स्पेस मैप',
+    lblAI:'AI विश्लेषण',
+    lblSettings:'सेटिंग्स',lblSettingsSub:'भाषा और अधिक',
+    sectLang:'भाषा',langDesc:'प्रदर्शन भाषा चुनें',
+    settingsTitle:'सेटिंग्स ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'डिस्क अवलोकन',speed:'Mac तेज करें',clean:'Mac साफ करें',manage:'स्थान प्रबंधित करें',dupes:'डुप्लिकेट खोजें',uninstall:'ऐप हटाएं',analyze:'स्थान विश्लेषण',ai:'AI विश्लेषण',settings:'सेटिंग्स'}
+  },
+  'pt-BR':{
+    sectOverview:'Visão geral',sectProtools:'Ferramentas pro',sectAI:'AI · Local',sectSystem:'Sistema',
+    lblDisk:'Visão do disco',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Acelerar Mac',lblSpeedSub:'Desempenho',
+    lblClean:'Limpar Mac',lblCleanSub:'Arquivos lixo',
+    lblManage:'Gerenciar espaço',lblManageSub:'Arquivos do usuário',
+    lblDupes:'Encontrar duplicados',lblDupesSub:'Correspondências exatas',
+    lblUninstall:'Desinstalar apps',lblUninstallSub:'Limpador de apps',
+    lblAnalyze:'Analisar espaço',lblAnalyzeSub:'Mapa de espaço',
+    lblAI:'Análise de AI',
+    lblSettings:'Configurações',lblSettingsSub:'Idioma e mais',
+    sectLang:'Idioma',langDesc:'Selecionar idioma de exibição',
+    settingsTitle:'Configurações ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Visão do disco',speed:'Acelerar Mac',clean:'Limpar Mac',manage:'Gerenciar espaço',dupes:'Encontrar duplicados',uninstall:'Desinstalar apps',analyze:'Analisar espaço',ai:'Análise de AI',settings:'Configurações'}
+  },
+  ru:{
+    sectOverview:'Обзор',sectProtools:'Профи-инструменты',sectAI:'AI · Локально',sectSystem:'Система',
+    lblDisk:'Обзор диска',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Ускорить Mac',lblSpeedSub:'Производительность',
+    lblClean:'Очистить Mac',lblCleanSub:'Ненужные файлы',
+    lblManage:'Управление местом',lblManageSub:'Файлы пользователя',
+    lblDupes:'Найти дубликаты',lblDupesSub:'Точные совпадения',
+    lblUninstall:'Удалить приложения',lblUninstallSub:'Очистка приложений',
+    lblAnalyze:'Анализ места',lblAnalyzeSub:'Карта пространства',
+    lblAI:'AI-анализ',
+    lblSettings:'Настройки',lblSettingsSub:'Язык и другое',
+    sectLang:'Язык',langDesc:'Выберите язык интерфейса',
+    settingsTitle:'Настройки ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Обзор диска',speed:'Ускорить Mac',clean:'Очистить Mac',manage:'Управление местом',dupes:'Найти дубликаты',uninstall:'Удалить приложения',analyze:'Анализ места',ai:'AI-анализ',settings:'Настройки'}
+  },
+  bn:{
+    sectOverview:'সংক্ষিপ্ত বিবরণ',sectProtools:'প্রো টুলস',sectAI:'AI · লোকাল',sectSystem:'সিস্টেম',
+    lblDisk:'ডিস্ক ওভারভিউ',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Mac দ্রুত করুন',lblSpeedSub:'পারফরম্যান্স',
+    lblClean:'Mac পরিষ্কার করুন',lblCleanSub:'জাঙ্ক ফাইল',
+    lblManage:'জায়গা পরিচালনা',lblManageSub:'ব্যবহারকারীর ফাইল',
+    lblDupes:'ডুপ্লিকেট খুঁজুন',lblDupesSub:'হুবহু মিল',
+    lblUninstall:'অ্যাপ আনইনস্টল',lblUninstallSub:'অ্যাপ ক্লিনার',
+    lblAnalyze:'জায়গা বিশ্লেষণ',lblAnalyzeSub:'স্পেস ম্যাপ',
+    lblAI:'AI বিশ্লেষণ',
+    lblSettings:'সেটিংস',lblSettingsSub:'ভাষা ও আরও',
+    sectLang:'ভাষা',langDesc:'প্রদর্শনের ভাষা নির্বাচন',
+    settingsTitle:'সেটিংস ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'ডিস্ক ওভারভিউ',speed:'Mac দ্রুত করুন',clean:'Mac পরিষ্কার করুন',manage:'জায়গা পরিচালনা',dupes:'ডুপ্লিকেট খুঁজুন',uninstall:'অ্যাপ আনইনস্টল',analyze:'জায়গা বিশ্লেষণ',ai:'AI বিশ্লেষণ',settings:'সেটিংস'}
   }
 };
 var currentLang='en';
 
 function t(k){return(I18N[currentLang]&&I18N[currentLang][k])||I18N['en'][k]||k;}
+
+function buildLanguageGrid(){
+  var grid=document.getElementById('lang-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  LANGUAGES.forEach(function(language){
+    var btn=document.createElement('button');
+    btn.className='lang-btn';
+    btn.dataset.lang=language.code;
+    btn.onclick=function(){setLang(language.code)};
+    btn.style.cssText='min-height:46px;border-radius:10px 6px 10px 6px;border:2.5px solid #1E1A2E;background:#F8F8F8;box-shadow:3px 3px 0 #1E1A2E;cursor:pointer;display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:0 9px;text-align:left;overflow:hidden';
+    btn.innerHTML='<span style="font-size:12px;font-weight:900;line-height:1;flex:0 0 22px;text-align:center;color:#9E70E8">'+language.mark+'</span>'
+      +'<span style="font-size:11px;font-weight:600;color:#4A4060;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+language.label+'</span>';
+    grid.appendChild(btn);
+  });
+}
 
 function applyLang(){
   var s=I18N[currentLang];
