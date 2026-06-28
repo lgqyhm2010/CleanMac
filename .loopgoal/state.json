@@ -5,15 +5,15 @@
   "status": "in_progress",
   "iteration": 0,
   "phases": [
-    {"name": "Extract HTML design and animation requirements", "status": "todo"},
+    {"name": "Extract HTML design and animation requirements", "status": "done"},
     {"name": "Generate image assets that match the HTML design", "status": "todo"},
     {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "todo"},
     {"name": "Verify the app builds and the preserved behavior still compiles", "status": "todo"},
     {"name": "Commit the verified result", "status": "todo"}
   ],
   "current": {
-    "focus": "Baseline verified with SwiftPM using a writable Clang module cache after sandboxed SwiftPM failed on sandbox-exec.",
-    "next_action": "Inspect the HTML and SwiftUI surface for the first phase.",
+    "focus": "HTML layout, color, motion, image asset, and affected SwiftUI view requirements extracted into docs/design/2026-06-28-html-ui-animation-extraction.md.",
+    "next_action": "Generate the compact reusable image asset set described in the design extraction document.",
     "blockers": ""
   },
   "decisions": [
@@ -28,8 +28,20 @@
     {
       "decision": "Use env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build as the verification command.",
       "reason": "Plain swift build tried to write toolchain cache under the home directory, and sandboxed SwiftPM manifest evaluation hit sandbox-exec restrictions."
+    },
+    {
+      "decision": "Treat cleanmac_with_ai.html as visual direction rather than a request to add every prototype page as product behavior.",
+      "reason": "This phase must not change product behavior, and the existing app flow should keep the trust-first cleanup path intact."
+    },
+    {
+      "decision": "Generate a compact reusable asset set instead of copying every inline SVG from the HTML prototype.",
+      "reason": "The HTML has no external image assets, and a smaller mascot plus feature-illustration set is easier to maintain in SwiftUI."
+    },
+    {
+      "decision": "Keep later SwiftUI motion state-driven and Reduce Motion aware.",
+      "reason": "The HTML relies on playful looping cues, but the app should only animate active/progress/celebration states and respect accessibility settings."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build",
-  "updated_at": "2026-06-28T15:14:00Z"
+  "updated_at": "2026-06-28T15:14:18Z"
 }
