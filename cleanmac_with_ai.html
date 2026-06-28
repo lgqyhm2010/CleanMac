@@ -2,10 +2,18 @@
 <meta charset="UTF-8">
 <script>
 (function(){
-  var theme=new URLSearchParams(location.search).get('theme');
+  var storageKey='cleanmac.theme';
+  var queryTheme=new URLSearchParams(location.search).get('theme');
+  var storedTheme='';
+  try{storedTheme=localStorage.getItem(storageKey)||''}catch(e){}
+  var theme=(queryTheme==='system'||queryTheme==='light'||queryTheme==='dark')?queryTheme:storedTheme;
   if(theme==='light'||theme==='dark'){
     document.documentElement.dataset.theme=theme;
+  }else{
+    theme='system';
+    document.documentElement.removeAttribute('data-theme');
   }
+  document.documentElement.dataset.themePreference=theme;
 })();
 </script>
 <style>
@@ -35,6 +43,12 @@
 .checkbox{width:18px;height:18px;border-radius:5px;border:2px solid #1E1A2E;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
 .checkbox.checked{background:#58A7D8}
 .checkbox.checked::after{content:'✓';font-size:11px;color:white;font-weight:700}
+.theme-control{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.theme-btn{min-height:58px;border-radius:16px;border:2.5px solid var(--line);background:var(--paper);box-shadow:3px 4px 0 var(--line);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:9px 11px;text-align:left;transition:transform .12s,box-shadow .12s,background .12s,border-color .12s}
+.theme-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 5px 0 var(--line)}
+.theme-btn.active{border-color:#9E70E8;background:#F0E8FF;transform:rotate(-.2deg)}
+.theme-btn span{font-size:12px;font-weight:900;color:var(--ink);line-height:1.1}
+.theme-btn small{font-size:10px;font-weight:700;color:#7b7490;line-height:1.2}
 .ph{font-size:12px;color:#8AAAC8}
 .nav-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px 6px 12px 6px;cursor:pointer;border:2px solid transparent;margin-bottom:3px;transition:all .15s}
 .nav-item:hover{background:rgba(255,255,255,.08)}
@@ -344,6 +358,7 @@ body{
     align-items:flex-start !important;
     flex-wrap:wrap !important;
   }
+  .theme-control{grid-template-columns:1fr !important}
   #page-disk>div:nth-of-type(3){grid-template-columns:1fr !important}
   #page-disk>div:nth-of-type(3) .card{
     aspect-ratio:auto;
@@ -959,6 +974,26 @@ html[data-theme="dark"] .cleanmac-brand{
           </div>
         </div>
 
+        <!-- Appearance -->
+        <div class="card">
+          <div id="settings-sect-theme" style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:4px">Appearance</div>
+          <div id="settings-theme-desc" style="font-size:11px;color:#8AAAC8;margin-bottom:14px">Use system appearance by default</div>
+          <div class="theme-control" role="group" aria-label="Appearance">
+            <button class="theme-btn" data-theme-mode="system" onclick="setThemeMode('system')" type="button" aria-pressed="false">
+              <span id="theme-system-label">System</span>
+              <small id="theme-system-desc">Automatic</small>
+            </button>
+            <button class="theme-btn" data-theme-mode="light" onclick="setThemeMode('light')" type="button" aria-pressed="false">
+              <span id="theme-light-label">Light</span>
+              <small id="theme-light-desc">Bright</small>
+            </button>
+            <button class="theme-btn" data-theme-mode="dark" onclick="setThemeMode('dark')" type="button" aria-pressed="false">
+              <span id="theme-dark-label">Dark</span>
+              <small id="theme-dark-desc">Dimmed</small>
+            </button>
+          </div>
+        </div>
+
         <!-- Language -->
         <div class="card">
           <div id="settings-sect-lang" style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:4px">Language</div>
@@ -1034,10 +1069,50 @@ var folders=[
   {name:'Documents',size:'22 GB',pct:4.4,color:'#7DC4A8'}
 ];
 
+var THEME_STORAGE_KEY='cleanmac.theme';
+var currentThemeMode=document.documentElement.dataset.themePreference||'system';
+
+function normalizeThemeMode(mode){
+  return(mode==='light'||mode==='dark')?mode:'system';
+}
+
+function clearThemeQueryParam(){
+  if(!window.history||!window.history.replaceState)return;
+  var url=new URL(window.location.href);
+  if(!url.searchParams.has('theme'))return;
+  url.searchParams.delete('theme');
+  window.history.replaceState(null,'',url.pathname+url.search+url.hash);
+}
+
+function updateThemeButtons(){
+  var mode=normalizeThemeMode(currentThemeMode);
+  document.querySelectorAll('.theme-btn').forEach(function(btn){
+    var active=btn.dataset.themeMode===mode;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',active?'true':'false');
+  });
+}
+
+function setThemeMode(mode){
+  mode=normalizeThemeMode(mode);
+  currentThemeMode=mode;
+  document.documentElement.dataset.themePreference=mode;
+  if(mode==='system'){
+    document.documentElement.removeAttribute('data-theme');
+    try{localStorage.removeItem(THEME_STORAGE_KEY)}catch(e){}
+  }else{
+    document.documentElement.dataset.theme=mode;
+    try{localStorage.setItem(THEME_STORAGE_KEY,mode)}catch(e){}
+  }
+  clearThemeQueryParam();
+  updateThemeButtons();
+}
+
 // === INIT ===
 function init(){
   buildLanguageGrid();
   setLang(currentLang);
+  updateThemeButtons();
   buildStartupList();
   buildCleanList();
   buildLargeFiles();
@@ -1433,6 +1508,8 @@ var I18N={
     lblAnalyze:'Analyze space',lblAnalyzeSub:'Space map',
     lblAI:'AI Analysis',
     lblSettings:'Settings',lblSettingsSub:'Language & more',
+    sectTheme:'Appearance',themeDesc:'Default follows macOS system appearance',
+    themeSystem:'System',themeSystemDesc:'Automatic',themeLight:'Light',themeLightDesc:'Bright',themeDark:'Dark',themeDarkDesc:'Dimmed',
     sectLang:'Language',langDesc:'Select display language',
     settingsTitle:'Settings ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'Disk Overview',speed:'Speed Up Mac',clean:'Clean Up Mac',manage:'Manage Space',dupes:'Find Duplicates',uninstall:'Uninstall Apps',analyze:'Analyze Space',ai:'AI Analysis',settings:'Settings'}
@@ -1448,6 +1525,8 @@ var I18N={
     lblAnalyze:'空间分析',lblAnalyzeSub:'空间地图',
     lblAI:'AI 分析',
     lblSettings:'设置',lblSettingsSub:'语言与更多',
+    sectTheme:'外观',themeDesc:'默认跟随 macOS 系统外观',
+    themeSystem:'跟随系统',themeSystemDesc:'自动',themeLight:'浅色',themeLightDesc:'明亮',themeDark:'深色',themeDarkDesc:'柔和',
     sectLang:'语言',langDesc:'选择显示语言',
     settingsTitle:'设置 ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'磁盘概览',speed:'加速 Mac',clean:'清理 Mac',manage:'管理空间',dupes:'查找重复文件',uninstall:'卸载应用',analyze:'空间分析',ai:'AI 分析',settings:'设置'}
@@ -1463,6 +1542,8 @@ var I18N={
     lblAnalyze:'分析空間',lblAnalyzeSub:'空間地圖',
     lblAI:'AI 分析',
     lblSettings:'設定',lblSettingsSub:'語言與更多',
+    sectTheme:'外觀',themeDesc:'預設跟隨 macOS 系統外觀',
+    themeSystem:'跟隨系統',themeSystemDesc:'自動',themeLight:'淺色',themeLightDesc:'明亮',themeDark:'深色',themeDarkDesc:'柔和',
     sectLang:'語言',langDesc:'選擇顯示語言',
     settingsTitle:'設定 ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'磁碟概覽',speed:'加速 Mac',clean:'清理 Mac',manage:'管理空間',dupes:'尋找重複檔案',uninstall:'解除安裝應用程式',analyze:'分析空間',ai:'AI 分析',settings:'設定'}
@@ -1478,6 +1559,8 @@ var I18N={
     lblAnalyze:'容量を分析',lblAnalyzeSub:'スペースマップ',
     lblAI:'AI分析',
     lblSettings:'設定',lblSettingsSub:'言語とその他',
+    sectTheme:'外観',themeDesc:'初期設定ではmacOSの外観に従います',
+    themeSystem:'システム',themeSystemDesc:'自動',themeLight:'ライト',themeLightDesc:'明るい',themeDark:'ダーク',themeDarkDesc:'控えめ',
     sectLang:'言語',langDesc:'表示言語を選択',
     settingsTitle:'設定 ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'ディスク概要',speed:'Macを高速化',clean:'Macをクリーン',manage:'容量管理',dupes:'重複を検索',uninstall:'アプリをアンインストール',analyze:'容量を分析',ai:'AI分析',settings:'設定'}
@@ -1493,6 +1576,8 @@ var I18N={
     lblAnalyze:'Analizar espacio',lblAnalyzeSub:'Mapa de espacio',
     lblAI:'Análisis de AI',
     lblSettings:'Ajustes',lblSettingsSub:'Idioma y más',
+    sectTheme:'Apariencia',themeDesc:'Por defecto sigue la apariencia de macOS',
+    themeSystem:'Sistema',themeSystemDesc:'Automático',themeLight:'Claro',themeLightDesc:'Brillante',themeDark:'Oscuro',themeDarkDesc:'Suave',
     sectLang:'Idioma',langDesc:'Selecciona idioma de pantalla',
     settingsTitle:'Ajustes ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'Resumen de disco',speed:'Acelerar Mac',clean:'Limpiar Mac',manage:'Gestionar espacio',dupes:'Buscar duplicados',uninstall:'Desinstalar apps',analyze:'Analizar espacio',ai:'Análisis de AI',settings:'Ajustes'}
@@ -1508,6 +1593,8 @@ var I18N={
     lblAnalyze:'Analyser espace',lblAnalyzeSub:'Carte espace',
     lblAI:'Analyse AI',
     lblSettings:'Réglages',lblSettingsSub:'Langue et plus',
+    sectTheme:'Apparence',themeDesc:'Suit macOS par défaut',
+    themeSystem:'Système',themeSystemDesc:'Auto',themeLight:'Clair',themeLightDesc:'Lumineux',themeDark:'Sombre',themeDarkDesc:'Doux',
     sectLang:'Langue',langDesc:'Choisir la langue affichée',
     settingsTitle:'Réglages ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'Vue du disque',speed:'Accélérer Mac',clean:'Nettoyer Mac',manage:'Gérer espace',dupes:'Trouver doublons',uninstall:'Désinstaller apps',analyze:'Analyser espace',ai:'Analyse AI',settings:'Réglages'}
@@ -1523,6 +1610,8 @@ var I18N={
     lblAnalyze:'تحليل المساحة',lblAnalyzeSub:'خريطة المساحة',
     lblAI:'تحليل AI',
     lblSettings:'الإعدادات',lblSettingsSub:'اللغة والمزيد',
+    sectTheme:'المظهر',themeDesc:'يتبع مظهر macOS افتراضياً',
+    themeSystem:'النظام',themeSystemDesc:'تلقائي',themeLight:'فاتح',themeLightDesc:'مضيء',themeDark:'داكن',themeDarkDesc:'هادئ',
     sectLang:'اللغة',langDesc:'اختر لغة العرض',
     settingsTitle:'الإعدادات ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'نظرة القرص',speed:'تسريع Mac',clean:'تنظيف Mac',manage:'إدارة المساحة',dupes:'البحث عن التكرارات',uninstall:'إزالة التطبيقات',analyze:'تحليل المساحة',ai:'تحليل AI',settings:'الإعدادات'}
@@ -1538,6 +1627,8 @@ var I18N={
     lblAnalyze:'स्थान विश्लेषण',lblAnalyzeSub:'स्पेस मैप',
     lblAI:'AI विश्लेषण',
     lblSettings:'सेटिंग्स',lblSettingsSub:'भाषा और अधिक',
+    sectTheme:'रूप',themeDesc:'डिफ़ॉल्ट रूप से macOS सिस्टम रूप का पालन करता है',
+    themeSystem:'सिस्टम',themeSystemDesc:'स्वचालित',themeLight:'हल्का',themeLightDesc:'उज्ज्वल',themeDark:'गहरा',themeDarkDesc:'मंद',
     sectLang:'भाषा',langDesc:'प्रदर्शन भाषा चुनें',
     settingsTitle:'सेटिंग्स ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'डिस्क अवलोकन',speed:'Mac तेज करें',clean:'Mac साफ करें',manage:'स्थान प्रबंधित करें',dupes:'डुप्लिकेट खोजें',uninstall:'ऐप हटाएं',analyze:'स्थान विश्लेषण',ai:'AI विश्लेषण',settings:'सेटिंग्स'}
@@ -1553,6 +1644,8 @@ var I18N={
     lblAnalyze:'Analisar espaço',lblAnalyzeSub:'Mapa de espaço',
     lblAI:'Análise de AI',
     lblSettings:'Configurações',lblSettingsSub:'Idioma e mais',
+    sectTheme:'Aparência',themeDesc:'Por padrão segue a aparência do macOS',
+    themeSystem:'Sistema',themeSystemDesc:'Automático',themeLight:'Claro',themeLightDesc:'Brilhante',themeDark:'Escuro',themeDarkDesc:'Suave',
     sectLang:'Idioma',langDesc:'Selecionar idioma de exibição',
     settingsTitle:'Configurações ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'Visão do disco',speed:'Acelerar Mac',clean:'Limpar Mac',manage:'Gerenciar espaço',dupes:'Encontrar duplicados',uninstall:'Desinstalar apps',analyze:'Analisar espaço',ai:'Análise de AI',settings:'Configurações'}
@@ -1568,6 +1661,8 @@ var I18N={
     lblAnalyze:'Анализ места',lblAnalyzeSub:'Карта пространства',
     lblAI:'AI-анализ',
     lblSettings:'Настройки',lblSettingsSub:'Язык и другое',
+    sectTheme:'Внешний вид',themeDesc:'По умолчанию следует оформлению macOS',
+    themeSystem:'Система',themeSystemDesc:'Авто',themeLight:'Светлая',themeLightDesc:'Ярко',themeDark:'Тёмная',themeDarkDesc:'Мягко',
     sectLang:'Язык',langDesc:'Выберите язык интерфейса',
     settingsTitle:'Настройки ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'Обзор диска',speed:'Ускорить Mac',clean:'Очистить Mac',manage:'Управление местом',dupes:'Найти дубликаты',uninstall:'Удалить приложения',analyze:'Анализ места',ai:'AI-анализ',settings:'Настройки'}
@@ -1583,6 +1678,8 @@ var I18N={
     lblAnalyze:'জায়গা বিশ্লেষণ',lblAnalyzeSub:'স্পেস ম্যাপ',
     lblAI:'AI বিশ্লেষণ',
     lblSettings:'সেটিংস',lblSettingsSub:'ভাষা ও আরও',
+    sectTheme:'চেহারা',themeDesc:'ডিফল্টভাবে macOS সিস্টেম চেহারা অনুসরণ করে',
+    themeSystem:'সিস্টেম',themeSystemDesc:'স্বয়ংক্রিয়',themeLight:'হালকা',themeLightDesc:'উজ্জ্বল',themeDark:'গাঢ়',themeDarkDesc:'নরম',
     sectLang:'ভাষা',langDesc:'প্রদর্শনের ভাষা নির্বাচন',
     settingsTitle:'সেটিংস ⚙️',settingsSub:'CleanMac v1.0',
     winTitles:{disk:'ডিস্ক ওভারভিউ',speed:'Mac দ্রুত করুন',clean:'Mac পরিষ্কার করুন',manage:'জায়গা পরিচালনা',dupes:'ডুপ্লিকেট খুঁজুন',uninstall:'অ্যাপ আনইনস্টল',analyze:'জায়গা বিশ্লেষণ',ai:'AI বিশ্লেষণ',settings:'সেটিংস'}
@@ -1625,6 +1722,10 @@ function applyLang(){
   set('lbl-analyze',s.lblAnalyze);set('lbl-analyze-sub',s.lblAnalyzeSub);
   set('lbl-ai',s.lblAI);
   set('lbl-settings',s.lblSettings);set('lbl-settings-sub',s.lblSettingsSub);
+  set('settings-sect-theme',s.sectTheme);set('settings-theme-desc',s.themeDesc);
+  set('theme-system-label',s.themeSystem);set('theme-system-desc',s.themeSystemDesc);
+  set('theme-light-label',s.themeLight);set('theme-light-desc',s.themeLightDesc);
+  set('theme-dark-label',s.themeDark);set('theme-dark-desc',s.themeDarkDesc);
   set('settings-sect-lang',s.sectLang);set('settings-lang-desc',s.langDesc);
   set('page-settings-title',s.settingsTitle);set('page-settings-sub',s.settingsSub);
   // update winTitles for current page
