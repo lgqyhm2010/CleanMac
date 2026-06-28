@@ -89,7 +89,10 @@ public final class DiskScanner {
                         category: classification.category,
                         risk: classification.risk,
                         reasons: classification.reasons,
-                        isDirectory: false
+                        isDirectory: false,
+                        protection: classification.protection,
+                        ruleMatches: classification.ruleMatches,
+                        userVisibleRules: classification.userVisibleRules
                     )
                 )
             }
@@ -102,8 +105,11 @@ public final class DiskScanner {
             return $0.sizeBytes > $1.sizeBytes
         }
 
+        let duplicateGroups = try DuplicateFileFinder().findDuplicates(in: candidates)
+
         return ScanReport(
             candidates: candidates,
+            duplicateGroups: duplicateGroups,
             totalBytes: candidates.reduce(0) { $0 + $1.sizeBytes },
             scannedFileCount: scannedFileCount,
             skippedFileCount: skippedFileCount

@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "CleanMac",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v14)
     ],
@@ -19,7 +20,10 @@ let package = Package(
         ),
         .target(
             name: "CleanMacCore",
-            path: "Sources/CleanMacCore"
+            path: "Sources/CleanMacCore",
+            resources: [
+                .process("Resources")
+            ]
         ),
         .testTarget(
             name: "CleanMacCoreTests",

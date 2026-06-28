@@ -6,6 +6,8 @@ public enum L10n {
         case aiCLI
         case aiReview
         case appLanguage
+        case applications
+        case appUninstaller
         case arguments
         case askAI
         case candidates
@@ -15,12 +17,17 @@ public enum L10n {
         case clear
         case clearSelection
         case command
+        case duplicateGroup
+        case duplicates
         case english
         case executable
         case folders
         case followSystem
+        case french
         case hiddenFiles
+        case hindi
         case include
+        case japanese
         case largeFile
         case minimumSize
         case moveToTrash
@@ -28,34 +35,48 @@ public enum L10n {
         case moving
         case name
         case noCandidates
+        case noApplicationsFound
         case noItemSelected
         case noReview
         case potential
+        case permissions
+        case protection
         case question
         case quitCleanMac
         case remove
         case results
         case reviewing
         case risk
+        case rules
         case scan
+        case scanApplications
         case scanOptions
         case scanning
         case selectAll
         case selectAllCandidates
+        case selectDuplicateCopies
+        case selectUninstallItems
         case selected
         case settings
         case size
+        case spanish
+        case status
+        case openSettings
+        case arabic
+        case bengali
         case chinese
+        case chineseTraditional
+        case portuguese
+        case russian
         case unknown
+
+        fileprivate var resourceKey: String {
+            String(describing: self)
+        }
     }
 
     public static func text(_ key: Key, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return englishText(key)
-        case .chinese:
-            return chineseText(key)
-        }
+        localized(key.resourceKey, language: language)
     }
 
     public static func languagePreferenceName(_ preference: AppLanguage, language: ResolvedLanguage) -> String {
@@ -66,159 +87,206 @@ public enum L10n {
             return text(.english, language: language)
         case .chinese:
             return text(.chinese, language: language)
+        case .chineseTraditional:
+            return text(.chineseTraditional, language: language)
+        case .japanese:
+            return text(.japanese, language: language)
+        case .spanish:
+            return text(.spanish, language: language)
+        case .french:
+            return text(.french, language: language)
+        case .arabic:
+            return text(.arabic, language: language)
+        case .hindi:
+            return text(.hindi, language: language)
+        case .portuguese:
+            return text(.portuguese, language: language)
+        case .russian:
+            return text(.russian, language: language)
+        case .bengali:
+            return text(.bengali, language: language)
         }
     }
 
     public static func categoryName(_ category: CandidateCategory, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return category.displayName
-        case .chinese:
-            switch category {
-            case .cache: return "缓存"
-            case .logs: return "日志"
-            case .downloads: return "下载"
-            case .trash: return "废纸篓"
-            case .temporary: return "临时文件"
-            case .developer: return "开发者"
-            case .largeFile: return "大文件"
-            case .other: return "其他"
-            }
-        }
+        localized("category.\(category.rawValue)", language: language)
     }
 
     public static func riskName(_ risk: DeletionRisk, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return risk.displayName
-        case .chinese:
-            switch risk {
-            case .usuallySafe: return "通常安全"
-            case .reviewRecommended: return "建议检查"
-            case .beCareful: return "谨慎处理"
-            }
+        localized("risk.\(risk.rawValue)", language: language)
+    }
+
+    public static func protectionName(_ protection: DeletionProtection, language: ResolvedLanguage) -> String {
+        localized("protection.\(protection.rawValue)", language: language)
+    }
+
+    public static func permissionStatusName(_ status: SystemPermissionStatus, language: ResolvedLanguage) -> String {
+        localized("permissionStatus.\(status.rawValue)", language: language)
+    }
+
+    public static func permissionTitle(_ guide: SystemPermissionGuide, language: ResolvedLanguage) -> String {
+        switch guide.kind {
+        case .fullDiskAccess:
+            return localized("permission.fullDiskAccess.title", language: language)
         }
     }
 
-    public static func scanReason(_ reason: String, language: ResolvedLanguage) -> String {
-        guard language == .chinese else {
-            return reason
+    public static func permissionExplanation(_ guide: SystemPermissionGuide, language: ResolvedLanguage) -> String {
+        switch guide.kind {
+        case .fullDiskAccess:
+            return localized("permission.fullDiskAccess.explanation", language: language)
         }
+    }
 
+    public static func permissionInstructions(_ guide: SystemPermissionGuide, language: ResolvedLanguage) -> [String] {
+        switch guide.kind {
+        case .fullDiskAccess:
+            return [
+                localized("permission.fullDiskAccess.instruction.1", language: language),
+                localized("permission.fullDiskAccess.instruction.2", language: language),
+                localized("permission.fullDiskAccess.instruction.3", language: language)
+            ]
+        }
+    }
+
+    public static func protectedItemCount(_ count: Int, language: ResolvedLanguage) -> String {
+        format("protectedItemCount", language: language, count)
+    }
+
+    public static func moveToTrashSummary(
+        selectedCount: Int,
+        protectedCount: Int,
+        totalBytes: Int64,
+        language: ResolvedLanguage
+    ) -> String {
+        let size = ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
+        if protectedCount == 0 {
+            return format("moveToTrashSummary.unprotected", language: language, selectedCount, size)
+        }
+        return format("moveToTrashSummary.protected", language: language, selectedCount, size, protectedCount)
+    }
+
+    public static func scanReason(_ reason: String, language: ResolvedLanguage) -> String {
         switch reason {
         case "Cache directory item":
-            return "缓存目录项目"
+            return localized("scanReason.cacheDirectoryItem", language: language)
         case "Log file or Logs directory item":
-            return "日志文件或日志目录项目"
+            return localized("scanReason.logFileOrLogsDirectoryItem", language: language)
         case "Downloads folder item":
-            return "下载文件夹项目"
+            return localized("scanReason.downloadsFolderItem", language: language)
         case "Already in Trash":
-            return "已在废纸篓中"
+            return localized("scanReason.alreadyInTrash", language: language)
         case "Temporary file location or extension":
-            return "临时文件位置或扩展名"
+            return localized("scanReason.temporaryFileLocationOrExtension", language: language)
         case "Developer cache or Xcode-derived data":
-            return "开发缓存或 Xcode 派生数据"
+            return localized("scanReason.developerCacheOrXcodeDerivedData", language: language)
         case "Large file above configured threshold":
-            return "超过设定阈值的大文件"
+            return localized("scanReason.largeFileAboveConfiguredThreshold", language: language)
         case "No cleanup-specific pattern matched":
-            return "未匹配到明确的清理模式"
+            return localized("scanReason.noCleanupSpecificPatternMatched", language: language)
+        case let reason where reason.hasPrefix("Application bundle for "):
+            let bundleIdentifier = String(reason.dropFirst("Application bundle for ".count))
+            return format("scanReason.applicationBundle", language: language, bundleIdentifier)
+        case let reason where reason.hasPrefix("App uninstall support item for "):
+            let bundleIdentifier = String(reason.dropFirst("App uninstall support item for ".count))
+            return format("scanReason.appUninstallSupportItem", language: language, bundleIdentifier)
         default:
             return reason
         }
     }
 
     public static func folderCount(_ count: Int, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return "\(count) folders"
-        case .chinese:
-            return "\(count) 个文件夹"
-        }
+        format("folderCount", language: language, count)
     }
 
     public static func candidateCount(_ count: Int, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return "\(count) candidates"
-        case .chinese:
-            return "\(count) 个候选项"
-        }
+        format("candidateCount", language: language, count)
+    }
+
+    public static func duplicateGroupCount(_ count: Int, language: ResolvedLanguage) -> String {
+        format("duplicateGroupCount", language: language, count)
+    }
+
+    public static func uninstallPlanCount(_ count: Int, language: ResolvedLanguage) -> String {
+        format("uninstallPlanCount", language: language, count)
+    }
+
+    public static func uninstallReclaimableBytes(_ bytes: Int64, language: ResolvedLanguage) -> String {
+        let size = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        return format("uninstallReclaimableBytes", language: language, size)
+    }
+
+    public static func duplicateReclaimableBytes(_ bytes: Int64, language: ResolvedLanguage) -> String {
+        let size = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        return format("duplicateReclaimableBytes", language: language, size)
+    }
+
+    public static func duplicateGroupDetail(_ group: DuplicateFileGroup, language: ResolvedLanguage) -> String {
+        let reclaimable = ByteCountFormatter.string(fromByteCount: group.movableReclaimableBytes, countStyle: .file)
+        return format("duplicateGroupDetail", language: language, group.candidates.count, reclaimable)
+    }
+
+    public static func appUninstallPlanDetail(_ plan: AppUninstallPlan, language: ResolvedLanguage) -> String {
+        let reclaimable = ByteCountFormatter.string(fromByteCount: plan.movableReclaimableBytes, countStyle: .file)
+        return format("appUninstallPlanDetail", language: language, plan.appName, plan.allCandidates.count, reclaimable)
     }
 
     public static func selectedCount(_ count: Int, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return "\(count) selected"
-        case .chinese:
-            return "\(count) 个已选择"
-        }
+        format("selectedCount", language: language, count)
     }
 
     public static func selectedHeadline(_ count: Int, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return "\(count) Selected"
-        case .chinese:
-            return "已选择 \(count) 个"
-        }
+        format("selectedHeadline", language: language, count)
     }
 
     public static func candidatesHeadline(_ count: Int, language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return "\(count) Candidates"
-        case .chinese:
-            return "\(count) 个候选项"
-        }
+        format("candidatesHeadline", language: language, count)
     }
 
     public static func status(_ status: CleaningStatus, language: ResolvedLanguage) -> String {
         switch status {
         case .ready:
-            return language == .english ? "Ready" : "就绪"
+            return localized("status.ready", language: language)
         case .scanning:
-            return language == .english ? "Scanning..." : "正在扫描..."
+            return localized("status.scanning", language: language)
         case .candidatesFound(let count):
-            return language == .english ? "\(count) candidates found" : "找到 \(count) 个候选项"
+            return format("status.candidatesFound", language: language, count)
         case .scanFailed:
-            return language == .english ? "Scan failed" : "扫描失败"
+            return localized("status.scanFailed", language: language)
         case .movingToTrash:
-            return language == .english ? "Moving to Trash..." : "正在移到废纸篓..."
+            return localized("status.movingToTrash", language: language)
         case .movedToTrash(let count):
-            return language == .english ? "\(count) items moved to Trash" : "已将 \(count) 个项目移到废纸篓"
+            return format("status.movedToTrash", language: language, count)
         case .cleanupFailed:
-            return language == .english ? "Cleanup failed" : "清理失败"
+            return localized("status.cleanupFailed", language: language)
         case .askingAI:
-            return language == .english ? "Asking AI..." : "正在询问 AI..."
+            return localized("status.askingAI", language: language)
         case .aiReviewFinished:
-            return language == .english ? "AI review finished" : "AI 审查完成"
+            return localized("status.aiReviewFinished", language: language)
         case .aiReviewFailed:
-            return language == .english ? "AI review failed" : "AI 审查失败"
+            return localized("status.aiReviewFailed", language: language)
         }
     }
 
     public static func error(_ error: CleaningErrorMessage, language: ResolvedLanguage) -> String {
         switch error {
         case .addFolderToScan:
-            return language == .english ? "Add at least one folder to scan." : "请至少添加一个要扫描的文件夹。"
+            return localized("error.addFolderToScan", language: language)
         case .itemsCouldNotBeMoved(let count):
-            return language == .english ? "\(count) items could not be moved." : "\(count) 个项目无法移动。"
+            return format("error.itemsCouldNotBeMoved", language: language, count)
+        case .itemsWereProtected(let count):
+            return format("error.itemsWereProtected", language: language, count)
         case .selectItemForAIReview:
-            return language == .english ? "Select at least one item for AI review." : "请至少选择一个项目供 AI 审查。"
+            return localized("error.selectItemForAIReview", language: language)
         case .setAIExecutable:
-            return language == .english ? "Set an AI CLI executable in Settings." : "请在设置中配置 AI CLI 可执行文件。"
+            return localized("error.setAIExecutable", language: language)
         case .system(let message):
             return message
         }
     }
 
     public static func defaultAIQuestion(language: ResolvedLanguage) -> String {
-        switch language {
-        case .english:
-            return "Please decide whether these files are suitable to move to Trash, and list anything I should manually confirm."
-        case .chinese:
-            return "请判断这些文件是否适合移到废纸篓，并列出需要我手动确认的项目。"
-        }
+        localized("defaultAIQuestion", language: language)
     }
 
     public static func isDefaultAIQuestion(_ question: String) -> Bool {
@@ -228,103 +296,24 @@ public enum L10n {
         }
     }
 
-    private static func englishText(_ key: Key) -> String {
-        switch key {
-        case .add: return "Add"
-        case .aiCLI: return "AI CLI"
-        case .aiReview: return "AI Review"
-        case .appLanguage: return "Language"
-        case .arguments: return "Arguments"
-        case .askAI: return "Ask AI"
-        case .candidates: return "Candidates"
-        case .category: return "Category"
-        case .cancel: return "Cancel"
-        case .cleaner: return "Cleaner"
-        case .clear: return "Clear"
-        case .clearSelection: return "Clear Selection"
-        case .command: return "Command"
-        case .english: return "English"
-        case .executable: return "Executable"
-        case .folders: return "Folders"
-        case .followSystem: return "Follow System"
-        case .hiddenFiles: return "Hidden Files"
-        case .include: return "Include"
-        case .largeFile: return "Large File"
-        case .minimumSize: return "Minimum Size"
-        case .moveToTrash: return "Move to Trash"
-        case .moveSelectedItemsToTrash: return "Move selected items to Trash?"
-        case .moving: return "Moving"
-        case .name: return "Name"
-        case .noCandidates: return "No Candidates"
-        case .noItemSelected: return "No item selected"
-        case .noReview: return "No Review"
-        case .potential: return "Potential"
-        case .question: return "Question"
-        case .quitCleanMac: return "Quit CleanMac"
-        case .remove: return "Remove"
-        case .results: return "Results"
-        case .reviewing: return "Reviewing"
-        case .risk: return "Risk"
-        case .scan: return "Scan"
-        case .scanOptions: return "Scan Options"
-        case .scanning: return "Scanning"
-        case .selectAll: return "Select All"
-        case .selectAllCandidates: return "Select All Candidates"
-        case .selected: return "Selected"
-        case .settings: return "Settings"
-        case .size: return "Size"
-        case .chinese: return "Chinese"
-        case .unknown: return "Unknown"
-        }
+    private static func localized(_ key: String, language: ResolvedLanguage) -> String {
+        localizedBundle(for: language).localizedString(forKey: key, value: key, table: "Localizable")
     }
 
-    private static func chineseText(_ key: Key) -> String {
-        switch key {
-        case .add: return "添加"
-        case .aiCLI: return "AI CLI"
-        case .aiReview: return "AI 审查"
-        case .appLanguage: return "语言"
-        case .arguments: return "参数"
-        case .askAI: return "询问 AI"
-        case .candidates: return "候选项"
-        case .category: return "类别"
-        case .cancel: return "取消"
-        case .cleaner: return "清理器"
-        case .clear: return "清除"
-        case .clearSelection: return "清除选择"
-        case .command: return "命令"
-        case .english: return "English"
-        case .executable: return "可执行文件"
-        case .folders: return "文件夹"
-        case .followSystem: return "跟随系统"
-        case .hiddenFiles: return "隐藏文件"
-        case .include: return "包含"
-        case .largeFile: return "大文件"
-        case .minimumSize: return "最小大小"
-        case .moveToTrash: return "移到废纸篓"
-        case .moveSelectedItemsToTrash: return "将选中项目移到废纸篓？"
-        case .moving: return "正在移动"
-        case .name: return "名称"
-        case .noCandidates: return "没有候选项"
-        case .noItemSelected: return "未选择项目"
-        case .noReview: return "没有审查结果"
-        case .potential: return "可清理"
-        case .question: return "问题"
-        case .quitCleanMac: return "退出 CleanMac"
-        case .remove: return "移除"
-        case .results: return "结果"
-        case .reviewing: return "正在审查"
-        case .risk: return "风险"
-        case .scan: return "扫描"
-        case .scanOptions: return "扫描选项"
-        case .scanning: return "正在扫描"
-        case .selectAll: return "全选"
-        case .selectAllCandidates: return "全选候选项"
-        case .selected: return "已选择"
-        case .settings: return "设置"
-        case .size: return "大小"
-        case .chinese: return "中文"
-        case .unknown: return "未知"
+    private static func format(_ key: String, language: ResolvedLanguage, _ arguments: CVarArg...) -> String {
+        let template = localized(key, language: language)
+        return String(format: template, locale: language.locale, arguments: arguments)
+    }
+
+    private static func localizedBundle(for language: ResolvedLanguage) -> Bundle {
+        let candidateLprojNames = [language.lprojName, language.lprojName.lowercased()]
+        for lprojName in candidateLprojNames {
+            if let path = Bundle.module.path(forResource: lprojName, ofType: "lproj"),
+               let bundle = Bundle(path: path) {
+                return bundle
+            }
         }
+
+        return Bundle.module
     }
 }

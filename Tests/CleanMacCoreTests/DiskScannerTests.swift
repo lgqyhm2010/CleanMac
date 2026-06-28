@@ -36,6 +36,20 @@ final class DiskScannerTests: XCTestCase {
         XCTAssertEqual(report.candidates.first?.category, .largeFile)
     }
 
+    func testScanReportsDuplicateGroupsAndReclaimableBytes() throws {
+        let root = try makeTemporaryDirectory()
+        try writeFile(root.appending(path: "one.txt"), contents: "same")
+        try writeFile(root.appending(path: "copy/one-copy.txt"), contents: "same")
+        try writeFile(root.appending(path: "different.txt"), contents: "diff")
+
+        let report = try DiskScanner(classifier: ScanClassifier(largeFileThresholdBytes: 100))
+            .scan(roots: [root], options: ScanOptions(minimumFileSizeBytes: 1, includeHiddenFiles: false))
+
+        XCTAssertEqual(report.duplicateGroups.count, 1)
+        XCTAssertEqual(report.duplicateGroups.first?.candidates.count, 2)
+        XCTAssertEqual(report.duplicateReclaimableBytes, 4)
+    }
+
     private func makeTemporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appending(path: UUID().uuidString, directoryHint: .isDirectory)
@@ -53,5 +67,13 @@ final class DiskScannerTests: XCTestCase {
         )
         let data = Data(repeating: 65, count: byteCount)
         try data.write(to: url)
+    }
+
+    private func writeFile(_ url: URL, contents: String) throws {
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try contents.data(using: .utf8)?.write(to: url)
     }
 }

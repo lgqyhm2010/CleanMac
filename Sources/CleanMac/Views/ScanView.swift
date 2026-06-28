@@ -4,17 +4,36 @@ import SwiftUI
 struct ScanView: View {
     @ObservedObject var store: CleaningStore
     var language: ResolvedLanguage
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                SummaryStrip(store: store, language: language)
+        CleanMacPage {
+            CleanMacHeroHeader(
+                title: L10n.text(.scan, language: language),
+                subtitle: L10n.status(store.status, language: language),
+                symbolName: "magnifyingglass",
+                tint: CleanMacTheme.accent,
+                isActive: store.isScanning
+            ) {
+                StatusText(store: store, language: language)
+            }
 
+            SummaryStrip(store: store, language: language)
+
+            PermissionGuideView(
+                guide: .fullDiskAccess(),
+                language: language,
+                displayStyle: .compact
+            )
+
+            CleanMacPanel {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text(L10n.text(.folders, language: language))
-                            .font(.headline)
-                        Spacer()
+                        CleanMacSectionHeader(
+                            title: L10n.text(.folders, language: language),
+                            symbolName: "folder",
+                            tint: CleanMacTheme.accent
+                        )
                         Button {
                             store.addFolderWithOpenPanel()
                         } label: {
@@ -22,43 +41,22 @@ struct ScanView: View {
                         }
                     }
 
-                    VStack(spacing: 0) {
-                        ForEach(store.roots, id: \.self) { root in
-                            HStack(spacing: 10) {
-                                Image(systemName: "folder")
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 18)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(root.lastPathComponent.isEmpty ? root.path : root.lastPathComponent)
-                                        .lineLimit(1)
-                                    Text(root.path)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                }
-                                Spacer()
-                                Button {
-                                    store.removeRoot(root)
-                                } label: {
-                                    Image(systemName: "minus.circle")
-                                }
-                                .buttonStyle(.borderless)
-                                .help(L10n.text(.remove, language: language))
-                            }
-                            .padding(.vertical, 9)
-                            .padding(.horizontal, 10)
-
-                            if root != store.roots.last {
-                                Divider()
-                            }
-                        }
-                    }
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    CleanMacURLList(
+                        urls: store.roots,
+                        tint: CleanMacTheme.accent,
+                        remove: store.removeRoot,
+                        language: language
+                    )
                 }
+            }
 
+            CleanMacPanel {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text(L10n.text(.scanOptions, language: language))
-                        .font(.headline)
+                    CleanMacSectionHeader(
+                        title: L10n.text(.scanOptions, language: language),
+                        symbolName: "slider.horizontal.3",
+                        tint: CleanMacTheme.accent
+                    )
 
                     Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
                         GridRow {
@@ -99,6 +97,7 @@ struct ScanView: View {
                         if store.isScanning {
                             ProgressView()
                                 .controlSize(.small)
+                                .transition(.opacity)
                         }
 
                         Spacer()
@@ -106,11 +105,8 @@ struct ScanView: View {
                         StatusText(store: store, language: language)
                     }
                 }
-                .padding(16)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.isScanning)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
@@ -121,38 +117,32 @@ private struct SummaryStrip: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            MetricTile(title: L10n.text(.candidates, language: language), value: "\(store.candidates.count)", symbolName: "doc.on.doc")
-            MetricTile(title: L10n.text(.potential, language: language), value: Formatters.bytes(store.lastReport?.totalBytes ?? 0), symbolName: "internaldrive")
-            MetricTile(title: L10n.text(.selected, language: language), value: Formatters.bytes(store.selectedSummary.totalBytes), symbolName: "checkmark.circle")
+            MetricTileView(
+                title: L10n.text(.candidates, language: language),
+                value: "\(store.candidates.count)",
+                symbolName: "doc.on.doc",
+                tint: CleanMacTheme.accent,
+                isActive: store.isScanning
+            )
+            MetricTileView(
+                title: L10n.text(.potential, language: language),
+                value: Formatters.bytes(store.lastReport?.totalBytes ?? 0),
+                symbolName: "internaldrive",
+                tint: CleanMacTheme.mint
+            )
+            MetricTileView(
+                title: L10n.text(.duplicates, language: language),
+                value: Formatters.bytes(store.duplicateReclaimableBytes),
+                symbolName: "doc.on.doc.fill",
+                tint: Color.indigo
+            )
+            MetricTileView(
+                title: L10n.text(.selected, language: language),
+                value: Formatters.bytes(store.selectedSummary.totalBytes),
+                symbolName: "checkmark.circle",
+                tint: CleanMacTheme.amber
+            )
         }
-    }
-}
-
-private struct MetricTile: View {
-    var title: String
-    var value: String
-    var symbolName: String
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: symbolName)
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .frame(width: 26)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.title3.weight(.semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .frame(minWidth: 150, maxWidth: .infinity, minHeight: 76)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -162,12 +152,16 @@ private struct StatusText: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 2) {
-            Text(L10n.status(store.status, language: language))
-                .font(.callout)
+            StatusBadge(
+                text: L10n.status(store.status, language: language),
+                symbolName: CleanMacTheme.statusSymbol(store.status),
+                tint: CleanMacTheme.statusColor(store.status),
+                isActive: store.isScanning
+            )
             if let error = store.errorMessage {
                 Text(L10n.error(error, language: language))
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(CleanMacTheme.danger)
                     .lineLimit(2)
             }
         }

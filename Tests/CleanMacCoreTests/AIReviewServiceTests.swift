@@ -24,6 +24,8 @@ final class AIReviewServiceTests: XCTestCase {
 
         XCTAssertTrue(prompt.contains("old-installer.dmg"))
         XCTAssertTrue(prompt.contains("Downloads folder item"))
+        XCTAssertTrue(prompt.contains("protection:"))
+        XCTAssertTrue(prompt.contains("rules:"))
         XCTAssertTrue(prompt.contains("这个可以删吗？"))
         XCTAssertTrue(prompt.contains("JSON"))
     }

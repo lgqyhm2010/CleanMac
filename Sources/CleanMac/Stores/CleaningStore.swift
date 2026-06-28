@@ -5,10 +5,12 @@ import Foundation
 @MainActor
 final class CleaningStore: ObservableObject {
     @Published var roots: [URL] = DefaultScanRoots.urls
+    @Published var appRoots: [URL] = DefaultApplicationRoots.urls
     @Published var candidates: [CleaningCandidate] = []
     @Published var selection = CleaningSelection()
     @Published var selectedCandidateID: CleaningCandidate.ID?
     @Published var lastReport: ScanReport?
+    @Published var uninstallPlans: [AppUninstallPlan] = []
     @Published var cleanupResult: CleanupResult?
     @Published var aiQuestion: String
     @Published var aiOutput = ""
@@ -17,6 +19,7 @@ final class CleaningStore: ObservableObject {
     @Published var isScanning = false
     @Published var isCleaning = false
     @Published var isReviewingWithAI = false
+    @Published var isScanningApplications = false
     @Published var includeHiddenFiles = false
     @Published var minimumSizeMegabytes = 1.0
     @Published var largeFileThresholdMegabytes = 500.0
@@ -27,6 +30,30 @@ final class CleaningStore: ObservableObject {
 
     var selectedCandidates: [CleaningCandidate] {
         selection.selectedCandidates(from: candidates)
+    }
+
+    var selectedMovableCandidates: [CleaningCandidate] {
+        selectedCandidates.filter { $0.protection != .blocked }
+    }
+
+    var selectedProtectedCandidates: [CleaningCandidate] {
+        selectedCandidates.filter { $0.protection == .blocked }
+    }
+
+    var duplicateGroups: [DuplicateFileGroup] {
+        lastReport?.duplicateGroups ?? []
+    }
+
+    var duplicateReclaimableBytes: Int64 {
+        lastReport?.duplicateReclaimableBytes ?? 0
+    }
+
+    var movableDuplicateCandidates: [CleaningCandidate] {
+        duplicateGroups.flatMap(\.movableDuplicateCandidates)
+    }
+
+    var uninstallReclaimableBytes: Int64 {
+        uninstallPlans.reduce(0) { $0 + $1.movableReclaimableBytes }
     }
 
     var selectedSummary: CleaningSelectionSummary {
@@ -60,6 +87,23 @@ final class CleaningStore: ObservableObject {
         roots.removeAll { $0 == url }
     }
 
+    func addApplicationFolderWithOpenPanel() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = false
+        panel.prompt = L10n.text(.add, language: AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey)).resolved())
+
+        guard panel.runModal() == .OK else { return }
+        let additions = panel.urls.filter { !appRoots.contains($0) }
+        appRoots.append(contentsOf: additions)
+    }
+
+    func removeApplicationRoot(_ url: URL) {
+        appRoots.removeAll { $0 == url }
+    }
+
     func scan() {
         guard !roots.isEmpty else {
             errorMessage = .addFolderToScan
@@ -86,6 +130,7 @@ final class CleaningStore: ObservableObject {
                 .value
                 lastReport = report
                 candidates = report.candidates
+                uninstallPlans = []
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
                 status = .candidatesFound(report.candidates.count)
@@ -97,6 +142,48 @@ final class CleaningStore: ObservableObject {
         }
     }
 
+    func scanApplications() {
+        guard !appRoots.isEmpty else {
+            errorMessage = .addFolderToScan
+            return
+        }
+
+        let appRoots = appRoots
+        let userLibrary = FileManager.default.homeDirectoryForCurrentUser
+            .appending(path: "Library", directoryHint: .isDirectory)
+
+        isScanningApplications = true
+        errorMessage = nil
+        cleanupResult = nil
+        status = .scanning
+
+        Task {
+            do {
+                let plans = try await Task.detached(priority: .userInitiated) {
+                    try AppUninstaller().scan(appRoots: appRoots, userLibrary: userLibrary)
+                }
+                .value
+                uninstallPlans = plans
+                candidates = plans.flatMap(\.allCandidates)
+                let duplicateGroups = (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []
+                lastReport = ScanReport(
+                    candidates: candidates,
+                    duplicateGroups: duplicateGroups,
+                    totalBytes: candidates.reduce(0) { $0 + $1.sizeBytes },
+                    scannedFileCount: candidates.count,
+                    skippedFileCount: 0
+                )
+                selection.clear()
+                selectedCandidateID = candidates.first?.id
+                status = .candidatesFound(candidates.count)
+            } catch {
+                errorMessage = .system(error.localizedDescription)
+                status = .scanFailed
+            }
+            isScanningApplications = false
+        }
+    }
+
     func toggle(_ candidate: CleaningCandidate, selected: Bool) {
         let alreadySelected = selection.contains(candidate)
         guard selected != alreadySelected else { return }
@@ -104,7 +191,30 @@ final class CleaningStore: ObservableObject {
     }
 
     func selectAll() {
-        selection.select(candidates)
+        selection.selectMovable(candidates)
+    }
+
+    func selectDuplicateCopies() {
+        selection.selectDuplicateCopies(in: duplicateGroups)
+    }
+
+    func selectUninstallItems(for plan: AppUninstallPlan) {
+        selection.clear()
+        selection.selectMovable(plan.allCandidates)
+    }
+
+    func duplicateGroup(containing candidate: CleaningCandidate?) -> DuplicateFileGroup? {
+        guard let candidate else { return nil }
+        return duplicateGroups.first { group in
+            group.candidates.contains { $0.id == candidate.id }
+        }
+    }
+
+    func uninstallPlan(containing candidate: CleaningCandidate?) -> AppUninstallPlan? {
+        guard let candidate else { return nil }
+        return uninstallPlans.first { plan in
+            plan.allCandidates.contains { $0.id == candidate.id }
+        }
     }
 
     func clearSelection() {
@@ -128,13 +238,28 @@ final class CleaningStore: ObservableObject {
                 cleanupResult = result
 
                 let failedURLs = Set(result.failures.map(\.url))
-                let cleanedIDs = Set(targets.filter { !failedURLs.contains($0.url) }.map(\.id))
+                let skippedURLs = Set(result.skipped.map(\.url))
+                let cleanedIDs = Set(targets.filter {
+                    !failedURLs.contains($0.url) && !skippedURLs.contains($0.url)
+                }.map(\.id))
                 candidates.removeAll { cleanedIDs.contains($0.id) }
+                uninstallPlans = uninstallPlans.map { plan in
+                    AppUninstallPlan(
+                        appName: plan.appName,
+                        bundleIdentifier: plan.bundleIdentifier,
+                        appCandidate: plan.appCandidate,
+                        supportCandidates: plan.supportCandidates.filter { !cleanedIDs.contains($0.id) }
+                    )
+                }
+                .filter { !cleanedIDs.contains($0.appCandidate.id) }
+                refreshReportAfterCandidateChanges()
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
                 status = .movedToTrash(result.cleanedCount)
                 if !result.failures.isEmpty {
                     errorMessage = .itemsCouldNotBeMoved(result.failures.count)
+                } else if !result.skipped.isEmpty {
+                    errorMessage = .itemsWereProtected(result.skipped.count)
                 }
             } catch {
                 errorMessage = .system(error.localizedDescription)
@@ -179,6 +304,18 @@ final class CleaningStore: ObservableObject {
             isReviewingWithAI = false
         }
     }
+
+    private func refreshReportAfterCandidateChanges() {
+        guard let lastReport else { return }
+        let duplicateGroups = (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []
+        self.lastReport = ScanReport(
+            candidates: candidates,
+            duplicateGroups: duplicateGroups,
+            totalBytes: candidates.reduce(0) { $0 + $1.sizeBytes },
+            scannedFileCount: lastReport.scannedFileCount,
+            skippedFileCount: lastReport.skippedFileCount
+        )
+    }
 }
 
 enum DefaultScanRoots {
@@ -189,6 +326,17 @@ enum DefaultScanRoots {
             home.appending(path: "Library/Caches", directoryHint: .isDirectory),
             home.appending(path: "Library/Logs", directoryHint: .isDirectory),
             FileManager.default.temporaryDirectory
+        ]
+        return candidates.filter { FileManager.default.fileExists(atPath: $0.path) }
+    }
+}
+
+enum DefaultApplicationRoots {
+    static var urls: [URL] {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let candidates = [
+            URL(filePath: "/Applications", directoryHint: .isDirectory),
+            home.appending(path: "Applications", directoryHint: .isDirectory)
         ]
         return candidates.filter { FileManager.default.fileExists(atPath: $0.path) }
     }
