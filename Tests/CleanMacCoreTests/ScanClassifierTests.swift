@@ -1,0 +1,41 @@
+import XCTest
+@testable import CleanMacCore
+
+final class ScanClassifierTests: XCTestCase {
+    func testClassifiesCommonCleanupLocationsWithRiskHints() {
+        let classifier = ScanClassifier(largeFileThresholdBytes: 100)
+
+        let cache = classifier.classify(
+            url: URL(filePath: "/Users/me/Library/Caches/com.example/blob.cache"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(cache.category, .cache)
+        XCTAssertEqual(cache.risk, .usuallySafe)
+        XCTAssertTrue(cache.reasons.contains { $0.localizedCaseInsensitiveContains("cache") })
+
+        let log = classifier.classify(
+            url: URL(filePath: "/Users/me/Library/Logs/example.log"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(log.category, .logs)
+        XCTAssertEqual(log.risk, .usuallySafe)
+
+        let download = classifier.classify(
+            url: URL(filePath: "/Users/me/Downloads/installer.dmg"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(download.category, .downloads)
+        XCTAssertEqual(download.risk, .reviewRecommended)
+
+        let large = classifier.classify(
+            url: URL(filePath: "/Users/me/Movies/export.mov"),
+            sizeBytes: 101,
+            isDirectory: false
+        )
+        XCTAssertEqual(large.category, .largeFile)
+        XCTAssertEqual(large.risk, .reviewRecommended)
+    }
+}
