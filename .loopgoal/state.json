@@ -1,55 +1,35 @@
 {
   "mode": "goal",
-  "objective": "Expose all 11 supported CleanMac languages in the app language selection UI.",
-  "exit_condition": "The goal is complete when CleanMac settings can present System plus all 11 AppLanguage options, every option has a localized display name, tests cover the 11-language language picker surface and resource coverage, all Localizable.strings files lint successfully, swift test passes, and the resulting changes are committed.",
-  "status": "done",
-  "iteration": 1,
+  "objective": "Make the local CleanMac app match the updated HTML design and animation direction while keeping existing app functionality intact.",
+  "exit_condition": "The goal is complete when the SwiftUI app visually follows cleanmac_with_ai.html, includes the corresponding generated image assets, preserves the existing local feature flow, builds successfully, and the checkpoint plus implementation changes are committed.",
+  "status": "in_progress",
+  "iteration": 0,
   "phases": [
-    {"name": "Inspect language selection surface", "status": "done"},
-    {"name": "Add coverage for all visible language options", "status": "done"},
-    {"name": "Expose all supported languages in settings", "status": "done"},
-    {"name": "Verify strings syntax and full SwiftPM test suite", "status": "done"},
-    {"name": "Commit the verified result", "status": "done"}
+    {"name": "Extract HTML design and animation requirements", "status": "todo"},
+    {"name": "Generate image assets that match the HTML design", "status": "todo"},
+    {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "todo"},
+    {"name": "Verify the app builds and the preserved behavior still compiles", "status": "todo"},
+    {"name": "Commit the verified result", "status": "todo"}
   ],
   "current": {
-    "focus": "Goal complete: the HTML prototype exposes all 11 supported languages, automated tests guard the list, Swift tests and strings lint pass, and browser QA passed on desktop and mobile widths.",
-    "next_action": "Stop scheduling after the commit succeeds.",
+    "focus": "Baseline verified with SwiftPM using a writable Clang module cache after sandboxed SwiftPM failed on sandbox-exec.",
+    "next_action": "Inspect the HTML and SwiftUI surface for the first phase.",
     "blockers": ""
   },
   "decisions": [
     {
-      "decision": "Use SwiftPM package resources with en.lproj and zh-Hans.lproj instead of adding L10nKit.",
-      "reason": "CleanMac is a package-first macOS app with an existing lightweight L10n API; resource-backed lookup satisfies the requested .lproj migration without adding an unnecessary remote dependency."
+      "decision": "Treat this as GOAL mode.",
+      "reason": "The task has a concrete completion condition: the local app should match the already-updated HTML design and animation direction."
     },
     {
-      "decision": "Keep AppLanguage storage values unchanged while mapping ResolvedLanguage to lproj folder names.",
-      "reason": "Existing user defaults and tests expect english/chinese values, while Bundle resources need en and zh-Hans names."
+      "decision": "Keep local app functionality unchanged for this pass.",
+      "reason": "The user explicitly asked to leave local functionality alone and handle it later."
     },
     {
-      "decision": "Try both zh-Hans and lowercase zh-hans when locating resource bundles.",
-      "reason": "SwiftPM normalizes the built resource directory to zh-hans.lproj even though the source folder is zh-Hans.lproj."
-    },
-    {
-      "decision": "Do not stage the pre-existing untracked Assets directory.",
-      "reason": "Those files are unrelated to the localization resource migration."
-    },
-    {
-      "decision": "Keep the 11-language ResolvedLanguage/AppLanguage model and focus this goal on the language selection surface.",
-      "reason": "The current code already defines 11 resolved languages and has 11 .lproj resource folders, so the likely gap is the settings picker rather than the localization resource model."
-    },
-    {
-      "decision": "Update the HTML prototype language picker rather than Swift SettingsView.",
-      "reason": "SettingsView already iterates AppLanguage.allCases, while the HTML prototype had a manually written language grid that had drifted from the 11-language model."
-    },
-    {
-      "decision": "Generate prototype language buttons from one LANGUAGES array and test that the array and I18N dictionaries both contain the 11 expected codes.",
-      "reason": "A single source for the prototype picker plus an automated assertion prevents the UI from silently shrinking back to a smaller hardcoded list."
-    },
-    {
-      "decision": "Use script marks such as EN, 简, 繁, あ, and RU instead of flag emoji in the prototype language buttons.",
-      "reason": "Browser QA showed some flag emoji rendering as missing glyphs, while script marks render reliably and still keep each option scannable."
+      "decision": "Use env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build as the verification command.",
+      "reason": "Plain swift build tried to write toolchain cache under the home directory, and sandboxed SwiftPM manifest evaluation hit sandbox-exec restrictions."
     }
   ],
-  "verify_cmd": "swift test && plutil -lint Sources/CleanMacCore/Resources/en.lproj/Localizable.strings Sources/CleanMacCore/Resources/zh-Hans.lproj/Localizable.strings Sources/CleanMacCore/Resources/zh-Hant.lproj/Localizable.strings Sources/CleanMacCore/Resources/ja.lproj/Localizable.strings Sources/CleanMacCore/Resources/es.lproj/Localizable.strings Sources/CleanMacCore/Resources/fr.lproj/Localizable.strings Sources/CleanMacCore/Resources/ar.lproj/Localizable.strings Sources/CleanMacCore/Resources/hi.lproj/Localizable.strings Sources/CleanMacCore/Resources/pt-BR.lproj/Localizable.strings Sources/CleanMacCore/Resources/ru.lproj/Localizable.strings Sources/CleanMacCore/Resources/bn.lproj/Localizable.strings",
-  "updated_at": "2026-06-28T15:00:13Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build",
+  "updated_at": "2026-06-28T15:14:00Z"
 }
