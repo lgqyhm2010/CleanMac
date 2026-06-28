@@ -14,65 +14,67 @@ struct PermissionGuideView: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: statusSymbolName)
+        CleanMacPanel(padding: 14) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    CleanMacPulseIcon(
+                        symbolName: statusSymbolName,
+                        tint: statusColor,
+                        isActive: guide.status == .needsAttention
+                    )
                     .font(.title3)
-                    .foregroundStyle(statusColor)
-                    .frame(width: 24)
+                    .frame(width: 36, height: 36)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(L10n.permissionTitle(guide, language: language))
-                            .font(.headline)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            Text(L10n.permissionTitle(guide, language: language))
+                                .font(.headline)
 
-                        Text(L10n.permissionStatusName(guide.status, language: language))
-                            .font(.caption)
-                            .foregroundStyle(statusColor)
-                    }
-
-                    Text(L10n.permissionExplanation(guide, language: language))
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer(minLength: 8)
-
-                if let settingsURL = guide.settingsURL {
-                    Button {
-                        openURL(settingsURL)
-                    } label: {
-                        Label(L10n.text(.openSettings, language: language), systemImage: "gearshape")
-                    }
-                }
-            }
-
-            if displayStyle == .detailed {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(Array(L10n.permissionInstructions(guide, language: language).enumerated()), id: \.offset) { index, instruction in
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text("\(index + 1).")
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                            Text(instruction)
-                                .foregroundStyle(.secondary)
+                            StatusBadge(
+                                text: L10n.permissionStatusName(guide.status, language: language),
+                                symbolName: statusSymbolName,
+                                tint: statusColor,
+                                isActive: guide.status == .needsAttention
+                            )
                         }
-                        .font(.caption)
+
+                        Text(L10n.permissionExplanation(guide, language: language))
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    if let settingsURL = guide.settingsURL {
+                        Button {
+                            openURL(settingsURL)
+                        } label: {
+                            Label(L10n.text(.openSettings, language: language), systemImage: "gearshape")
+                        }
+                    }
+                }
+
+                if displayStyle == .detailed {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(Array(L10n.permissionInstructions(guide, language: language).enumerated()), id: \.offset) { index, instruction in
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text("\(index + 1).")
+                                    .foregroundStyle(.secondary)
+                                    .monospacedDigit()
+                                Text(instruction)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .font(.caption)
+                        }
                     }
                 }
             }
         }
-        .padding(14)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var statusColor: Color {
-        switch guide.status {
-        case .granted: .green
-        case .needsAttention: .orange
-        case .unavailable: .secondary
-        }
+        CleanMacTheme.permissionColor(guide.status)
     }
 
     private var statusSymbolName: String {

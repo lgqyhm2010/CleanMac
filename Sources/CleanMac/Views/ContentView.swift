@@ -4,6 +4,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var store: CleaningStore
     @State private var selection: SidebarSection? = .scan
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
     @AppStorage("aiExecutable") private var aiExecutable = "/usr/bin/env"
     @AppStorage("aiArguments") private var aiArguments = "codex exec"
@@ -40,8 +41,12 @@ struct ContentView: View {
                     )
                 }
             }
+            .id(selection ?? .scan)
+            .transition(.cleanMacPage)
+            .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: selection)
             .navigationTitle((selection ?? .scan).title(language: resolvedLanguage))
         }
+        .tint(CleanMacTheme.accent)
         .toolbar {
             ToolbarItemGroup {
                 Button {

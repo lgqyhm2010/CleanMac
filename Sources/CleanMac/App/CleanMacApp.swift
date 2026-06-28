@@ -95,7 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1_080, height: 720),
+            contentRect: NSRect(x: 0, y: 0, width: 1_120, height: 760),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
@@ -108,7 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         window.minSize = NSSize(width: 980, height: 640)
         window.contentMinSize = NSSize(width: 980, height: 640)
-        window.setContentSize(NSSize(width: 1_080, height: 720))
+        window.setContentSize(NSSize(width: 1_120, height: 760))
         window.center()
         window.makeKeyAndOrderFront(nil)
         mainWindow = window
@@ -195,7 +195,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 620, height: 400),
+            contentRect: NSRect(x: 0, y: 0, width: 640, height: 440),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false

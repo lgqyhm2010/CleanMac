@@ -20,12 +20,15 @@ struct SidebarView: View {
     }
 
     private func sidebarRow(_ section: SidebarSection, detail: String) -> some View {
-        HStack(spacing: 10) {
+        let tint = CleanMacTheme.sectionTint(section)
+        return HStack(spacing: 10) {
             Image(systemName: section.symbolName)
-                .foregroundStyle(.secondary)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(tint)
                 .frame(width: 16)
             VStack(alignment: .leading, spacing: 2) {
                 Text(section.title(language: language))
+                    .fontWeight(selection == section ? .semibold : .regular)
                     .lineLimit(1)
                 Text(detail)
                     .font(.caption)

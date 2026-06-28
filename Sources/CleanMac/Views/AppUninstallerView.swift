@@ -5,21 +5,55 @@ struct AppUninstallerView: View {
     @ObservedObject var store: CleaningStore
     var language: ResolvedLanguage
     var openResults: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                HStack(spacing: 12) {
-                    UninstallerMetricTile(title: L10n.text(.applications, language: language), value: "\(store.uninstallPlans.count)", symbolName: "app")
-                    UninstallerMetricTile(title: L10n.text(.potential, language: language), value: Formatters.bytes(store.uninstallReclaimableBytes), symbolName: "shippingbox")
-                    UninstallerMetricTile(title: L10n.text(.selected, language: language), value: Formatters.bytes(store.selectedSummary.totalBytes), symbolName: "checkmark.circle")
-                }
+        CleanMacPage {
+            CleanMacHeroHeader(
+                title: L10n.text(.appUninstaller, language: language),
+                subtitle: appStatusText,
+                symbolName: "app.badge",
+                tint: CleanMacTheme.mint,
+                isActive: store.isScanningApplications
+            ) {
+                StatusBadge(
+                    text: appStatusText,
+                    symbolName: appStatusSymbol,
+                    tint: appStatusTint,
+                    isActive: store.isScanningApplications
+                )
+            }
 
+            HStack(spacing: 12) {
+                MetricTileView(
+                    title: L10n.text(.applications, language: language),
+                    value: "\(store.uninstallPlans.count)",
+                    symbolName: "app",
+                    tint: CleanMacTheme.mint,
+                    isActive: store.isScanningApplications
+                )
+                MetricTileView(
+                    title: L10n.text(.potential, language: language),
+                    value: Formatters.bytes(store.uninstallReclaimableBytes),
+                    symbolName: "shippingbox",
+                    tint: CleanMacTheme.accent
+                )
+                MetricTileView(
+                    title: L10n.text(.candidates, language: language),
+                    value: "\(uninstallCandidateCount)",
+                    symbolName: "list.bullet.rectangle",
+                    tint: CleanMacTheme.amber
+                )
+            }
+
+            CleanMacPanel {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text(L10n.text(.applications, language: language))
-                            .font(.headline)
-                        Spacer()
+                        CleanMacSectionHeader(
+                            title: L10n.text(.applications, language: language),
+                            symbolName: "folder",
+                            tint: CleanMacTheme.mint
+                        )
                         Button {
                             store.addApplicationFolderWithOpenPanel()
                         } label: {
@@ -27,45 +61,23 @@ struct AppUninstallerView: View {
                         }
                     }
 
-                    VStack(spacing: 0) {
-                        ForEach(store.appRoots, id: \.self) { root in
-                            HStack(spacing: 10) {
-                                Image(systemName: "folder")
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 18)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(root.lastPathComponent.isEmpty ? root.path : root.lastPathComponent)
-                                        .lineLimit(1)
-                                    Text(root.path)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                }
-                                Spacer()
-                                Button {
-                                    store.removeApplicationRoot(root)
-                                } label: {
-                                    Image(systemName: "minus.circle")
-                                }
-                                .buttonStyle(.borderless)
-                                .help(L10n.text(.remove, language: language))
-                            }
-                            .padding(.vertical, 9)
-                            .padding(.horizontal, 10)
-
-                            if root != store.appRoots.last {
-                                Divider()
-                            }
-                        }
-                    }
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    CleanMacURLList(
+                        urls: store.appRoots,
+                        tint: CleanMacTheme.mint,
+                        remove: store.removeApplicationRoot,
+                        language: language
+                    )
                 }
+            }
 
+            CleanMacPanel {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
-                        Text(L10n.text(.appUninstaller, language: language))
-                            .font(.headline)
-                        Spacer()
+                        CleanMacSectionHeader(
+                            title: L10n.text(.appUninstaller, language: language),
+                            symbolName: "app.badge",
+                            tint: CleanMacTheme.mint
+                        )
                         Button {
                             store.scanApplications()
                         } label: {
@@ -79,14 +91,19 @@ struct AppUninstallerView: View {
                     }
 
                     if store.isScanningApplications {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else if store.uninstallPlans.isEmpty {
-                        ContentUnavailableView(
-                            L10n.text(.noApplicationsFound, language: language),
-                            systemImage: "app"
+                        CleanMacProgressState(
+                            title: L10n.text(.scanning, language: language),
+                            symbolName: "app.badge",
+                            tint: CleanMacTheme.mint
                         )
-                        .frame(maxWidth: .infinity, minHeight: 180)
+                        .frame(minHeight: 180)
+                    } else if store.uninstallPlans.isEmpty {
+                        CleanMacEmptyState(
+                            title: L10n.text(.noApplicationsFound, language: language),
+                            symbolName: "app",
+                            tint: CleanMacTheme.mint
+                        )
+                        .frame(minHeight: 180)
                     } else {
                         VStack(spacing: 0) {
                             ForEach(store.uninstallPlans) { plan in
@@ -98,21 +115,46 @@ struct AppUninstallerView: View {
                                         openResults()
                                     }
                                 )
+                                .transition(.cleanMacInsert)
 
                                 if plan.id != store.uninstallPlans.last?.id {
                                     Divider()
                                 }
                             }
                         }
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
                 }
-                .padding(16)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.isScanningApplications)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private var appStatusText: String {
+        if store.isScanningApplications {
+            return L10n.text(.scanning, language: language)
+        }
+
+        guard !store.uninstallPlans.isEmpty else {
+            return L10n.status(.ready, language: language)
+        }
+
+        return L10n.uninstallPlanCount(store.uninstallPlans.count, language: language)
+    }
+
+    private var appStatusSymbol: String {
+        if store.isScanningApplications {
+            return "app.badge"
+        }
+
+        return store.uninstallPlans.isEmpty ? "checkmark.circle" : "list.bullet.rectangle"
+    }
+
+    private var appStatusTint: Color {
+        store.isScanningApplications ? CleanMacTheme.accent : CleanMacTheme.mint
+    }
+
+    private var uninstallCandidateCount: Int {
+        store.uninstallPlans.reduce(0) { $0 + $1.allCandidates.count }
     }
 }
 
@@ -123,9 +165,9 @@ private struct UninstallPlanRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "app")
-                .foregroundStyle(.secondary)
-                .frame(width: 24)
+            CleanMacPulseIcon(symbolName: "app", tint: CleanMacTheme.mint, isActive: false)
+                .font(.title3)
+                .frame(width: 36, height: 36)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(plan.appName)
@@ -135,7 +177,7 @@ private struct UninstallPlanRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                Text("\(plan.supportCandidates.count) support items | \(Formatters.bytes(plan.movableReclaimableBytes))")
+                Text("\(L10n.candidateCount(plan.supportCandidates.count, language: language)) | \(Formatters.bytes(plan.movableReclaimableBytes))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -151,33 +193,5 @@ private struct UninstallPlanRow: View {
             .disabled(plan.movableCandidates.isEmpty)
         }
         .padding(12)
-    }
-}
-
-private struct UninstallerMetricTile: View {
-    var title: String
-    var value: String
-    var symbolName: String
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: symbolName)
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .frame(width: 26)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.title3.weight(.semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .frame(minWidth: 150, maxWidth: .infinity, minHeight: 76)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 }
