@@ -8,12 +8,13 @@ struct AppUninstallerView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        CleanMacPage {
+        CleanMacPage(accent: CleanMacTheme.pink) {
             CleanMacHeroHeader(
                 title: L10n.text(.appUninstaller, language: language),
                 subtitle: appStatusText,
                 symbolName: "app.badge",
-                tint: CleanMacTheme.mint,
+                asset: .cleanupTrash,
+                tint: CleanMacTheme.pink,
                 isActive: store.isScanningApplications
             ) {
                 StatusBadge(
@@ -29,30 +30,33 @@ struct AppUninstallerView: View {
                     title: L10n.text(.applications, language: language),
                     value: "\(store.uninstallPlans.count)",
                     symbolName: "app",
-                    tint: CleanMacTheme.mint,
+                    asset: .cleanupTrash,
+                    tint: CleanMacTheme.pink,
                     isActive: store.isScanningApplications
                 )
                 MetricTileView(
                     title: L10n.text(.potential, language: language),
                     value: Formatters.bytes(store.uninstallReclaimableBytes),
                     symbolName: "shippingbox",
+                    asset: .diskOverview,
                     tint: CleanMacTheme.accent
                 )
                 MetricTileView(
                     title: L10n.text(.candidates, language: language),
                     value: "\(uninstallCandidateCount)",
                     symbolName: "list.bullet.rectangle",
+                    asset: .duplicates,
                     tint: CleanMacTheme.amber
                 )
             }
 
-            CleanMacPanel {
+            CleanMacPanel(tint: CleanMacTheme.pink) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         CleanMacSectionHeader(
                             title: L10n.text(.applications, language: language),
                             symbolName: "folder",
-                            tint: CleanMacTheme.mint
+                            tint: CleanMacTheme.pink
                         )
                         Button {
                             store.addApplicationFolderWithOpenPanel()
@@ -63,20 +67,20 @@ struct AppUninstallerView: View {
 
                     CleanMacURLList(
                         urls: store.appRoots,
-                        tint: CleanMacTheme.mint,
+                        tint: CleanMacTheme.pink,
                         remove: store.removeApplicationRoot,
                         language: language
                     )
                 }
             }
 
-            CleanMacPanel {
+            CleanMacPanel(tint: CleanMacTheme.pink) {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
                         CleanMacSectionHeader(
                             title: L10n.text(.appUninstaller, language: language),
                             symbolName: "app.badge",
-                            tint: CleanMacTheme.mint
+                            tint: CleanMacTheme.pink
                         )
                         Button {
                             store.scanApplications()
@@ -86,7 +90,7 @@ struct AppUninstallerView: View {
                                 systemImage: "app.badge"
                             )
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.pink, prominent: true))
                         .disabled(store.isScanningApplications || store.appRoots.isEmpty)
                     }
 
@@ -94,14 +98,16 @@ struct AppUninstallerView: View {
                         CleanMacProgressState(
                             title: L10n.text(.scanning, language: language),
                             symbolName: "app.badge",
-                            tint: CleanMacTheme.mint
+                            asset: .cleanupTrash,
+                            tint: CleanMacTheme.pink
                         )
                         .frame(minHeight: 180)
                     } else if store.uninstallPlans.isEmpty {
                         CleanMacEmptyState(
                             title: L10n.text(.noApplicationsFound, language: language),
                             symbolName: "app",
-                            tint: CleanMacTheme.mint
+                            asset: .cleanupTrash,
+                            tint: CleanMacTheme.pink
                         )
                         .frame(minHeight: 180)
                     } else {
@@ -150,7 +156,7 @@ struct AppUninstallerView: View {
     }
 
     private var appStatusTint: Color {
-        store.isScanningApplications ? CleanMacTheme.accent : CleanMacTheme.mint
+        store.isScanningApplications ? CleanMacTheme.accent : CleanMacTheme.pink
     }
 
     private var uninstallCandidateCount: Int {
@@ -165,9 +171,8 @@ private struct UninstallPlanRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            CleanMacPulseIcon(symbolName: "app", tint: CleanMacTheme.mint, isActive: false)
-                .font(.title3)
-                .frame(width: 36, height: 36)
+            CleanMacFeatureImage(asset: .cleanupTrash, tint: CleanMacTheme.pink)
+                .frame(width: 40, height: 40)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(plan.appName)
@@ -175,11 +180,11 @@ private struct UninstallPlanRow: View {
                     .lineLimit(1)
                 Text(plan.bundleIdentifier)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)
                 Text("\(L10n.candidateCount(plan.supportCandidates.count, language: language)) | \(Formatters.bytes(plan.movableReclaimableBytes))")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)
             }
 

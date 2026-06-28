@@ -35,4 +35,13 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         case .aiReview: "sparkles"
         }
     }
+
+    var illustrationAsset: CleanMacIllustrationAsset {
+        switch self {
+        case .scan: .diskOverview
+        case .uninstaller: .cleanupTrash
+        case .results: .duplicates
+        case .aiReview: .aiReview
+        }
+    }
 }

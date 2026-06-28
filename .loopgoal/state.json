@@ -7,13 +7,13 @@
   "phases": [
     {"name": "Extract HTML design and animation requirements", "status": "done"},
     {"name": "Generate image assets that match the HTML design", "status": "done"},
-    {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "todo"},
+    {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "done"},
     {"name": "Verify the app builds and the preserved behavior still compiles", "status": "todo"},
     {"name": "Commit the verified result", "status": "todo"}
   ],
   "current": {
-    "focus": "Generated image assets are present under Sources/CleanMac/Resources, final Images PNGs are 8-bit RGBA with transparent corners, and the package build has verified they are copied into the app resource bundle.",
-    "next_action": "SwiftUI design implementation.",
+    "focus": "SwiftUI visual design and state-driven animation pass is implemented in the allowed view files, and verify_cmd has passed after the edits.",
+    "next_action": "Verification.",
     "blockers": ""
   },
   "decisions": [
@@ -48,8 +48,16 @@
     {
       "decision": "Keep chroma-key source PNGs and ship cleaned RGBA runtime PNGs.",
       "reason": "ImagesSource preserves the generated key-color inputs for provenance, while Images contains the chroma-key-removed assets verified as RGBA with transparent corners for runtime use."
+    },
+    {
+      "decision": "Keep the SwiftUI pass visual-only and preserve the existing store/core calls.",
+      "reason": "This phase maps the HTML design direction onto current Scan, Results, App Uninstaller, AI Review, Permission, and Settings flows without changing local behavior."
+    },
+    {
+      "decision": "Load generated PNG illustrations through Bundle.module with system-symbol fallbacks.",
+      "reason": "Package.swift already processes Sources/CleanMac/Resources, and fallbacks keep the UI usable if a packaged image cannot be loaded."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build",
-  "updated_at": "2026-06-28T15:32:53Z"
+  "updated_at": "2026-06-28T15:45:14Z"
 }

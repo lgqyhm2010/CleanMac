@@ -7,11 +7,12 @@ struct ScanView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        CleanMacPage {
+        CleanMacPage(accent: CleanMacTheme.accent) {
             CleanMacHeroHeader(
                 title: L10n.text(.scan, language: language),
                 subtitle: L10n.status(store.status, language: language),
                 symbolName: "magnifyingglass",
+                asset: .diskOverview,
                 tint: CleanMacTheme.accent,
                 isActive: store.isScanning
             ) {
@@ -26,7 +27,7 @@ struct ScanView: View {
                 displayStyle: .compact
             )
 
-            CleanMacPanel {
+            CleanMacPanel(tint: CleanMacTheme.accent) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         CleanMacSectionHeader(
@@ -50,7 +51,7 @@ struct ScanView: View {
                 }
             }
 
-            CleanMacPanel {
+            CleanMacPanel(tint: CleanMacTheme.accent) {
                 VStack(alignment: .leading, spacing: 14) {
                     CleanMacSectionHeader(
                         title: L10n.text(.scanOptions, language: language),
@@ -63,7 +64,7 @@ struct ScanView: View {
                             Text(L10n.text(.minimumSize, language: language))
                             Slider(value: $store.minimumSizeMegabytes, in: 0...200, step: 1)
                             Text("\(Int(store.minimumSizeMegabytes)) MB")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
                                 .monospacedDigit()
                         }
 
@@ -71,7 +72,7 @@ struct ScanView: View {
                             Text(L10n.text(.largeFile, language: language))
                             Slider(value: $store.largeFileThresholdMegabytes, in: 50...5_000, step: 50)
                             Text("\(Int(store.largeFileThresholdMegabytes)) MB")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
                                 .monospacedDigit()
                         }
 
@@ -91,7 +92,7 @@ struct ScanView: View {
                                 systemImage: "magnifyingglass"
                             )
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.accent, prominent: true))
                         .disabled(store.isScanning || store.roots.isEmpty)
 
                         if store.isScanning {
@@ -103,6 +104,12 @@ struct ScanView: View {
                         Spacer()
 
                         StatusText(store: store, language: language)
+                    }
+
+                    if store.isScanning {
+                        CleanMacProgressBeam(tint: CleanMacTheme.accent)
+                            .frame(height: 10)
+                            .transition(.opacity)
                     }
                 }
                 .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.isScanning)
@@ -121,6 +128,7 @@ private struct SummaryStrip: View {
                 title: L10n.text(.candidates, language: language),
                 value: "\(store.candidates.count)",
                 symbolName: "doc.on.doc",
+                asset: .diskOverview,
                 tint: CleanMacTheme.accent,
                 isActive: store.isScanning
             )
@@ -128,18 +136,21 @@ private struct SummaryStrip: View {
                 title: L10n.text(.potential, language: language),
                 value: Formatters.bytes(store.lastReport?.totalBytes ?? 0),
                 symbolName: "internaldrive",
+                asset: .cleanupTrash,
                 tint: CleanMacTheme.mint
             )
             MetricTileView(
                 title: L10n.text(.duplicates, language: language),
                 value: Formatters.bytes(store.duplicateReclaimableBytes),
                 symbolName: "doc.on.doc.fill",
-                tint: Color.indigo
+                asset: .duplicates,
+                tint: CleanMacTheme.amber
             )
             MetricTileView(
                 title: L10n.text(.selected, language: language),
                 value: Formatters.bytes(store.selectedSummary.totalBytes),
                 symbolName: "checkmark.circle",
+                asset: .permissionShield,
                 tint: CleanMacTheme.amber
             )
         }
@@ -165,6 +176,6 @@ private struct StatusText: View {
                     .lineLimit(2)
             }
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(CleanMacTheme.secondaryText)
     }
 }

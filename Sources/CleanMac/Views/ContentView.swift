@@ -43,10 +43,13 @@ struct ContentView: View {
             }
             .id(selection ?? .scan)
             .transition(.cleanMacPage)
-            .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: selection)
+            .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.page), value: selection)
             .navigationTitle((selection ?? .scan).title(language: resolvedLanguage))
         }
         .tint(CleanMacTheme.accent)
+        .buttonStyle(CleanMacRaisedButtonStyle())
+        .background(CleanMacTheme.desk)
+        .frame(minWidth: 1000, minHeight: 620)
         .toolbar {
             ToolbarItemGroup {
                 Button {
