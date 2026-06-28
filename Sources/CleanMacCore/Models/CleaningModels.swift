@@ -25,6 +25,10 @@ public enum CandidateCategory: String, CaseIterable, Codable, Hashable, Identifi
         }
     }
 
+    public func displayName(language: ResolvedLanguage) -> String {
+        L10n.categoryName(self, language: language)
+    }
+
     public var symbolName: String {
         switch self {
         case .cache: "externaldrive.badge.icloud"
@@ -52,6 +56,10 @@ public enum DeletionRisk: String, CaseIterable, Codable, Hashable, Identifiable,
         case .reviewRecommended: "Review"
         case .beCareful: "Be Careful"
         }
+    }
+
+    public func displayName(language: ResolvedLanguage) -> String {
+        L10n.riskName(self, language: language)
     }
 }
 

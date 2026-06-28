@@ -1,3 +1,4 @@
+import CleanMacCore
 import Foundation
 
 enum Formatters {
@@ -10,6 +11,11 @@ enum Formatters {
 
     static func date(_ value: Date?) -> String {
         guard let value else { return "Unknown" }
+        return value.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    static func date(_ value: Date?, language: ResolvedLanguage) -> String {
+        guard let value else { return L10n.text(.unknown, language: language) }
         return value.formatted(date: .abbreviated, time: .shortened)
     }
 }

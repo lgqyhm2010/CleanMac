@@ -10,16 +10,20 @@ final class CleaningStore: ObservableObject {
     @Published var selectedCandidateID: CleaningCandidate.ID?
     @Published var lastReport: ScanReport?
     @Published var cleanupResult: CleanupResult?
-    @Published var aiQuestion = "请判断这些文件是否适合移到废纸篓，并列出需要我手动确认的项目。"
+    @Published var aiQuestion: String
     @Published var aiOutput = ""
-    @Published var statusMessage = "Ready"
-    @Published var errorMessage: String?
+    @Published var status: CleaningStatus = .ready
+    @Published var errorMessage: CleaningErrorMessage?
     @Published var isScanning = false
     @Published var isCleaning = false
     @Published var isReviewingWithAI = false
     @Published var includeHiddenFiles = false
     @Published var minimumSizeMegabytes = 1.0
     @Published var largeFileThresholdMegabytes = 500.0
+
+    init(language: ResolvedLanguage = AppLanguage.system.resolved()) {
+        aiQuestion = L10n.defaultAIQuestion(language: language)
+    }
 
     var selectedCandidates: [CleaningCandidate] {
         selection.selectedCandidates(from: candidates)
@@ -34,13 +38,18 @@ final class CleaningStore: ObservableObject {
         return candidates.first { $0.id == selectedCandidateID }
     }
 
+    func updateDefaultAIQuestionIfNeeded(language: ResolvedLanguage) {
+        guard L10n.isDefaultAIQuestion(aiQuestion) else { return }
+        aiQuestion = L10n.defaultAIQuestion(language: language)
+    }
+
     func addFolderWithOpenPanel() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.canCreateDirectories = false
-        panel.prompt = "Add"
+        panel.prompt = L10n.text(.add, language: AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey)).resolved())
 
         guard panel.runModal() == .OK else { return }
         let additions = panel.urls.filter { !roots.contains($0) }
@@ -53,7 +62,7 @@ final class CleaningStore: ObservableObject {
 
     func scan() {
         guard !roots.isEmpty else {
-            errorMessage = "Add at least one folder to scan."
+            errorMessage = .addFolderToScan
             return
         }
 
@@ -67,7 +76,7 @@ final class CleaningStore: ObservableObject {
         isScanning = true
         errorMessage = nil
         cleanupResult = nil
-        statusMessage = "Scanning..."
+        status = .scanning
 
         Task {
             do {
@@ -79,10 +88,10 @@ final class CleaningStore: ObservableObject {
                 candidates = report.candidates
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
-                statusMessage = "\(report.candidates.count) candidates found"
+                status = .candidatesFound(report.candidates.count)
             } catch {
-                errorMessage = error.localizedDescription
-                statusMessage = "Scan failed"
+                errorMessage = .system(error.localizedDescription)
+                status = .scanFailed
             }
             isScanning = false
         }
@@ -108,7 +117,7 @@ final class CleaningStore: ObservableObject {
 
         isCleaning = true
         errorMessage = nil
-        statusMessage = "Moving to Trash..."
+        status = .movingToTrash
 
         Task {
             do {
@@ -123,13 +132,13 @@ final class CleaningStore: ObservableObject {
                 candidates.removeAll { cleanedIDs.contains($0.id) }
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
-                statusMessage = "\(result.cleanedCount) items moved to Trash"
+                status = .movedToTrash(result.cleanedCount)
                 if !result.failures.isEmpty {
-                    errorMessage = "\(result.failures.count) items could not be moved."
+                    errorMessage = .itemsCouldNotBeMoved(result.failures.count)
                 }
             } catch {
-                errorMessage = error.localizedDescription
-                statusMessage = "Cleanup failed"
+                errorMessage = .system(error.localizedDescription)
+                status = .cleanupFailed
             }
             isCleaning = false
         }
@@ -138,18 +147,18 @@ final class CleaningStore: ObservableObject {
     func askAI(executable: String, argumentsText: String) {
         let targets = selectedCandidates
         guard !targets.isEmpty else {
-            errorMessage = "Select at least one item for AI review."
+            errorMessage = .selectItemForAIReview
             return
         }
         guard !executable.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Set an AI CLI executable in Settings."
+            errorMessage = .setAIExecutable
             return
         }
 
         isReviewingWithAI = true
         errorMessage = nil
         aiOutput = ""
-        statusMessage = "Asking AI..."
+        status = .askingAI
 
         let command = AICommand(
             executable: executable,
@@ -162,10 +171,10 @@ final class CleaningStore: ObservableObject {
                 let review = try await AIReviewService(command: command)
                     .review(candidates: targets, userQuestion: question)
                 aiOutput = review.output
-                statusMessage = "AI review finished"
+                status = .aiReviewFinished
             } catch {
-                errorMessage = error.localizedDescription
-                statusMessage = "AI review failed"
+                errorMessage = .system(error.localizedDescription)
+                status = .aiReviewFailed
             }
             isReviewingWithAI = false
         }

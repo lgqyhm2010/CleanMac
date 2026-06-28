@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ResultsView: View {
     @ObservedObject var store: CleaningStore
+    var language: ResolvedLanguage
     @State private var confirmTrash = false
 
     var body: some View {
@@ -14,7 +15,7 @@ struct ResultsView: View {
 
             if store.candidates.isEmpty {
                 ContentUnavailableView(
-                    "No Candidates",
+                    L10n.text(.noCandidates, language: language),
                     systemImage: store.isScanning ? "magnifyingglass" : "checkmark.seal"
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -29,7 +30,7 @@ struct ResultsView: View {
                     }
                     .width(34)
 
-                    TableColumn("Name") { candidate in
+                    TableColumn(L10n.text(.name, language: language)) { candidate in
                         HStack(spacing: 8) {
                             Image(systemName: candidate.category.symbolName)
                                 .foregroundStyle(.secondary)
@@ -45,18 +46,18 @@ struct ResultsView: View {
                         }
                     }
 
-                    TableColumn("Category") { candidate in
-                        Text(candidate.category.displayName)
+                    TableColumn(L10n.text(.category, language: language)) { candidate in
+                        Text(candidate.category.displayName(language: language))
                     }
                     .width(min: 110, ideal: 130)
 
-                    TableColumn("Risk") { candidate in
-                        Text(candidate.risk.displayName)
+                    TableColumn(L10n.text(.risk, language: language)) { candidate in
+                        Text(candidate.risk.displayName(language: language))
                             .foregroundStyle(riskColor(candidate.risk))
                     }
                     .width(min: 110, ideal: 130)
 
-                    TableColumn("Size") { candidate in
+                    TableColumn(L10n.text(.size, language: language)) { candidate in
                         Text(Formatters.bytes(candidate.sizeBytes))
                             .monospacedDigit()
                     }
@@ -66,12 +67,12 @@ struct ResultsView: View {
 
             Divider()
 
-            CandidateDetailView(candidate: store.selectedCandidate)
+            CandidateDetailView(candidate: store.selectedCandidate, language: language)
                 .padding(16)
         }
-        .alert("Move selected items to Trash?", isPresented: $confirmTrash) {
-            Button("Cancel", role: .cancel) {}
-            Button("Move to Trash", role: .destructive) {
+        .alert(L10n.text(.moveSelectedItemsToTrash, language: language), isPresented: $confirmTrash) {
+            Button(L10n.text(.cancel, language: language), role: .cancel) {}
+            Button(L10n.text(.moveToTrash, language: language), role: .destructive) {
                 store.cleanSelected()
             }
         } message: {
@@ -82,9 +83,9 @@ struct ResultsView: View {
     private var resultsHeader: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(store.candidates.count) Candidates")
+                Text(L10n.candidatesHeadline(store.candidates.count, language: language))
                     .font(.headline)
-                Text("\(Formatters.bytes(store.selectedSummary.totalBytes)) selected")
+                Text("\(Formatters.bytes(store.selectedSummary.totalBytes)) \(L10n.text(.selected, language: language).lowercased())")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -94,21 +95,24 @@ struct ResultsView: View {
             Button {
                 store.selectAll()
             } label: {
-                Label("Select All", systemImage: "checklist.checked")
+                Label(L10n.text(.selectAll, language: language), systemImage: "checklist.checked")
             }
             .disabled(store.candidates.isEmpty)
 
             Button {
                 store.clearSelection()
             } label: {
-                Label("Clear", systemImage: "xmark.circle")
+                Label(L10n.text(.clear, language: language), systemImage: "xmark.circle")
             }
             .disabled(store.selectedSummary.selectedCount == 0)
 
             Button(role: .destructive) {
                 confirmTrash = true
             } label: {
-                Label(store.isCleaning ? "Moving" : "Move to Trash", systemImage: "trash")
+                Label(
+                    store.isCleaning ? L10n.text(.moving, language: language) : L10n.text(.moveToTrash, language: language),
+                    systemImage: "trash"
+                )
             }
             .disabled(store.selectedSummary.selectedCount == 0 || store.isCleaning)
         }
@@ -125,13 +129,14 @@ struct ResultsView: View {
 
 private struct CandidateDetailView: View {
     var candidate: CleaningCandidate?
+    var language: ResolvedLanguage
 
     var body: some View {
         Group {
             if let candidate {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Label(candidate.category.displayName, systemImage: candidate.category.symbolName)
+                        Label(candidate.category.displayName(language: language), systemImage: candidate.category.symbolName)
                             .font(.headline)
                         Spacer()
                         Text(Formatters.bytes(candidate.sizeBytes))
@@ -145,20 +150,20 @@ private struct CandidateDetailView: View {
                         .lineLimit(2)
 
                     HStack(spacing: 18) {
-                        Label(candidate.risk.displayName, systemImage: "exclamationmark.triangle")
-                        Label(Formatters.date(candidate.modifiedAt), systemImage: "calendar")
+                        Label(candidate.risk.displayName(language: language), systemImage: "exclamationmark.triangle")
+                        Label(Formatters.date(candidate.modifiedAt, language: language), systemImage: "calendar")
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                     if !candidate.reasons.isEmpty {
-                        Text(candidate.reasons.joined(separator: " · "))
+                        Text(candidate.reasons.map { L10n.scanReason($0, language: language) }.joined(separator: " · "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
             } else {
-                Text("No item selected")
+                Text(L10n.text(.noItemSelected, language: language))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

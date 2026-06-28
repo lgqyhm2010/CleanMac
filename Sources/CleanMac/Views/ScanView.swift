@@ -1,22 +1,24 @@
+import CleanMacCore
 import SwiftUI
 
 struct ScanView: View {
     @ObservedObject var store: CleaningStore
+    var language: ResolvedLanguage
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                SummaryStrip(store: store)
+                SummaryStrip(store: store, language: language)
 
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text("Folders")
+                        Text(L10n.text(.folders, language: language))
                             .font(.headline)
                         Spacer()
                         Button {
                             store.addFolderWithOpenPanel()
                         } label: {
-                            Label("Add", systemImage: "plus")
+                            Label(L10n.text(.add, language: language), systemImage: "plus")
                         }
                     }
 
@@ -41,7 +43,7 @@ struct ScanView: View {
                                     Image(systemName: "minus.circle")
                                 }
                                 .buttonStyle(.borderless)
-                                .help("Remove")
+                                .help(L10n.text(.remove, language: language))
                             }
                             .padding(.vertical, 9)
                             .padding(.horizontal, 10)
@@ -55,12 +57,12 @@ struct ScanView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Scan Options")
+                    Text(L10n.text(.scanOptions, language: language))
                         .font(.headline)
 
                     Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
                         GridRow {
-                            Text("Minimum Size")
+                            Text(L10n.text(.minimumSize, language: language))
                             Slider(value: $store.minimumSizeMegabytes, in: 0...200, step: 1)
                             Text("\(Int(store.minimumSizeMegabytes)) MB")
                                 .foregroundStyle(.secondary)
@@ -68,7 +70,7 @@ struct ScanView: View {
                         }
 
                         GridRow {
-                            Text("Large File")
+                            Text(L10n.text(.largeFile, language: language))
                             Slider(value: $store.largeFileThresholdMegabytes, in: 50...5_000, step: 50)
                             Text("\(Int(store.largeFileThresholdMegabytes)) MB")
                                 .foregroundStyle(.secondary)
@@ -76,8 +78,8 @@ struct ScanView: View {
                         }
 
                         GridRow {
-                            Text("Hidden Files")
-                            Toggle("Include", isOn: $store.includeHiddenFiles)
+                            Text(L10n.text(.hiddenFiles, language: language))
+                            Toggle(L10n.text(.include, language: language), isOn: $store.includeHiddenFiles)
                             Text("")
                         }
                     }
@@ -86,7 +88,10 @@ struct ScanView: View {
                         Button {
                             store.scan()
                         } label: {
-                            Label(store.isScanning ? "Scanning" : "Scan", systemImage: "magnifyingglass")
+                            Label(
+                                store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.scan, language: language),
+                                systemImage: "magnifyingglass"
+                            )
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(store.isScanning || store.roots.isEmpty)
@@ -98,7 +103,7 @@ struct ScanView: View {
 
                         Spacer()
 
-                        StatusText(store: store)
+                        StatusText(store: store, language: language)
                     }
                 }
                 .padding(16)
@@ -112,12 +117,13 @@ struct ScanView: View {
 
 private struct SummaryStrip: View {
     @ObservedObject var store: CleaningStore
+    var language: ResolvedLanguage
 
     var body: some View {
         HStack(spacing: 12) {
-            MetricTile(title: "Candidates", value: "\(store.candidates.count)", symbolName: "doc.on.doc")
-            MetricTile(title: "Potential", value: Formatters.bytes(store.lastReport?.totalBytes ?? 0), symbolName: "internaldrive")
-            MetricTile(title: "Selected", value: Formatters.bytes(store.selectedSummary.totalBytes), symbolName: "checkmark.circle")
+            MetricTile(title: L10n.text(.candidates, language: language), value: "\(store.candidates.count)", symbolName: "doc.on.doc")
+            MetricTile(title: L10n.text(.potential, language: language), value: Formatters.bytes(store.lastReport?.totalBytes ?? 0), symbolName: "internaldrive")
+            MetricTile(title: L10n.text(.selected, language: language), value: Formatters.bytes(store.selectedSummary.totalBytes), symbolName: "checkmark.circle")
         }
     }
 }
@@ -152,13 +158,14 @@ private struct MetricTile: View {
 
 private struct StatusText: View {
     @ObservedObject var store: CleaningStore
+    var language: ResolvedLanguage
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 2) {
-            Text(store.statusMessage)
+            Text(L10n.status(store.status, language: language))
                 .font(.callout)
             if let error = store.errorMessage {
-                Text(error)
+                Text(L10n.error(error, language: language))
                     .font(.caption)
                     .foregroundStyle(.red)
                     .lineLimit(2)

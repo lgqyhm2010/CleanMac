@@ -1,15 +1,17 @@
+import CleanMacCore
 import SwiftUI
 
 struct SidebarView: View {
     @Binding var selection: SidebarSection?
     @ObservedObject var store: CleaningStore
+    var language: ResolvedLanguage
 
     var body: some View {
         List(selection: $selection) {
-            Section("Cleaner") {
-                sidebarRow(.scan, detail: "\(store.roots.count) folders")
-                sidebarRow(.results, detail: "\(store.candidates.count) candidates")
-                sidebarRow(.aiReview, detail: "\(store.selectedSummary.selectedCount) selected")
+            Section(L10n.text(.cleaner, language: language)) {
+                sidebarRow(.scan, detail: L10n.folderCount(store.roots.count, language: language))
+                sidebarRow(.results, detail: L10n.candidateCount(store.candidates.count, language: language))
+                sidebarRow(.aiReview, detail: L10n.selectedCount(store.selectedSummary.selectedCount, language: language))
             }
         }
         .listStyle(.sidebar)
@@ -22,7 +24,7 @@ struct SidebarView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 16)
             VStack(alignment: .leading, spacing: 2) {
-                Text(section.title)
+                Text(section.title(language: language))
                     .lineLimit(1)
                 Text(detail)
                     .font(.caption)

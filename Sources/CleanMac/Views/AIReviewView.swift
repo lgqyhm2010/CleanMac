@@ -1,19 +1,21 @@
+import CleanMacCore
 import SwiftUI
 
 struct AIReviewView: View {
     @ObservedObject var store: CleaningStore
     @Binding var aiExecutable: String
     @Binding var aiArguments: String
+    var language: ResolvedLanguage
 
     var body: some View {
         VStack(spacing: 0) {
             Form {
-                Section("Command") {
-                    TextField("Executable", text: $aiExecutable)
-                    TextField("Arguments", text: $aiArguments)
+                Section(L10n.text(.command, language: language)) {
+                    TextField(L10n.text(.executable, language: language), text: $aiExecutable)
+                    TextField(L10n.text(.arguments, language: language), text: $aiArguments)
                 }
 
-                Section("Question") {
+                Section(L10n.text(.question, language: language)) {
                     TextEditor(text: $store.aiQuestion)
                         .font(.body)
                         .frame(minHeight: 80)
@@ -27,7 +29,7 @@ struct AIReviewView: View {
 
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("\(store.selectedSummary.selectedCount) Selected")
+                    Text(L10n.selectedHeadline(store.selectedSummary.selectedCount, language: language))
                         .font(.headline)
                     Text(Formatters.bytes(store.selectedSummary.totalBytes))
                         .font(.caption)
@@ -39,7 +41,10 @@ struct AIReviewView: View {
                 Button {
                     store.askAI(executable: aiExecutable, argumentsText: aiArguments)
                 } label: {
-                    Label(store.isReviewingWithAI ? "Reviewing" : "Ask AI", systemImage: "sparkles")
+                    Label(
+                        store.isReviewingWithAI ? L10n.text(.reviewing, language: language) : L10n.text(.askAI, language: language),
+                        systemImage: "sparkles"
+                    )
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(store.selectedSummary.selectedCount == 0 || store.isReviewingWithAI)
@@ -51,13 +56,13 @@ struct AIReviewView: View {
             if store.isReviewingWithAI {
                 VStack(spacing: 10) {
                     ProgressView()
-                    Text("Reviewing")
+                    Text(L10n.text(.reviewing, language: language))
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if store.aiOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 ContentUnavailableView(
-                    "No Review",
+                    L10n.text(.noReview, language: language),
                     systemImage: "sparkles"
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

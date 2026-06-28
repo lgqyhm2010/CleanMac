@@ -1,3 +1,4 @@
+import CleanMacCore
 import SwiftUI
 
 struct CleanerActions {
@@ -20,10 +21,11 @@ extension FocusedValues {
 
 struct CleanerCommands: Commands {
     @FocusedValue(\.cleanerActions) private var actions
+    @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
 
     var body: some Commands {
-        CommandMenu("Cleaner") {
-            Button("Scan") {
+        CommandMenu(L10n.text(.cleaner, language: resolvedLanguage)) {
+            Button(L10n.text(.scan, language: resolvedLanguage)) {
                 actions?.scan()
             }
             .keyboardShortcut("r")
@@ -31,13 +33,13 @@ struct CleanerCommands: Commands {
 
             Divider()
 
-            Button("Select All Candidates") {
+            Button(L10n.text(.selectAllCandidates, language: resolvedLanguage)) {
                 actions?.selectAll()
             }
             .keyboardShortcut("a", modifiers: [.command, .shift])
             .disabled(actions == nil)
 
-            Button("Clear Selection") {
+            Button(L10n.text(.clearSelection, language: resolvedLanguage)) {
                 actions?.clearSelection()
             }
             .keyboardShortcut(.delete, modifiers: [.command, .shift])
@@ -45,11 +47,15 @@ struct CleanerCommands: Commands {
 
             Divider()
 
-            Button("Ask AI") {
+            Button(L10n.text(.askAI, language: resolvedLanguage)) {
                 actions?.askAI()
             }
             .keyboardShortcut("i", modifiers: [.command, .shift])
             .disabled(actions == nil)
         }
+    }
+
+    private var resolvedLanguage: ResolvedLanguage {
+        AppLanguage(storedRawValue: appLanguageRaw).resolved()
     }
 }

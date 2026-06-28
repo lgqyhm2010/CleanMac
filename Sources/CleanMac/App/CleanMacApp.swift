@@ -1,4 +1,5 @@
 import AppKit
+import CleanMacCore
 import SwiftUI
 
 @main
@@ -25,6 +26,8 @@ enum CleanMacApp {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var mainWindow: NSWindow?
     private var settingsWindow: NSWindow?
+    private var settingsMenuItem: NSMenuItem?
+    private var quitMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         showMainWindow()
@@ -45,24 +48,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let mainMenu = NSMenu()
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(
-            NSMenuItem(
-                title: "Settings...",
-                action: #selector(showSettingsWindow),
-                keyEquivalent: ","
-            )
+        let settingsItem = NSMenuItem(
+            title: "",
+            action: #selector(showSettingsWindow),
+            keyEquivalent: ","
         )
+        let quitItem = NSMenuItem(
+            title: "",
+            action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q"
+        )
+
+        settingsMenuItem = settingsItem
+        quitMenuItem = quitItem
+
+        appMenu.addItem(settingsItem)
         appMenu.addItem(.separator())
-        appMenu.addItem(
-            NSMenuItem(
-                title: "Quit CleanMac",
-                action: #selector(NSApplication.terminate(_:)),
-                keyEquivalent: "q"
-            )
-        )
+        appMenu.addItem(quitItem)
         appMenuItem.submenu = appMenu
         mainMenu.addItem(appMenuItem)
         NSApp.mainMenu = mainMenu
+        updateLocalizedChrome()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(userDefaultsDidChange),
+            name: UserDefaults.didChangeNotification,
+            object: nil,
+        )
     }
 
     func showMainWindow() {
@@ -102,17 +114,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 220),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 260),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
-        window.title = "Settings"
+        window.title = L10n.text(.settings, language: resolvedLanguage)
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(rootView: SettingsView())
         window.center()
         window.makeKeyAndOrderFront(nil)
         settingsWindow = window
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private var resolvedLanguage: ResolvedLanguage {
+        AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey)).resolved()
+    }
+
+    private func updateLocalizedChrome() {
+        let language = resolvedLanguage
+        settingsMenuItem?.title = "\(L10n.text(.settings, language: language))..."
+        quitMenuItem?.title = L10n.text(.quitCleanMac, language: language)
+        settingsWindow?.title = L10n.text(.settings, language: language)
+    }
+
+    @objc
+    private func userDefaultsDidChange(_ notification: Notification) {
+        updateLocalizedChrome()
     }
 }
