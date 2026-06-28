@@ -19,8 +19,11 @@
 "executable" = "Executable";
 "folders" = "Folders";
 "followSystem" = "Follow System";
+"french" = "French";
 "hiddenFiles" = "Hidden Files";
+"hindi" = "Hindi";
 "include" = "Include";
+"japanese" = "Japanese";
 "largeFile" = "Large File";
 "minimumSize" = "Minimum Size";
 "moveToTrash" = "Move to Trash";
@@ -52,9 +55,15 @@
 "selected" = "Selected";
 "settings" = "Settings";
 "size" = "Size";
+"spanish" = "Spanish";
 "status" = "Status";
 "openSettings" = "Open Settings";
+"arabic" = "Arabic";
+"bengali" = "Bengali";
 "chinese" = "Chinese";
+"chineseTraditional" = "Traditional Chinese";
+"portuguese" = "Portuguese";
+"russian" = "Russian";
 "unknown" = "Unknown";
 
 "category.cache" = "Caches";

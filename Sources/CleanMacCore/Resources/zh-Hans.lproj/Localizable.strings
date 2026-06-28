@@ -19,8 +19,11 @@
 "executable" = "可执行文件";
 "folders" = "文件夹";
 "followSystem" = "跟随系统";
+"french" = "法语";
 "hiddenFiles" = "隐藏文件";
+"hindi" = "印地语";
 "include" = "包含";
+"japanese" = "日语";
 "largeFile" = "大文件";
 "minimumSize" = "最小大小";
 "moveToTrash" = "移到废纸篓";
@@ -52,9 +55,15 @@
 "selected" = "已选择";
 "settings" = "设置";
 "size" = "大小";
+"spanish" = "西班牙语";
 "status" = "状态";
 "openSettings" = "打开设置";
+"arabic" = "阿拉伯语";
+"bengali" = "孟加拉语";
 "chinese" = "中文";
+"chineseTraditional" = "繁体中文";
+"portuguese" = "葡萄牙语";
+"russian" = "俄语";
 "unknown" = "未知";
 
 "category.cache" = "缓存";
@@ -97,8 +106,8 @@
 "scanReason.developerCacheOrXcodeDerivedData" = "开发缓存或 Xcode 派生数据";
 "scanReason.largeFileAboveConfiguredThreshold" = "超过设定阈值的大文件";
 "scanReason.noCleanupSpecificPatternMatched" = "未匹配到明确的清理模式";
-"scanReason.applicationBundle" = "应用程序包";
-"scanReason.appUninstallSupportItem" = "应用卸载支持文件";
+"scanReason.applicationBundle" = "%@ 应用程序包";
+"scanReason.appUninstallSupportItem" = "%@ 应用卸载支持文件";
 
 "folderCount" = "%ld 个文件夹";
 "candidateCount" = "%ld 个候选项";

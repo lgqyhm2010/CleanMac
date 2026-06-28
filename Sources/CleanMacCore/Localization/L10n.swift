@@ -23,8 +23,11 @@ public enum L10n {
         case executable
         case folders
         case followSystem
+        case french
         case hiddenFiles
+        case hindi
         case include
+        case japanese
         case largeFile
         case minimumSize
         case moveToTrash
@@ -56,9 +59,15 @@ public enum L10n {
         case selected
         case settings
         case size
+        case spanish
         case status
         case openSettings
+        case arabic
+        case bengali
         case chinese
+        case chineseTraditional
+        case portuguese
+        case russian
         case unknown
 
         fileprivate var resourceKey: String {
@@ -78,6 +87,24 @@ public enum L10n {
             return text(.english, language: language)
         case .chinese:
             return text(.chinese, language: language)
+        case .chineseTraditional:
+            return text(.chineseTraditional, language: language)
+        case .japanese:
+            return text(.japanese, language: language)
+        case .spanish:
+            return text(.spanish, language: language)
+        case .french:
+            return text(.french, language: language)
+        case .arabic:
+            return text(.arabic, language: language)
+        case .hindi:
+            return text(.hindi, language: language)
+        case .portuguese:
+            return text(.portuguese, language: language)
+        case .russian:
+            return text(.russian, language: language)
+        case .bengali:
+            return text(.bengali, language: language)
         }
     }
 
