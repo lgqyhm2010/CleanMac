@@ -22,8 +22,18 @@ public struct TrashCleaner {
         var cleanedCount = 0
         var reclaimedBytes: Int64 = 0
         var failures: [CleanupFailure] = []
+        var skipped: [CleanupSkippedItem] = []
 
         for candidate in candidates {
+            guard candidate.protection != .blocked else {
+                let ruleSummary = candidate.userVisibleRules.first ?? "Protected by safety rules"
+                skipped.append(CleanupSkippedItem(
+                    url: candidate.url,
+                    message: "Protected item skipped: \(ruleSummary)"
+                ))
+                continue
+            }
+
             do {
                 try trasher.trashItem(at: candidate.url)
                 cleanedCount += 1
@@ -36,7 +46,8 @@ public struct TrashCleaner {
         return CleanupResult(
             cleanedCount: cleanedCount,
             reclaimedBytes: reclaimedBytes,
-            failures: failures
+            failures: failures,
+            skipped: skipped
         )
     }
 }

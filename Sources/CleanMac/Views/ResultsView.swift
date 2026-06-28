@@ -57,6 +57,15 @@ struct ResultsView: View {
                     }
                     .width(min: 110, ideal: 130)
 
+                    TableColumn(L10n.text(.protection, language: language)) { candidate in
+                        Label(
+                            candidate.protection.displayName(language: language),
+                            systemImage: candidate.protection.symbolName
+                        )
+                        .foregroundStyle(protectionColor(candidate.protection))
+                    }
+                    .width(min: 130, ideal: 150)
+
                     TableColumn(L10n.text(.size, language: language)) { candidate in
                         Text(Formatters.bytes(candidate.sizeBytes))
                             .monospacedDigit()
@@ -67,7 +76,12 @@ struct ResultsView: View {
 
             Divider()
 
-            CandidateDetailView(candidate: store.selectedCandidate, language: language)
+            CandidateDetailView(
+                candidate: store.selectedCandidate,
+                duplicateGroup: store.duplicateGroup(containing: store.selectedCandidate),
+                uninstallPlan: store.uninstallPlan(containing: store.selectedCandidate),
+                language: language
+            )
                 .padding(16)
         }
         .alert(L10n.text(.moveSelectedItemsToTrash, language: language), isPresented: $confirmTrash) {
@@ -76,7 +90,12 @@ struct ResultsView: View {
                 store.cleanSelected()
             }
         } message: {
-            Text("\(store.selectedSummary.selectedCount) items, \(Formatters.bytes(store.selectedSummary.totalBytes))")
+            Text(L10n.moveToTrashSummary(
+                selectedCount: store.selectedSummary.selectedCount,
+                protectedCount: store.selectedProtectedCandidates.count,
+                totalBytes: store.selectedSummary.totalBytes,
+                language: language
+            ))
         }
     }
 
@@ -85,7 +104,7 @@ struct ResultsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(L10n.candidatesHeadline(store.candidates.count, language: language))
                     .font(.headline)
-                Text("\(Formatters.bytes(store.selectedSummary.totalBytes)) \(L10n.text(.selected, language: language).lowercased())")
+                Text(selectedDetailText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -98,6 +117,13 @@ struct ResultsView: View {
                 Label(L10n.text(.selectAll, language: language), systemImage: "checklist.checked")
             }
             .disabled(store.candidates.isEmpty)
+
+            Button {
+                store.selectDuplicateCopies()
+            } label: {
+                Label(L10n.text(.selectDuplicateCopies, language: language), systemImage: "doc.on.doc")
+            }
+            .disabled(store.movableDuplicateCandidates.isEmpty)
 
             Button {
                 store.clearSelection()
@@ -114,8 +140,15 @@ struct ResultsView: View {
                     systemImage: "trash"
                 )
             }
-            .disabled(store.selectedSummary.selectedCount == 0 || store.isCleaning)
+            .disabled(store.selectedMovableCandidates.isEmpty || store.isCleaning)
         }
+    }
+
+    private var selectedDetailText: String {
+        let base = "\(Formatters.bytes(store.selectedSummary.totalBytes)) \(L10n.text(.selected, language: language).lowercased())"
+        let protectedCount = store.selectedProtectedCandidates.count
+        guard protectedCount > 0 else { return base }
+        return "\(base) · \(L10n.protectedItemCount(protectedCount, language: language))"
     }
 
     private func riskColor(_ risk: DeletionRisk) -> Color {
@@ -125,10 +158,20 @@ struct ResultsView: View {
         case .beCareful: .red
         }
     }
+
+    private func protectionColor(_ protection: DeletionProtection) -> Color {
+        switch protection {
+        case .allowed: .green
+        case .requiresReview: .orange
+        case .blocked: .red
+        }
+    }
 }
 
 private struct CandidateDetailView: View {
     var candidate: CleaningCandidate?
+    var duplicateGroup: DuplicateFileGroup?
+    var uninstallPlan: AppUninstallPlan?
     var language: ResolvedLanguage
 
     var body: some View {
@@ -151,6 +194,7 @@ private struct CandidateDetailView: View {
 
                     HStack(spacing: 18) {
                         Label(candidate.risk.displayName(language: language), systemImage: "exclamationmark.triangle")
+                        Label(candidate.protection.displayName(language: language), systemImage: candidate.protection.symbolName)
                         Label(Formatters.date(candidate.modifiedAt, language: language), systemImage: "calendar")
                     }
                     .font(.caption)
@@ -160,6 +204,56 @@ private struct CandidateDetailView: View {
                         Text(candidate.reasons.map { L10n.scanReason($0, language: language) }.joined(separator: " · "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+
+                    if !candidate.userVisibleRules.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(L10n.text(.rules, language: language))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.secondary)
+
+                            ForEach(candidate.userVisibleRules, id: \.self) { rule in
+                                Label(rule, systemImage: "list.bullet.clipboard")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                            }
+                        }
+                    }
+
+                    if let duplicateGroup {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(L10n.text(.duplicateGroup, language: language))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.secondary)
+
+                            Label(
+                                L10n.duplicateGroupDetail(duplicateGroup, language: language),
+                                systemImage: "doc.on.doc"
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                        }
+                    }
+
+                    if let uninstallPlan {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(L10n.text(.appUninstaller, language: language))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.secondary)
+
+                            Label(
+                                L10n.appUninstallPlanDetail(uninstallPlan, language: language),
+                                systemImage: "app.badge"
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                        }
                     }
                 }
             } else {

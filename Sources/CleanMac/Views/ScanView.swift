@@ -10,6 +10,12 @@ struct ScanView: View {
             VStack(alignment: .leading, spacing: 18) {
                 SummaryStrip(store: store, language: language)
 
+                PermissionGuideView(
+                    guide: .fullDiskAccess(),
+                    language: language,
+                    displayStyle: .compact
+                )
+
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text(L10n.text(.folders, language: language))
@@ -123,6 +129,7 @@ private struct SummaryStrip: View {
         HStack(spacing: 12) {
             MetricTile(title: L10n.text(.candidates, language: language), value: "\(store.candidates.count)", symbolName: "doc.on.doc")
             MetricTile(title: L10n.text(.potential, language: language), value: Formatters.bytes(store.lastReport?.totalBytes ?? 0), symbolName: "internaldrive")
+            MetricTile(title: L10n.text(.duplicates, language: language), value: Formatters.bytes(store.duplicateReclaimableBytes), symbolName: "doc.on.doc.fill")
             MetricTile(title: L10n.text(.selected, language: language), value: Formatters.bytes(store.selectedSummary.totalBytes), symbolName: "checkmark.circle")
         }
     }

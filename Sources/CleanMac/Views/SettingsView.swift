@@ -23,8 +23,20 @@ struct SettingsView: View {
             .tabItem {
                 Label(L10n.text(.aiCLI, language: resolvedLanguage), systemImage: "sparkles")
             }
+
+            Form {
+                PermissionGuideView(
+                    guide: .fullDiskAccess(),
+                    language: resolvedLanguage,
+                    displayStyle: .detailed
+                )
+            }
+            .padding(20)
+            .tabItem {
+                Label(L10n.text(.permissions, language: resolvedLanguage), systemImage: "lock.shield")
+            }
         }
-        .frame(width: 520, height: 220)
+        .frame(width: 620, height: 360)
     }
 
     private var resolvedLanguage: ResolvedLanguage {

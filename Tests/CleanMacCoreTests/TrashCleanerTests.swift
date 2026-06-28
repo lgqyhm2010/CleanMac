@@ -16,9 +16,31 @@ final class TrashCleanerTests: XCTestCase {
         XCTAssertEqual(result.cleanedCount, 2)
         XCTAssertEqual(result.reclaimedBytes, 30)
         XCTAssertTrue(result.failures.isEmpty)
+        XCTAssertTrue(result.skipped.isEmpty)
     }
 
-    private func candidate(path: String, size: Int64) -> CleaningCandidate {
+    func testCleanerDoesNotTrashBlockedCandidates() throws {
+        let trasher = RecordingFileTrasher()
+        let cleaner = TrashCleaner(trasher: trasher)
+        let safe = candidate(path: "/tmp/a.cache", size: 10, protection: .allowed)
+        let blocked = candidate(path: "/System/Library/do-not-touch", size: 20, protection: .blocked)
+
+        let result = try cleaner.clean([safe, blocked])
+
+        XCTAssertEqual(trasher.urls, [safe.url])
+        XCTAssertEqual(result.cleanedCount, 1)
+        XCTAssertEqual(result.reclaimedBytes, 10)
+        XCTAssertTrue(result.failures.isEmpty)
+        XCTAssertEqual(result.skipped.count, 1)
+        XCTAssertEqual(result.skipped.first?.url, blocked.url)
+        XCTAssertTrue(result.skipped.first?.message.localizedCaseInsensitiveContains("protected") == true)
+    }
+
+    private func candidate(
+        path: String,
+        size: Int64,
+        protection: DeletionProtection = .allowed
+    ) -> CleaningCandidate {
         CleaningCandidate(
             url: URL(filePath: path),
             sizeBytes: size,
@@ -26,7 +48,10 @@ final class TrashCleanerTests: XCTestCase {
             category: .cache,
             risk: .usuallySafe,
             reasons: [],
-            isDirectory: false
+            isDirectory: false,
+            protection: protection,
+            ruleMatches: [],
+            userVisibleRules: []
         )
     }
 }

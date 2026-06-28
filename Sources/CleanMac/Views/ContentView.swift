@@ -8,9 +8,9 @@ struct ContentView: View {
     @AppStorage("aiExecutable") private var aiExecutable = "/usr/bin/env"
     @AppStorage("aiArguments") private var aiArguments = "codex exec"
 
-    init() {
+    init(store: CleaningStore? = nil) {
         let preference = AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey))
-        _store = StateObject(wrappedValue: CleaningStore(language: preference.resolved()))
+        _store = StateObject(wrappedValue: store ?? CleaningStore(language: preference.resolved()))
     }
 
     var body: some View {
@@ -21,6 +21,14 @@ struct ContentView: View {
                 switch selection ?? .scan {
                 case .scan:
                     ScanView(store: store, language: resolvedLanguage)
+                case .uninstaller:
+                    AppUninstallerView(
+                        store: store,
+                        language: resolvedLanguage,
+                        openResults: {
+                            selection = .results
+                        }
+                    )
                 case .results:
                     ResultsView(store: store, language: resolvedLanguage)
                 case .aiReview:

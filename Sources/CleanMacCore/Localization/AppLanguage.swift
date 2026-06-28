@@ -49,6 +49,7 @@ public enum CleaningStatus: Equatable, Sendable {
 public enum CleaningErrorMessage: Equatable, Sendable {
     case addFolderToScan
     case itemsCouldNotBeMoved(Int)
+    case itemsWereProtected(Int)
     case selectItemForAIReview
     case setAIExecutable
     case system(String)

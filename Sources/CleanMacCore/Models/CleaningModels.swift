@@ -8,6 +8,8 @@ public enum CandidateCategory: String, CaseIterable, Codable, Hashable, Identifi
     case temporary
     case developer
     case largeFile
+    case application
+    case applicationSupport
     case other
 
     public var id: String { rawValue }
@@ -21,6 +23,8 @@ public enum CandidateCategory: String, CaseIterable, Codable, Hashable, Identifi
         case .temporary: "Temporary"
         case .developer: "Developer"
         case .largeFile: "Large Files"
+        case .application: "Applications"
+        case .applicationSupport: "App Support"
         case .other: "Other"
         }
     }
@@ -38,6 +42,8 @@ public enum CandidateCategory: String, CaseIterable, Codable, Hashable, Identifi
         case .temporary: "clock.arrow.circlepath"
         case .developer: "hammer"
         case .largeFile: "archivebox"
+        case .application: "app"
+        case .applicationSupport: "shippingbox"
         case .other: "questionmark.folder"
         }
     }
@@ -63,6 +69,71 @@ public enum DeletionRisk: String, CaseIterable, Codable, Hashable, Identifiable,
     }
 }
 
+public enum DeletionProtection: String, CaseIterable, Codable, Hashable, Identifiable, Sendable {
+    case allowed
+    case requiresReview
+    case blocked
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .allowed: "Allowed"
+        case .requiresReview: "Review Required"
+        case .blocked: "Protected"
+        }
+    }
+
+    public func displayName(language: ResolvedLanguage) -> String {
+        L10n.protectionName(self, language: language)
+    }
+
+    public var symbolName: String {
+        switch self {
+        case .allowed: "checkmark.shield"
+        case .requiresReview: "eye"
+        case .blocked: "lock.shield"
+        }
+    }
+}
+
+public struct SafetyRuleMatch: Identifiable, Hashable, Codable, Sendable {
+    public var id: String { ruleID }
+
+    public let ruleID: String
+    public let name: String
+    public let explanation: String
+    public let protection: DeletionProtection
+
+    public init(
+        ruleID: String,
+        name: String,
+        explanation: String,
+        protection: DeletionProtection
+    ) {
+        self.ruleID = ruleID
+        self.name = name
+        self.explanation = explanation
+        self.protection = protection
+    }
+}
+
+public struct SafetyEvaluation: Equatable, Sendable {
+    public let protection: DeletionProtection
+    public let ruleMatches: [SafetyRuleMatch]
+    public let userVisibleRules: [String]
+
+    public init(
+        protection: DeletionProtection,
+        ruleMatches: [SafetyRuleMatch],
+        userVisibleRules: [String]
+    ) {
+        self.protection = protection
+        self.ruleMatches = ruleMatches
+        self.userVisibleRules = userVisibleRules
+    }
+}
+
 public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
     public var id: String { url.standardizedFileURL.path }
 
@@ -73,6 +144,9 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
     public let risk: DeletionRisk
     public let reasons: [String]
     public let isDirectory: Bool
+    public let protection: DeletionProtection
+    public let ruleMatches: [SafetyRuleMatch]
+    public let userVisibleRules: [String]
 
     public init(
         url: URL,
@@ -81,7 +155,10 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
         category: CandidateCategory,
         risk: DeletionRisk,
         reasons: [String],
-        isDirectory: Bool
+        isDirectory: Bool,
+        protection: DeletionProtection = .requiresReview,
+        ruleMatches: [SafetyRuleMatch] = [],
+        userVisibleRules: [String] = []
     ) {
         self.url = url
         self.sizeBytes = sizeBytes
@@ -90,6 +167,9 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
         self.risk = risk
         self.reasons = reasons
         self.isDirectory = isDirectory
+        self.protection = protection
+        self.ruleMatches = ruleMatches
+        self.userVisibleRules = userVisibleRules
     }
 }
 
@@ -97,11 +177,24 @@ public struct ScanClassification: Equatable, Sendable {
     public let category: CandidateCategory
     public let risk: DeletionRisk
     public let reasons: [String]
+    public let protection: DeletionProtection
+    public let ruleMatches: [SafetyRuleMatch]
+    public let userVisibleRules: [String]
 
-    public init(category: CandidateCategory, risk: DeletionRisk, reasons: [String]) {
+    public init(
+        category: CandidateCategory,
+        risk: DeletionRisk,
+        reasons: [String],
+        protection: DeletionProtection = .requiresReview,
+        ruleMatches: [SafetyRuleMatch] = [],
+        userVisibleRules: [String] = []
+    ) {
         self.category = category
         self.risk = risk
         self.reasons = reasons
+        self.protection = protection
+        self.ruleMatches = ruleMatches
+        self.userVisibleRules = userVisibleRules
     }
 }
 
@@ -123,20 +216,116 @@ public struct ScanOptions: Equatable, Sendable {
 
 public struct ScanReport: Equatable, Sendable {
     public let candidates: [CleaningCandidate]
+    public let duplicateGroups: [DuplicateFileGroup]
     public let totalBytes: Int64
     public let scannedFileCount: Int
     public let skippedFileCount: Int
 
+    public var duplicateReclaimableBytes: Int64 {
+        duplicateGroups.reduce(0) { $0 + $1.movableReclaimableBytes }
+    }
+
     public init(
         candidates: [CleaningCandidate],
+        duplicateGroups: [DuplicateFileGroup] = [],
         totalBytes: Int64,
         scannedFileCount: Int,
         skippedFileCount: Int
     ) {
         self.candidates = candidates
+        self.duplicateGroups = duplicateGroups
         self.totalBytes = totalBytes
         self.scannedFileCount = scannedFileCount
         self.skippedFileCount = skippedFileCount
+    }
+}
+
+public struct DuplicateFileGroup: Identifiable, Hashable, Codable, Sendable {
+    public var id: String { "\(sizeBytes)-\(contentHash)" }
+
+    public let contentHash: String
+    public let sizeBytes: Int64
+    public let candidates: [CleaningCandidate]
+
+    public var reclaimableBytes: Int64 {
+        guard candidates.count > 1 else { return 0 }
+        return sizeBytes * Int64(candidates.count - 1)
+    }
+
+    public var movableReclaimableBytes: Int64 {
+        movableDuplicateCandidates.reduce(0) { $0 + $1.sizeBytes }
+    }
+
+    public var preferredOriginal: CleaningCandidate? {
+        candidates.sortedForDuplicateRetention().first
+    }
+
+    public var duplicateCandidates: [CleaningCandidate] {
+        Array(candidates.sortedForDuplicateRetention().dropFirst())
+    }
+
+    public var movableDuplicateCandidates: [CleaningCandidate] {
+        duplicateCandidates.filter { $0.protection != .blocked }
+    }
+
+    public init(contentHash: String, sizeBytes: Int64, candidates: [CleaningCandidate]) {
+        self.contentHash = contentHash
+        self.sizeBytes = sizeBytes
+        self.candidates = candidates
+    }
+}
+
+public struct AppUninstallPlan: Identifiable, Hashable, Codable, Sendable {
+    public var id: String { bundleIdentifier }
+
+    public let appName: String
+    public let bundleIdentifier: String
+    public let appCandidate: CleaningCandidate
+    public let supportCandidates: [CleaningCandidate]
+
+    public var allCandidates: [CleaningCandidate] {
+        [appCandidate] + supportCandidates
+    }
+
+    public var movableCandidates: [CleaningCandidate] {
+        allCandidates.filter { $0.protection != .blocked }
+    }
+
+    public var reclaimableBytes: Int64 {
+        allCandidates.reduce(0) { $0 + $1.sizeBytes }
+    }
+
+    public var movableReclaimableBytes: Int64 {
+        movableCandidates.reduce(0) { $0 + $1.sizeBytes }
+    }
+
+    public init(
+        appName: String,
+        bundleIdentifier: String,
+        appCandidate: CleaningCandidate,
+        supportCandidates: [CleaningCandidate]
+    ) {
+        self.appName = appName
+        self.bundleIdentifier = bundleIdentifier
+        self.appCandidate = appCandidate
+        self.supportCandidates = supportCandidates
+    }
+}
+
+private extension Array where Element == CleaningCandidate {
+    func sortedForDuplicateRetention() -> [CleaningCandidate] {
+        sorted { lhs, rhs in
+            switch (lhs.modifiedAt, rhs.modifiedAt) {
+            case let (lhsDate?, rhsDate?) where lhsDate != rhsDate:
+                return lhsDate > rhsDate
+            case (_?, nil):
+                return true
+            case (nil, _?):
+                return false
+            default:
+                return lhs.url.path.localizedStandardCompare(rhs.url.path) == .orderedAscending
+            }
+        }
     }
 }
 
@@ -161,6 +350,14 @@ public struct CleaningSelection: Equatable, Sendable {
 
     public mutating func select(_ candidates: [CleaningCandidate]) {
         selectedIDs.formUnion(candidates.map(\.id))
+    }
+
+    public mutating func selectMovable(_ candidates: [CleaningCandidate]) {
+        selectedIDs.formUnion(candidates.filter { $0.protection != .blocked }.map(\.id))
+    }
+
+    public mutating func selectDuplicateCopies(in groups: [DuplicateFileGroup]) {
+        selectedIDs.formUnion(groups.flatMap(\.movableDuplicateCandidates).map(\.id))
     }
 
     public mutating func clear() {
@@ -199,15 +396,32 @@ public struct CleanupResult: Equatable, Sendable {
     public let cleanedCount: Int
     public let reclaimedBytes: Int64
     public let failures: [CleanupFailure]
+    public let skipped: [CleanupSkippedItem]
 
-    public init(cleanedCount: Int, reclaimedBytes: Int64, failures: [CleanupFailure]) {
+    public init(
+        cleanedCount: Int,
+        reclaimedBytes: Int64,
+        failures: [CleanupFailure],
+        skipped: [CleanupSkippedItem] = []
+    ) {
         self.cleanedCount = cleanedCount
         self.reclaimedBytes = reclaimedBytes
         self.failures = failures
+        self.skipped = skipped
     }
 }
 
 public struct CleanupFailure: Equatable, Sendable {
+    public let url: URL
+    public let message: String
+
+    public init(url: URL, message: String) {
+        self.url = url
+        self.message = message
+    }
+}
+
+public struct CleanupSkippedItem: Equatable, Sendable {
     public let url: URL
     public let message: String
 

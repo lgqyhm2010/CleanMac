@@ -21,6 +21,7 @@ public final class AIReviewService {
         let rows = candidates.prefix(80).map { candidate in
             let modified = candidate.modifiedAt.map { ISO8601DateFormatter().string(from: $0) } ?? "unknown"
             let reasons = candidate.reasons.joined(separator: "; ")
+            let rules = candidate.userVisibleRules.joined(separator: "; ")
             return """
             - path: \(candidate.url.path)
               sizeBytes: \(candidate.sizeBytes)
@@ -28,6 +29,8 @@ public final class AIReviewService {
               category: \(candidate.category.rawValue)
               risk: \(candidate.risk.rawValue)
               reasons: \(reasons)
+              protection: \(candidate.protection.rawValue)
+              rules: \(rules)
             """
         }
         .joined(separator: "\n")
