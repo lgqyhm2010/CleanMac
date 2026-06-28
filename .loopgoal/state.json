@@ -6,14 +6,14 @@
   "iteration": 0,
   "phases": [
     {"name": "Extract HTML design and animation requirements", "status": "done"},
-    {"name": "Generate image assets that match the HTML design", "status": "todo"},
+    {"name": "Generate image assets that match the HTML design", "status": "done"},
     {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "todo"},
     {"name": "Verify the app builds and the preserved behavior still compiles", "status": "todo"},
     {"name": "Commit the verified result", "status": "todo"}
   ],
   "current": {
-    "focus": "HTML layout, color, motion, image asset, and affected SwiftUI view requirements extracted into docs/design/2026-06-28-html-ui-animation-extraction.md.",
-    "next_action": "Generate the compact reusable image asset set described in the design extraction document.",
+    "focus": "Generated image assets are present under Sources/CleanMac/Resources, final Images PNGs are 8-bit RGBA with transparent corners, and the package build has verified they are copied into the app resource bundle.",
+    "next_action": "SwiftUI design implementation.",
     "blockers": ""
   },
   "decisions": [
@@ -40,8 +40,16 @@
     {
       "decision": "Keep later SwiftUI motion state-driven and Reduce Motion aware.",
       "reason": "The HTML relies on playful looping cues, but the app should only animate active/progress/celebration states and respect accessibility settings."
+    },
+    {
+      "decision": "Use SwiftPM target resources for the app image set.",
+      "reason": "Package.swift processes Sources/CleanMac/Resources for the CleanMac executable target, so the next SwiftUI phase can load packaged assets from the app bundle instead of relying on external file paths."
+    },
+    {
+      "decision": "Keep chroma-key source PNGs and ship cleaned RGBA runtime PNGs.",
+      "reason": "ImagesSource preserves the generated key-color inputs for provenance, while Images contains the chroma-key-removed assets verified as RGBA with transparent corners for runtime use."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build",
-  "updated_at": "2026-06-28T15:14:18Z"
+  "updated_at": "2026-06-28T15:32:53Z"
 }
