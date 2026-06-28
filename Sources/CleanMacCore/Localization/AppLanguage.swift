@@ -3,6 +3,17 @@ import Foundation
 public enum ResolvedLanguage: String, CaseIterable, Codable, Equatable, Hashable, Sendable {
     case english
     case chinese
+
+    var lprojName: String {
+        switch self {
+        case .english: return "en"
+        case .chinese: return "zh-Hans"
+        }
+    }
+
+    var locale: Locale {
+        Locale(identifier: lprojName)
+    }
 }
 
 public enum AppLanguage: String, CaseIterable, Codable, Equatable, Hashable, Identifiable, Sendable {
