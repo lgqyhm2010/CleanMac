@@ -2,18 +2,18 @@
   "mode": "goal",
   "objective": "Make the local CleanMac app match the updated HTML design and animation direction while keeping existing app functionality intact.",
   "exit_condition": "The goal is complete when the SwiftUI app visually follows cleanmac_with_ai.html, includes the corresponding generated image assets, preserves the existing local feature flow, builds successfully, and the checkpoint plus implementation changes are committed.",
-  "status": "in_progress",
-  "iteration": 0,
+  "status": "done",
+  "iteration": 1,
   "phases": [
     {"name": "Extract HTML design and animation requirements", "status": "done"},
     {"name": "Generate image assets that match the HTML design", "status": "done"},
     {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "done"},
-    {"name": "Verify the app builds and the preserved behavior still compiles", "status": "todo"},
-    {"name": "Commit the verified result", "status": "todo"}
+    {"name": "Verify the app builds and the preserved behavior still compiles", "status": "done"},
+    {"name": "Commit the verified result", "status": "done"}
   ],
   "current": {
-    "focus": "SwiftUI visual design and state-driven animation pass is implemented in the allowed view files, and verify_cmd has passed after the edits.",
-    "next_action": "Verification.",
+    "focus": "Goal complete: the SwiftUI app now follows the HTML visual and animation direction, generated image assets are packaged, build and tests pass, and the app bundle launches successfully.",
+    "next_action": "Stop scheduling; future local feature behavior changes can be handled in a separate goal.",
     "blockers": ""
   },
   "decisions": [
@@ -56,8 +56,12 @@
     {
       "decision": "Load generated PNG illustrations through Bundle.module with system-symbol fallbacks.",
       "reason": "Package.swift already processes Sources/CleanMac/Resources, and fallbacks keep the UI usable if a packaged image cannot be loaded."
+    },
+    {
+      "decision": "Use swift build, swift test, and script/build_and_run.sh --verify for final verification.",
+      "reason": "The implementation is SwiftUI-only but should still compile, preserve core behavior tests, and launch as a packaged macOS app with resources."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build",
-  "updated_at": "2026-06-28T15:45:14Z"
+  "updated_at": "2026-06-28T15:49:30Z"
 }
