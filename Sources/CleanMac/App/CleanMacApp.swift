@@ -14,6 +14,7 @@ enum CleanMacApp {
         appDelegate = delegate
         app.delegate = delegate
         app.setActivationPolicy(.regular)
+        delegate.installApplicationIcon()
         delegate.configureMainMenu()
         app.finishLaunching()
         delegate.showMainWindow()
@@ -35,6 +36,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenuQuitItem: NSMenuItem?
     private var statusCancellables: Set<AnyCancellable> = []
     private lazy var store = CleaningStore(language: resolvedLanguage)
+
+    func installApplicationIcon() {
+        guard
+            let iconURL = Bundle.module.url(forResource: "cleanmac-mascot", withExtension: "png", subdirectory: "Images"),
+            let iconImage = NSImage(contentsOf: iconURL)
+        else {
+            return
+        }
+
+        NSApp.applicationIconImage = iconImage
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         showMainWindow()
