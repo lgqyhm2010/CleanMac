@@ -19,8 +19,12 @@ enum CleanMacTheme {
     static let chrome = Color(hex: 0xEFE7D6)
     static let desk = Color(hex: 0xEDF1F4)
     static let shadow = Color(hex: 0xE7DECD)
-    static let sidebar = Color(hex: 0xF2E8D8)
-    static let sidebarText = Color(hex: 0x877AA1)
+    static let titlebar = Color(hex: 0x2C2640)
+    static let sidebar = Color(hex: 0x2C2640)
+    static let sidebarBorder = Color(hex: 0x3A3458)
+    static let sidebarText = Color(hex: 0x7070C0)
+    static let sidebarPrimaryText = Color(hex: 0xE8E0FF)
+    static let sidebarRowText = Color(hex: 0xC0C0E0)
     static let secondaryText = Color(hex: 0x706B82)
 
     static let accent = Color(hex: 0x5DAEE7)
@@ -32,7 +36,7 @@ enum CleanMacTheme {
     static let danger = Color(hex: 0xEA6A70)
     static let neutral = Color(hex: 0x706B82)
 
-    static let panelRadius: CGFloat = 8
+    static let panelRadius: CGFloat = 14
     static let compactSpacing: CGFloat = 10
     static let sectionSpacing: CGFloat = 16
     static let outlineWidth: CGFloat = 2.5
@@ -43,10 +47,15 @@ enum CleanMacTheme {
 
     static func sectionTint(_ section: SidebarSection) -> Color {
         switch section {
-        case .scan: accent
+        case .diskOverview: accent
+        case .speedUp: peach
+        case .cleanUp: mint
+        case .manageSpace: purple
+        case .duplicates: amber
         case .uninstaller: pink
-        case .results: mint
+        case .analyzeSpace: mint
         case .aiReview: purple
+        case .settings: neutral
         }
     }
 
@@ -221,6 +230,32 @@ struct CleanMacPageBackground: View {
     }
 }
 
+struct CleanMacAppTitleBar: View {
+    var title: String
+
+    var body: some View {
+        ZStack {
+            CleanMacTheme.titlebar
+
+            HStack(spacing: 8) {
+                Spacer()
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color(hex: 0x9090B0))
+                    .lineLimit(1)
+                Spacer()
+            }
+            .padding(.horizontal, 78)
+        }
+        .frame(height: 30)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(CleanMacTheme.ink)
+                .frame(height: 1.5)
+        }
+    }
+}
+
 private struct CleanMacSparkle: View {
     var position: CGPoint
     var delay: Double
@@ -266,6 +301,31 @@ struct CleanMacPanel<Content: View>: View {
                     .strokeBorder(CleanMacTheme.ink, lineWidth: CleanMacTheme.outlineWidth)
             }
             .shadow(color: CleanMacTheme.shadow, radius: 0, x: 0, y: 5)
+    }
+}
+
+private struct CleanMacTextFieldChrome: ViewModifier {
+    var tint: Color
+
+    func body(content: Content) -> some View {
+        content
+            .textFieldStyle(.plain)
+            .font(.body)
+            .foregroundStyle(CleanMacTheme.ink)
+            .tint(tint)
+            .padding(.horizontal, 10)
+            .frame(minHeight: 34, alignment: .center)
+            .background(CleanMacTheme.paper, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(tint.opacity(0.72), lineWidth: 1.5)
+            }
+    }
+}
+
+extension View {
+    func cleanMacTextField(tint: Color = CleanMacTheme.accent) -> some View {
+        modifier(CleanMacTextFieldChrome(tint: tint))
     }
 }
 

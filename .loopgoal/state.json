@@ -9,10 +9,11 @@
     {"name": "Generate image assets that match the HTML design", "status": "done"},
     {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "done"},
     {"name": "Verify the app builds and the preserved behavior still compiles", "status": "done"},
-    {"name": "Commit the verified result", "status": "done"}
+    {"name": "Commit the verified result", "status": "done"},
+    {"name": "Retest every sidebar page and remove black controls", "status": "done"}
   ],
   "current": {
-    "focus": "Goal complete: the SwiftUI app now follows the HTML visual and animation direction, generated image assets are packaged, build and tests pass, and the app bundle launches successfully.",
+    "focus": "Goal complete after follow-up: all nine sidebar pages are covered by screenshot smoke tests, black system controls were replaced, full tests pass, and the local app window launches successfully.",
     "next_action": "Stop scheduling; future local feature behavior changes can be handled in a separate goal.",
     "blockers": ""
   },
@@ -60,8 +61,20 @@
     {
       "decision": "Use swift build, swift test, and script/build_and_run.sh --verify for final verification.",
       "reason": "The implementation is SwiftUI-only but should still compile, preserve core behavior tests, and launch as a packaged macOS app with resources."
+    },
+    {
+      "decision": "Add a CleanMacUITests screenshot smoke test for every SidebarSection.",
+      "reason": "The user saw black pages and left-side routing issues, so every sidebar entry now renders into a snapshot and checks for visible non-black main content."
+    },
+    {
+      "decision": "Replace macOS default rounded text fields and the Settings TabView with project-owned light controls.",
+      "reason": "The default AppKit controls rendered dark inside the custom SwiftUI chrome, especially in AI Review and Settings."
+    },
+    {
+      "decision": "Keep the follow-up focused on UI chrome and page mapping, not cleaner behavior.",
+      "reason": "The user asked to keep local functionality unchanged for now and handle functionality details later."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build",
-  "updated_at": "2026-06-28T15:49:30Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift test",
+  "updated_at": "2026-06-29T01:23:19Z"
 }

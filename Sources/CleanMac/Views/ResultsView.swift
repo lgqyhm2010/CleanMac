@@ -9,19 +9,19 @@ struct ResultsView: View {
 
     var body: some View {
         ZStack {
-            CleanMacPageBackground(accent: CleanMacTheme.sectionTint(.results))
+            CleanMacPageBackground(accent: CleanMacTheme.sectionTint(.cleanUp))
 
             VStack(spacing: 14) {
-                CleanMacPanel(padding: 14, tint: CleanMacTheme.sectionTint(.results)) {
+                CleanMacPanel(padding: 14, tint: CleanMacTheme.sectionTint(.cleanUp)) {
                     resultsHeader
                 }
 
-                CleanMacPanel(padding: 0, tint: CleanMacTheme.sectionTint(.results)) {
+                CleanMacPanel(padding: 0, tint: CleanMacTheme.sectionTint(.cleanUp)) {
                     resultsTableContent
                 }
                 .frame(minHeight: 280, maxHeight: .infinity)
 
-                CleanMacPanel(padding: 14, tint: CleanMacTheme.sectionTint(.results)) {
+                CleanMacPanel(padding: 14, tint: CleanMacTheme.sectionTint(.cleanUp)) {
                     CandidateDetailView(
                         candidate: store.selectedCandidate,
                         duplicateGroup: store.duplicateGroup(containing: store.selectedCandidate),
@@ -135,7 +135,7 @@ struct ResultsView: View {
             HStack(spacing: 12) {
                 CleanMacFeatureImage(
                     asset: .cleanupTrash,
-                    tint: CleanMacTheme.sectionTint(.results),
+                    tint: CleanMacTheme.sectionTint(.cleanUp),
                     isActive: store.isCleaning || store.isScanning
                 )
                 .frame(width: 48, height: 48)

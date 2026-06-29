@@ -42,10 +42,10 @@ struct AIReviewView: View {
                         )
 
                         TextField(L10n.text(.executable, language: language), text: $aiExecutable)
-                            .textFieldStyle(.roundedBorder)
+                            .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
 
                         TextField(L10n.text(.arguments, language: language), text: $aiArguments)
-                            .textFieldStyle(.roundedBorder)
+                            .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
 
                         CleanMacSectionHeader(
                             title: L10n.text(.question, language: language),

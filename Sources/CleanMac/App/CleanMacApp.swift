@@ -16,9 +16,7 @@ enum CleanMacApp {
         app.setActivationPolicy(.regular)
         delegate.configureMainMenu()
         app.finishLaunching()
-        DispatchQueue.main.async {
-            delegate.showMainWindow()
-        }
+        delegate.showMainWindow()
         app.run()
     }
 }
@@ -43,9 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag {
-            showMainWindow()
-        }
+        showMainWindow()
         return true
     }
 
@@ -89,29 +85,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showMainWindow() {
         if let mainWindow {
+            activateApplication()
             mainWindow.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            mainWindow.makeMain()
+            mainWindow.orderFrontRegardless()
             return
         }
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1_120, height: 760),
+            contentRect: NSRect(x: 0, y: 0, width: 1_180, height: 760),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "CleanMac"
+        window.backgroundColor = NSColor(
+            calibratedRed: 1.0,
+            green: 253.0 / 255.0,
+            blue: 246.0 / 255.0,
+            alpha: 1.0
+        )
+        window.isOpaque = true
         window.isReleasedWhenClosed = false
         window.contentViewController = NSHostingController(
             rootView: ContentView(store: store)
-                .frame(minWidth: 980, minHeight: 640)
+                .frame(minWidth: 1_020, minHeight: 660)
         )
-        window.minSize = NSSize(width: 980, height: 640)
-        window.contentMinSize = NSSize(width: 980, height: 640)
-        window.setContentSize(NSSize(width: 1_120, height: 760))
-        window.center()
-        window.makeKeyAndOrderFront(nil)
+        window.minSize = NSSize(width: 1_020, height: 660)
+        window.contentMinSize = NSSize(width: 1_020, height: 660)
+        window.setContentSize(NSSize(width: 1_180, height: 760))
+        window.setFrame(Self.defaultMainWindowFrame(), display: true)
         mainWindow = window
+        activateApplication()
+        window.makeKeyAndOrderFront(nil)
+        window.makeMain()
+        window.orderFrontRegardless()
+        DispatchQueue.main.async { [weak self, weak window] in
+            guard let window else { return }
+            self?.activateApplication()
+            window.makeKeyAndOrderFront(nil)
+            window.makeMain()
+            window.orderFrontRegardless()
+        }
+    }
+
+    private static func defaultMainWindowFrame() -> NSRect {
+        let fallback = NSRect(x: 160, y: 120, width: 1_180, height: 792)
+        guard let visibleFrame = NSScreen.main?.visibleFrame else { return fallback }
+        let width = min(CGFloat(1_180), visibleFrame.width - 80)
+        let height = min(CGFloat(792), visibleFrame.height - 80)
+        return NSRect(
+            x: visibleFrame.midX - width / 2,
+            y: visibleFrame.midY - height / 2,
+            width: width,
+            height: height
+        )
+    }
+
+    private func activateApplication() {
         NSApp.activate(ignoringOtherApps: true)
     }
 
