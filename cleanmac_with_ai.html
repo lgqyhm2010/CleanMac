@@ -1,0 +1,1753 @@
+
+<meta charset="UTF-8">
+<script>
+(function(){
+  var storageKey='cleanmac.theme';
+  var queryTheme=new URLSearchParams(location.search).get('theme');
+  var storedTheme='';
+  try{storedTheme=localStorage.getItem(storageKey)||''}catch(e){}
+  var theme=(queryTheme==='system'||queryTheme==='light'||queryTheme==='dark')?queryTheme:storedTheme;
+  if(theme==='light'||theme==='dark'){
+    document.documentElement.dataset.theme=theme;
+  }else{
+    theme='system';
+    document.documentElement.removeAttribute('data-theme');
+  }
+  document.documentElement.dataset.themePreference=theme;
+})();
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes sparkPop{0%,100%{opacity:0;transform:scale(0)}45%,55%{opacity:1;transform:scale(1)}}
+@keyframes blink{0%,85%,100%{transform:scaleY(1)}91%,94%{transform:scaleY(0.08)}}
+@keyframes segIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes scanBeam{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.06);opacity:1}}
+@keyframes fillBar{from{width:0}to{width:var(--w)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes wiggle{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}70%{transform:translateY(-3px)}}
+.page{display:none;flex-direction:column;gap:14px;padding:20px;overflow-y:auto;height:100%;animation:slideIn .25s ease}
+.page.active{display:flex}
+.card{border:2.5px solid #1E1A2E;border-radius:14px 8px 14px 8px;background:white;box-shadow:4px 4px 0 #1E1A2E;padding:16px}
+.btn{height:34px;padding:0 16px;border-radius:10px 6px 10px 6px;border:2.5px solid #1E1A2E;font-size:13px;font-weight:500;cursor:pointer;box-shadow:3px 3px 0 #1E1A2E;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #1E1A2E}
+.btn:active{transform:translate(1px,1px);box-shadow:2px 2px 0 #1E1A2E}
+.toggle{width:38px;height:20px;border-radius:10px;border:2px solid #1E1A2E;background:#E8E8F0;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:#7DC4A8}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:white;border:1.5px solid #1E1A2E;top:1px;left:1px;transition:left .2s}
+.toggle.on::after{left:19px}
+.checkbox{width:18px;height:18px;border-radius:5px;border:2px solid #1E1A2E;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.checkbox.checked{background:#58A7D8}
+.checkbox.checked::after{content:'✓';font-size:11px;color:white;font-weight:700}
+.theme-control{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.theme-btn{min-height:58px;border-radius:16px;border:2.5px solid var(--line);background:var(--paper);box-shadow:3px 4px 0 var(--line);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:9px 11px;text-align:left;transition:transform .12s,box-shadow .12s,background .12s,border-color .12s}
+.theme-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 5px 0 var(--line)}
+.theme-btn.active{border-color:#9E70E8;background:#F0E8FF;transform:rotate(-.2deg)}
+.theme-btn span{font-size:12px;font-weight:900;color:var(--ink);line-height:1.1}
+.theme-btn small{font-size:10px;font-weight:700;color:#7b7490;line-height:1.2}
+.ph{font-size:12px;color:#8AAAC8}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px 6px 12px 6px;cursor:pointer;border:2px solid transparent;margin-bottom:3px;transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,.08)}
+.nav-item.active-nav{border:2px solid var(--c);background:rgba(255,255,255,.12)}
+.scan-ring{width:90px;height:90px;transform:rotate(-90deg)}
+.scan-ring circle{fill:none;stroke:#E8E8F8;stroke-width:8}
+.scan-ring circle.progress{stroke:var(--c,#58A7D8);stroke-dasharray:220;stroke-dashoffset:220;stroke-linecap:round;transition:stroke-dashoffset 1.2s ease}
+
+:root{
+  --ink:#221e34;
+  --chrome:#efe7d6;
+  --chrome-text:#262237;
+  --chrome-chip:#fffaf1;
+  --chrome-chip-text:#221e34;
+  --paper:#fffdf6;
+  --warm:#fbf6eb;
+  --line:#241f36;
+  --shadow:#e7decd;
+  --desk-bg:#edf1f4;
+  --app-ring:#d8cab1;
+  --app-shadow:rgba(88,72,44,.2);
+  --sidebar-bg:#f2e8d8;
+  --sidebar-section:#877aa1;
+  --sidebar-text:#2a2538;
+  --sidebar-sub:#746d82;
+  --nav-hover:rgba(255,255,255,.58);
+  --nav-active-shadow:#dfd1b8;
+  --brand-shadow:#dfd1b8;
+  --page-header-bg:rgba(255,253,246,.94);
+  --mobile-divider:#d9cbb4;
+  --blue:#5daee7;
+  --green:#74c6a6;
+  --yellow:#f6c94e;
+  --purple:#a685df;
+  --pink:#ef96b5;
+  --peach:#f2a67f;
+}
+
+html,body{
+  min-height:100%;
+  background:var(--desk-bg);
+}
+body{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:18px;
+  font-family:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 18% 8%,rgba(93,174,231,.18),transparent 28rem),
+    radial-gradient(circle at 86% 22%,rgba(246,201,78,.18),transparent 24rem),
+    linear-gradient(135deg,#f7f1e7 0%,var(--desk-bg) 48%,#e8f2f6 100%);
+}
+
+.cleanmac-app{
+  width:min(1180px,calc(100vw - 36px)) !important;
+  height:min(760px,calc(100vh - 36px)) !important;
+  min-height:620px !important;
+  border:0 !important;
+  border-radius:30px !important;
+  background:var(--paper) !important;
+  box-shadow:0 0 0 2px var(--app-ring),0 18px 42px var(--app-shadow) !important;
+}
+
+.cleanmac-titlebar{
+  height:48px !important;
+  background:var(--chrome) !important;
+  padding:0 20px !important;
+  gap:12px !important;
+}
+.cleanmac-titlebar>div:first-child{gap:7px !important}
+.cleanmac-titlebar>div:first-child>div{
+  width:10px !important;
+  height:10px !important;
+  border:0 !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.24) inset !important;
+}
+#win-title{
+  text-align:left !important;
+  color:var(--chrome-text) !important;
+  font-size:15px !important;
+  font-weight:800 !important;
+  letter-spacing:0 !important;
+}
+#win-title::before{
+  content:"CleanMac";
+  display:inline-flex;
+  align-items:center;
+  height:25px;
+  padding:0 12px;
+  margin-right:10px;
+  border-radius:13px;
+  background:var(--chrome-chip);
+  color:var(--chrome-chip-text);
+  font-weight:800;
+  box-shadow:0 1px 0 rgba(255,255,255,.48) inset,0 1px 2px rgba(36,31,54,.12);
+}
+
+.cleanmac-sidebar{
+  width:250px !important;
+  background:var(--sidebar-bg) !important;
+  border-right:0 !important;
+  padding:10px 8px 12px !important;
+  scrollbar-width:thin;
+  scrollbar-color:#4a445d transparent;
+}
+.cleanmac-brand{
+  margin:0 6px 14px !important;
+  padding:14px !important;
+  border:3px solid var(--line) !important;
+  border-radius:26px !important;
+  background:var(--paper) !important;
+  box-shadow:0 7px 0 var(--brand-shadow) !important;
+}
+.cleanmac-brand div[style*="font-size:14px"]{
+  color:var(--ink) !important;
+  font-weight:800 !important;
+}
+.cleanmac-brand div[style*="font-size:10px"]{color:#7f7890 !important}
+
+#sect-overview,#sect-protools,#sect-ai,#sect-system{
+  color:var(--sidebar-section) !important;
+  font-weight:800 !important;
+  letter-spacing:.13em !important;
+}
+.nav-item{
+  margin-bottom:7px !important;
+  padding:9px 10px !important;
+  border:2.5px solid transparent !important;
+  border-radius:20px !important;
+  background:transparent !important;
+}
+.nav-item:hover{
+  background:var(--nav-hover) !important;
+}
+.nav-item.active-nav{
+  background:var(--paper) !important;
+  border-color:var(--line) !important;
+  box-shadow:4px 5px 0 var(--nav-active-shadow) !important;
+  transform:rotate(-.2deg);
+}
+.nav-item svg{
+  overflow:visible;
+  filter:drop-shadow(1.5px 2px 0 rgba(0,0,0,.16));
+}
+.nav-item [id^="lbl-"]{
+  color:var(--sidebar-text) !important;
+  font-weight:800 !important;
+}
+.nav-item.active-nav [id^="lbl-"]{color:var(--ink) !important}
+.nav-item div[style*="font-size:10px"]{color:var(--sidebar-sub) !important}
+.nav-item.active-nav div[style*="font-size:10px"]{color:#6f6b7f !important}
+.nav-item>span{
+  font-weight:900 !important;
+  text-shadow:none !important;
+}
+
+.cleanmac-content{
+  background:
+    radial-gradient(circle at 92% 9%,rgba(246,201,78,.16) 0 0.55rem,transparent .58rem),
+    radial-gradient(circle at 86% 86%,rgba(116,198,166,.15) 0 0.5rem,transparent .53rem),
+    var(--warm) !important;
+  position:relative;
+}
+.cleanmac-content::before,
+.cleanmac-content::after{
+  content:"✦";
+  position:absolute;
+  color:var(--yellow);
+  font-size:34px;
+  line-height:1;
+  z-index:0;
+  animation:sparkPop 3s ease-in-out infinite;
+  pointer-events:none;
+}
+.cleanmac-content::before{top:24px;right:32px}
+.cleanmac-content::after{left:28px;bottom:24px;color:var(--green);animation-delay:1.2s}
+
+.page{
+  position:relative;
+  z-index:1;
+  gap:18px !important;
+  padding:24px !important;
+}
+.page>div:first-child{
+  background:var(--page-header-bg) !important;
+  border:3px solid var(--line) !important;
+  border-radius:28px !important;
+  box-shadow:0 8px 0 var(--shadow) !important;
+  padding:16px 18px !important;
+}
+.page>div:first-child svg{
+  filter:drop-shadow(2px 3px 0 rgba(36,31,54,.12));
+}
+.page>div:first-child div[style*="font-size:18px"],
+.page>div:first-child div[style*="font-size:22px"]{
+  color:var(--ink) !important;
+  font-weight:900 !important;
+}
+.page>div:first-child div[style*="font-size:12px"],
+.page>div:first-child div[style*="font-size:11px"]{
+  color:#706b82 !important;
+  font-weight:650 !important;
+}
+
+.card{
+  border:3px solid var(--line) !important;
+  border-radius:28px !important;
+  background:var(--paper) !important;
+  box-shadow:0 8px 0 var(--shadow),0 16px 28px rgba(36,31,54,.08) !important;
+}
+.card svg{
+  overflow:visible;
+  filter:drop-shadow(2px 3px 0 rgba(36,31,54,.1));
+}
+.btn{
+  min-height:38px !important;
+  height:auto !important;
+  border:3px solid var(--line) !important;
+  border-radius:18px !important;
+  box-shadow:4px 5px 0 var(--line) !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  letter-spacing:0 !important;
+}
+.btn:hover{
+  transform:translate(-2px,-2px) rotate(-.4deg) !important;
+  box-shadow:6px 7px 0 var(--line) !important;
+}
+.btn:active{
+  transform:translate(1px,1px) !important;
+  box-shadow:2px 3px 0 var(--line) !important;
+}
+
+#page-disk>div:nth-of-type(3){
+  gap:16px !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+#page-disk>div:nth-of-type(3) .card{
+  aspect-ratio:1/1;
+  min-width:0;
+  min-height:0;
+  justify-content:center !important;
+  border-radius:32px !important;
+  padding:14px 12px !important;
+  gap:7px !important;
+}
+#page-disk>div:nth-of-type(3) .card svg{
+  width:clamp(58px,9vw,86px) !important;
+  height:clamp(58px,9vw,86px) !important;
+}
+#page-disk>div:nth-of-type(3) .card div[style*="font-size:14px"]{
+  font-size:clamp(12px,1.55vw,16px) !important;
+  font-weight:900 !important;
+}
+#page-disk>div:nth-of-type(3) .card div[style*="font-size:24px"]{
+  font-size:clamp(20px,2.5vw,28px) !important;
+  font-weight:900 !important;
+}
+#page-disk>div:nth-of-type(3) .card div[style*="font-size:11px"]{
+  font-size:clamp(9px,1.15vw,11px) !important;
+  line-height:1.25 !important;
+}
+#page-disk>div:nth-of-type(3) .card .btn{
+  min-height:34px !important;
+  padding:0 10px !important;
+  font-size:clamp(10px,1.1vw,13px) !important;
+}
+
+#startup-list>div,#clean-list>div,#large-files>div,#dupe-list>div,
+#app-list>div,#space-bars>div,#folder-list>div,#ai-runtime-list>div,
+#ai-recs>div{
+  border-radius:20px !important;
+}
+.toggle,.checkbox{
+  border-color:var(--line) !important;
+  box-shadow:2px 2px 0 rgba(36,31,54,.12);
+}
+
+@media(max-width:640px){
+  body{padding:10px}
+  .cleanmac-app{
+    width:calc(100vw - 20px) !important;
+    height:auto !important;
+    min-height:calc(100vh - 20px) !important;
+  }
+  .cleanmac-app>div:nth-of-type(2){
+    flex-direction:column !important;
+    overflow:visible !important;
+  }
+  .cleanmac-titlebar{height:44px !important;padding:0 12px !important}
+  #win-title{font-size:13px !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #win-title::before{height:23px;padding:0 9px;margin-right:7px}
+  .cleanmac-sidebar{
+    width:100% !important;
+    max-height:230px;
+    border-bottom:2px solid var(--mobile-divider) !important;
+  }
+  .cleanmac-brand{display:none !important}
+  .cleanmac-content{
+    overflow:visible !important;
+    min-height:620px;
+  }
+  .page{padding:16px !important}
+  .page>div:first-child{
+    align-items:flex-start !important;
+    flex-wrap:wrap !important;
+  }
+  .theme-control{grid-template-columns:1fr !important}
+  #page-disk>div:nth-of-type(3){grid-template-columns:1fr !important}
+  #page-disk>div:nth-of-type(3) .card{
+    aspect-ratio:auto;
+    min-height:210px;
+  }
+}
+
+html[data-theme="dark"]{
+  --ink:#221e34;
+  --chrome:#282631;
+  --chrome-text:#fff7e8;
+  --chrome-chip:#3c3945;
+  --chrome-chip-text:#fff9ec;
+  --paper:#fff8ea;
+  --warm:#302d35;
+  --line:#241f36;
+  --shadow:rgba(0,0,0,.34);
+  --desk-bg:#28292f;
+  --app-ring:#18171e;
+  --app-shadow:rgba(0,0,0,.38);
+  --sidebar-bg:#2c2934;
+  --sidebar-section:#aaa0cf;
+  --sidebar-text:#f5efe5;
+  --sidebar-sub:#b9b1c3;
+  --nav-hover:rgba(255,248,234,.08);
+  --nav-active-shadow:rgba(255,248,234,.14);
+  --brand-shadow:rgba(255,248,234,.12);
+  --page-header-bg:rgba(255,248,234,.96);
+  --mobile-divider:#1d1b24;
+}
+
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(circle at 18% 8%,rgba(93,174,231,.16),transparent 27rem),
+    radial-gradient(circle at 86% 22%,rgba(166,133,223,.16),transparent 25rem),
+    linear-gradient(135deg,#34313a 0%,var(--desk-bg) 54%,#24242b 100%);
+}
+
+html[data-theme="dark"] .cleanmac-app{
+  box-shadow:0 0 0 2px var(--app-ring),0 22px 48px var(--app-shadow) !important;
+}
+
+html[data-theme="dark"] .cleanmac-titlebar>div:first-child>div{
+  box-shadow:0 0 0 1px rgba(255,255,255,.18) inset !important;
+}
+
+html[data-theme="dark"] .cleanmac-brand{
+  box-shadow:0 7px 0 var(--brand-shadow) !important;
+}
+
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#221e34;
+    --chrome:#282631;
+    --chrome-text:#fff7e8;
+    --chrome-chip:#3c3945;
+    --chrome-chip-text:#fff9ec;
+    --paper:#fff8ea;
+    --warm:#302d35;
+    --line:#241f36;
+    --shadow:rgba(0,0,0,.34);
+    --desk-bg:#28292f;
+    --app-ring:#18171e;
+    --app-shadow:rgba(0,0,0,.38);
+    --sidebar-bg:#2c2934;
+    --sidebar-section:#aaa0cf;
+    --sidebar-text:#f5efe5;
+    --sidebar-sub:#b9b1c3;
+    --nav-hover:rgba(255,248,234,.08);
+    --nav-active-shadow:rgba(255,248,234,.14);
+    --brand-shadow:rgba(255,248,234,.12);
+    --page-header-bg:rgba(255,248,234,.96);
+    --mobile-divider:#1d1b24;
+  }
+
+  html:not([data-theme="light"]) body{
+    background:
+      radial-gradient(circle at 18% 8%,rgba(93,174,231,.16),transparent 27rem),
+      radial-gradient(circle at 86% 22%,rgba(166,133,223,.16),transparent 25rem),
+      linear-gradient(135deg,#34313a 0%,var(--desk-bg) 54%,#24242b 100%);
+  }
+
+  html:not([data-theme="light"]) .cleanmac-app{
+    box-shadow:0 0 0 2px var(--app-ring),0 22px 48px var(--app-shadow) !important;
+  }
+
+  html:not([data-theme="light"]) .cleanmac-titlebar>div:first-child>div{
+    box-shadow:0 0 0 1px rgba(255,255,255,.18) inset !important;
+  }
+
+  html:not([data-theme="light"]) .cleanmac-brand{
+    box-shadow:0 7px 0 var(--brand-shadow) !important;
+  }
+}
+</style>
+
+<div class="cleanmac-app" style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;border:3px solid #1E1A2E;border-radius:18px;overflow:hidden;background:#FFFEF8;display:flex;flex-direction:column;min-height:560px">
+
+  <!-- TITLE BAR -->
+  <div class="cleanmac-titlebar" style="height:30px;background:#2C2640;display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0">
+    <div style="display:flex;gap:6px">
+      <div style="width:11px;height:11px;border-radius:50%;background:#FF6058;border:1.5px solid #D94030"></div>
+      <div style="width:11px;height:11px;border-radius:50%;background:#FFBD2E;border:1.5px solid #DEA123"></div>
+      <div style="width:11px;height:11px;border-radius:50%;background:#28CA41;border:1.5px solid #1FAD32"></div>
+    </div>
+    <div id="win-title" style="flex:1;text-align:center;font-size:12px;color:#9090B0;font-weight:500">CleanMac — Disk Overview</div>
+  </div>
+
+  <div style="display:flex;flex:1;overflow:hidden">
+
+    <!-- SIDEBAR -->
+    <div class="cleanmac-sidebar" style="width:222px;background:#2C2640;border-right:3px solid #1E1A2E;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto">
+      <div class="cleanmac-brand" style="padding:14px 12px 10px;border-bottom:2px solid #3A3458;display:flex;align-items:center;gap:10px">
+        <div style="animation:float 3s ease-in-out infinite;flex-shrink:0">
+          <svg width="40" height="42" viewBox="0 0 40 42">
+            <rect x="1" y="4" width="38" height="28" rx="7" fill="#FFFEF8" stroke="#1E1A2E" stroke-width="2.5"/>
+            <rect x="6" y="9" width="28" height="17" rx="4" fill="#BDD8F7" stroke="#1E1A2E" stroke-width="1.8"/>
+            <rect x="13" y="32" width="14" height="4" rx="2" fill="#D0DCF0" stroke="#1E1A2E" stroke-width="1.5"/>
+            <rect x="7" y="35" width="26" height="4" rx="2" fill="#C0CAE0" stroke="#1E1A2E" stroke-width="1.5"/>
+            <g style="animation:blink 3.5s ease-in-out infinite;transform-origin:13px 15px">
+              <ellipse cx="13" cy="15" rx="4" ry="4.5" fill="#3A6B9E"/>
+              <ellipse cx="13" cy="15" rx="2.2" ry="2.5" fill="#1E1A2E"/>
+              <ellipse cx="11.8" cy="12.8" rx="1.1" ry="1.1" fill="white"/>
+            </g>
+            <g style="animation:blink 3.5s .15s ease-in-out infinite;transform-origin:27px 15px">
+              <ellipse cx="27" cy="15" rx="4" ry="4.5" fill="#3A6B9E"/>
+              <ellipse cx="27" cy="15" rx="2.2" ry="2.5" fill="#1E1A2E"/>
+              <ellipse cx="25.8" cy="12.8" rx="1.1" ry="1.1" fill="white"/>
+            </g>
+            <line x1="10" y1="21" x2="12" y2="20" stroke="#F0A882" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="11.5" y1="22.5" x2="13.5" y2="21.5" stroke="#F0A882" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="29" y1="20" x2="31" y2="21" stroke="#F0A882" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="27.5" y1="21.5" x2="29.5" y2="22.5" stroke="#F0A882" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M16 22 Q20 26 24 22" fill="none" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:500;color:#E8E0FF">CleanMac</div>
+          <div style="font-size:10px;color:#7070A0">Keep it sparkly ✦</div>
+        </div>
+      </div>
+
+      <div style="padding:10px 8px">
+        <div id="sect-overview" style="font-size:9px;font-weight:500;color:#5050A0;letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin-bottom:6px">Overview</div>
+
+        <div class="nav-item active-nav" id="nav-disk" style="--c:#58A7D8" onclick="goTo('disk')">
+          <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#58A7D8" stroke="#1E1A2E" stroke-width="2"/><circle cx="13" cy="13" r="5" fill="#BDD8F7" stroke="#1E1A2E" stroke-width="1.5"/><circle cx="13" cy="13" r="2" fill="#1E1A2E"/><circle cx="16" cy="9" r="1.2" fill="white"/></svg>
+          <div style="flex:1"><div id="lbl-disk" style="font-size:12px;font-weight:500;color:#E0EEFF">Disk Overview</div><div id="lbl-disk-sub" style="font-size:10px;color:#7070C0">Macintosh HD</div></div>
+          <span style="font-size:11px;font-weight:500;color:#58A7D8">500 GB</span>
+        </div>
+
+        <div class="nav-item" id="nav-speed" style="--c:#F0A882" onclick="goTo('speed')">
+          <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#F0A882" stroke="#1E1A2E" stroke-width="2"/><path d="M13 19 A8 8 0 1 1 6 11" fill="none" stroke="#FFFEF8" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="19" x2="9" y2="10" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="19" r="2" fill="white"/></svg>
+          <div style="flex:1"><div id="lbl-speed" style="font-size:12px;font-weight:500;color:#C0C0E0">Speed up Mac</div><div id="lbl-speed-sub" style="font-size:10px;color:#7070C0">Performance</div></div>
+          <span style="font-size:11px;font-weight:500;color:#F0A882">5.1 GB</span>
+        </div>
+
+        <div class="nav-item" id="nav-clean" style="--c:#7DC4A8" onclick="goTo('clean')">
+          <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="2"/><rect x="7" y="9" width="12" height="10" rx="3" fill="#C8ECD8" stroke="#1E1A2E" stroke-width="1.5"/><line x1="13" y1="9" x2="13" y2="6" stroke="#1E1A2E" stroke-width="1.8" stroke-linecap="round"/><rect x="9" y="4" width="8" height="3" rx="1.5" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="1.5"/></svg>
+          <div style="flex:1"><div id="lbl-clean" style="font-size:12px;font-weight:500;color:#C0C0E0">Clean up Mac</div><div id="lbl-clean-sub" style="font-size:10px;color:#7070C0">Junk files</div></div>
+          <span style="font-size:11px;font-weight:500;color:#7DC4A8">32 GB</span>
+        </div>
+
+        <div class="nav-item" id="nav-manage" style="--c:#9E8FCC" onclick="goTo('manage')">
+          <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#9E8FCC" stroke="#1E1A2E" stroke-width="2"/><rect x="6" y="17" width="14" height="4" rx="1.5" fill="#DDD5F7" stroke="#1E1A2E" stroke-width="1.2"/><rect x="8" y="12" width="10" height="4" rx="1.5" fill="#DDD5F7" stroke="#1E1A2E" stroke-width="1.2"/><rect x="10" y="7" width="6" height="4" rx="1.5" fill="#DDD5F7" stroke="#1E1A2E" stroke-width="1.2"/></svg>
+          <div style="flex:1"><div id="lbl-manage" style="font-size:12px;font-weight:500;color:#C0C0E0">Manage space</div><div id="lbl-manage-sub" style="font-size:10px;color:#7070C0">User files</div></div>
+          <span style="font-size:11px;font-weight:500;color:#9E8FCC">20 GB</span>
+        </div>
+
+        <div id="sect-protools" style="font-size:9px;font-weight:500;color:#5050A0;letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin:10px 0 6px">Pro tools</div>
+
+        <div class="nav-item" id="nav-dupes" style="--c:#F2CC5A" onclick="goTo('dupes')">
+          <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#FFF3CC" stroke="#1E1A2E" stroke-width="2"/><rect x="5" y="8" width="8" height="10" rx="2" fill="#F2CC5A" stroke="#1E1A2E" stroke-width="1.5"/><rect x="13" y="8" width="8" height="10" rx="2" fill="#F2CC5A" stroke="#1E1A2E" stroke-width="1.5" opacity=".7"/></svg>
+          <div style="flex:1"><div id="lbl-dupes" style="font-size:12px;font-weight:500;color:#C0C0E0">Find duplicates</div><div id="lbl-dupes-sub" style="font-size:10px;color:#7070C0">Exact matches</div></div>
+          <span style="font-size:11px;font-weight:500;color:#F2CC5A">10.2 GB</span>
+        </div>
+
+        <div class="nav-item" id="nav-uninstall" style="--c:#E891B0" onclick="goTo('uninstall')">
+          <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#FFE0EC" stroke="#1E1A2E" stroke-width="2"/><rect x="7" y="6" width="12" height="14" rx="3" fill="#E891B0" stroke="#1E1A2E" stroke-width="1.5"/><line x1="10" y1="11" x2="16" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div style="flex:1"><div id="lbl-uninstall" style="font-size:12px;font-weight:500;color:#C0C0E0">Uninstall apps</div><div id="lbl-uninstall-sub" style="font-size:10px;color:#7070C0">App cleaner</div></div>
+          <span style="font-size:11px;font-weight:500;color:#E891B0">15 GB</span>
+        </div>
+
+        <div class="nav-item" id="nav-analyze" style="--c:#7DC4A8" onclick="goTo('analyze')">
+          <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#C8ECD8" stroke="#1E1A2E" stroke-width="2"/><rect x="5" y="14" width="5" height="7" rx="1.5" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="1.2"/><rect x="11" y="10" width="5" height="11" rx="1.5" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="1.2"/><rect x="17" y="7" width="5" height="14" rx="1.5" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="1.2"/></svg>
+          <div style="flex:1"><div id="lbl-analyze" style="font-size:12px;font-weight:500;color:#C0C0E0">Analyze space</div><div id="lbl-analyze-sub" style="font-size:10px;color:#7070C0">Space map</div></div>
+          <span style="font-size:11px;font-weight:500;color:#7DC4A8">6.4 GB</span>
+        </div>
+
+        <!-- AI ANALYSIS — shown only when local agent detected -->
+        <div id="nav-ai-wrap" style="display:none">
+          <div id="sect-ai" style="font-size:9px;font-weight:500;color:#5050A0;letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin:10px 0 6px">AI · Local</div>
+          <div class="nav-item" id="nav-ai" style="--c:#C4A8F2" onclick="goTo('ai')">
+            <svg width="26" height="26" viewBox="0 0 26 26">
+              <circle cx="13" cy="13" r="12" fill="#EAE0FF" stroke="#1E1A2E" stroke-width="2"/>
+              <path d="M8 17 Q8 9 13 9 Q18 9 18 17" fill="none" stroke="#9E70E8" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="10" cy="17" r="2" fill="#9E70E8" stroke="#1E1A2E" stroke-width="1.2"/>
+              <circle cx="16" cy="17" r="2" fill="#9E70E8" stroke="#1E1A2E" stroke-width="1.2"/>
+              <path d="M11 13 L13 11 L15 13" fill="none" stroke="#C4A8F2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div style="flex:1">
+              <div id="lbl-ai" style="font-size:12px;font-weight:500;color:#DDD0FF">AI Analysis</div>
+              <div id="nav-ai-agent-name" style="font-size:10px;color:#7070C0">Local agent</div>
+            </div>
+            <span style="font-size:9px;padding:2px 5px;border-radius:4px;background:#3A2860;color:#C4A8F2;border:1px solid #5A3090;font-weight:600">NEW</span>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="sect-system" style="font-size:9px;font-weight:500;color:#5050A0;letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin:10px 0 6px">System</div>
+        <div class="nav-item" id="nav-settings" style="--c:#A0B0D0" onclick="goTo('settings')">
+          <svg width="26" height="26" viewBox="0 0 26 26">
+            <circle cx="13" cy="13" r="12" fill="#D8E4F0" stroke="#1E1A2E" stroke-width="2"/>
+            <circle cx="13" cy="13" r="4" fill="none" stroke="#1E1A2E" stroke-width="1.8"/>
+            <circle cx="13" cy="13" r="1.5" fill="#1E1A2E"/>
+            <line x1="13" y1="5" x2="13" y2="8" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/>
+            <line x1="13" y1="18" x2="13" y2="21" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/>
+            <line x1="5" y1="13" x2="8" y2="13" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18" y1="13" x2="21" y2="13" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <div style="flex:1">
+            <div id="lbl-settings" style="font-size:12px;font-weight:500;color:#C0C0E0">Settings</div>
+            <div id="lbl-settings-sub" style="font-size:10px;color:#7070C0">Language & more</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="cleanmac-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;background:#FFFEF8">
+
+      <!-- PAGE: DISK -->
+      <div id="page-disk" class="page active">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="42" height="42" viewBox="0 0 42 42" style="animation:float 3s ease-in-out infinite;flex-shrink:0">
+            <rect x="1" y="6" width="40" height="28" rx="8" fill="#BDD8F7" stroke="#1E1A2E" stroke-width="2.5"/>
+            <rect x="7" y="12" width="28" height="16" rx="4" fill="#FFFEF8" stroke="#1E1A2E" stroke-width="1.8"/>
+            <rect x="15" y="34" width="12" height="4" rx="2" fill="#D0DCF0" stroke="#1E1A2E" stroke-width="1.5"/>
+            <rect x="7" y="37" width="28" height="3" rx="1.5" fill="#C0CAE0" stroke="#1E1A2E" stroke-width="1.5"/>
+            <rect x="10" y="15" width="8" height="7" rx="2" fill="#58A7D8" stroke="#1E1A2E" stroke-width="1.2"/>
+            <rect x="21" y="15" width="11" height="3" rx="1.2" fill="#D6EDFF"/>
+            <rect x="21" y="20" width="8" height="3" rx="1.2" fill="#D6EDFF"/>
+          </svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Macintosh HD ✦</div>
+            <div style="font-size:12px;color:#6892C4;margin-top:2px">72 GB free of 500 GB total</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:22px;font-weight:500;color:#0A1A40">428 GB</div>
+            <div style="font-size:11px;color:#6892C4">used</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="height:26px;border-radius:13px;border:2.5px solid #1E1A2E;overflow:hidden;display:flex;margin-bottom:12px;box-shadow:2px 2px 0 #1E1A2E">
+            <div style="width:6%;background:#A8B8D8;transform-origin:left;animation:segIn .35s .0s ease both"></div>
+            <div style="width:2.4%;background:#F0A882;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .05s ease both"></div>
+            <div style="width:15%;background:#58A7D8;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .1s ease both"></div>
+            <div style="width:24%;background:#9E8FCC;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .15s ease both"></div>
+            <div style="width:4%;background:#E891B0;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .2s ease both"></div>
+            <div style="width:7.6%;background:#7DC4A8;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .25s ease both"></div>
+            <div style="width:9%;background:#4A8FD4;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .3s ease both"></div>
+            <div style="width:10%;background:#F2CC5A;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .35s ease both"></div>
+            <div style="width:3%;background:#FF6058;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .4s ease both"></div>
+            <div style="width:7%;background:#F5B896;border-left:2px solid #1E1A2E;transform-origin:left;animation:segIn .35s .45s ease both"></div>
+            <div style="flex:1;background:#EDE8E0;border-left:2px solid #1E1A2E;display:flex;align-items:center;justify-content:center">
+              <span style="font-size:11px;color:#8AAAC8;font-weight:500">72 GB free</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px 14px">
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#A8B8D8;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">System</span><span style="font-size:11px;font-weight:500;color:#0A1A40">30 GB</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#F0A882;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">Cache</span><span style="font-size:11px;font-weight:500;color:#0A1A40">12 GB</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#58A7D8;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">Junk</span><span style="font-size:11px;font-weight:500;color:#0A1A40">75 GB</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#9E8FCC;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">Video</span><span style="font-size:11px;font-weight:500;color:#0A1A40">120 GB</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#E891B0;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">Docs</span><span style="font-size:11px;font-weight:500;color:#0A1A40">20 GB</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#7DC4A8;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">Archives</span><span style="font-size:11px;font-weight:500;color:#0A1A40">38 GB</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#F2CC5A;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">Duplicates</span><span style="font-size:11px;font-weight:500;color:#0A1A40">50 GB</span></div>
+            <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:3px;background:#F5B896;border:1.5px solid #1E1A2E"></div><span style="font-size:11px;color:#4A6896">Pictures</span><span style="font-size:11px;font-weight:500;color:#0A1A40">35 GB</span></div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px">
+            <svg width="58" height="58" viewBox="0 0 58 58" style="animation:float 3.4s ease-in-out infinite"><circle cx="29" cy="29" r="27" fill="#FFE0D0" stroke="#1E1A2E" stroke-width="2"/><path d="M29 42 A14 14 0 1 1 19 24" fill="none" stroke="#F0A882" stroke-width="3" stroke-linecap="round"/><path d="M29 42 A14 14 0 0 0 39 24" fill="none" stroke="#FFFEF8" stroke-width="3" stroke-linecap="round"/><line x1="29" y1="43" x2="22" y2="25" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/><circle cx="29" cy="43" r="3" fill="#F0A882" stroke="#1E1A2E" stroke-width="1.8"/></svg>
+            <div style="font-size:14px;font-weight:500;color:#D45A20">Performance</div>
+            <div style="font-size:11px;color:#8AAAC8;line-height:1.4">Temp files &amp; login items slowing things down</div>
+            <div style="font-size:24px;font-weight:500;color:#0A1A40">20 GB</div>
+            <button class="btn" onclick="goTo('speed')" style="width:100%;background:#F0A882;color:#4A1800">Speed Up →</button>
+          </div>
+          <div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px">
+            <svg width="58" height="58" viewBox="0 0 58 58" style="animation:float 3s .4s ease-in-out infinite"><circle cx="29" cy="29" r="27" fill="#D6EDFF" stroke="#1E1A2E" stroke-width="2"/><rect x="16" y="22" width="26" height="18" rx="5" fill="#BDD8F7" stroke="#1E1A2E" stroke-width="2"/><line x1="21" y1="28" x2="21" y2="35" stroke="#58A7D8" stroke-width="2.5" stroke-linecap="round"/><line x1="27" y1="24" x2="27" y2="35" stroke="#58A7D8" stroke-width="2.5" stroke-linecap="round"/><line x1="33" y1="30" x2="33" y2="35" stroke="#58A7D8" stroke-width="2.5" stroke-linecap="round"/><line x1="39" y1="26" x2="39" y2="35" stroke="#58A7D8" stroke-width="2.5" stroke-linecap="round"/><rect x="14" y="16" width="30" height="7" rx="3.5" fill="#FFFEF8" stroke="#1E1A2E" stroke-width="1.8"/></svg>
+            <div style="font-size:14px;font-weight:500;color:#1A5A9E">Junk Files</div>
+            <div style="font-size:11px;color:#8AAAC8;line-height:1.4">Cache, temp files and logs ready to remove</div>
+            <div style="font-size:24px;font-weight:500;color:#0A1A40">32 GB</div>
+            <button class="btn" onclick="goTo('clean')" style="width:100%;background:#58A7D8;color:white">Clean Up →</button>
+          </div>
+          <div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px">
+            <svg width="58" height="58" viewBox="0 0 58 58" style="animation:float 3.2s .2s ease-in-out infinite"><circle cx="29" cy="29" r="27" fill="#DDD5F7" stroke="#1E1A2E" stroke-width="2"/><rect x="14" y="36" width="30" height="7" rx="3" fill="#9E8FCC" stroke="#1E1A2E" stroke-width="1.8"/><rect x="17" y="28" width="24" height="7" rx="3" fill="#BDB0E8" stroke="#1E1A2E" stroke-width="1.8"/><rect x="20" y="20" width="18" height="7" rx="3" fill="#D4CCF5" stroke="#1E1A2E" stroke-width="1.8"/><rect x="23" y="12" width="12" height="7" rx="3" fill="#E8E4FF" stroke="#1E1A2E" stroke-width="1.8"/></svg>
+            <div style="font-size:14px;font-weight:500;color:#4A3098">User Files</div>
+            <div style="font-size:11px;color:#8AAAC8;line-height:1.4">Large files that take up significant storage</div>
+            <div style="font-size:24px;font-weight:500;color:#0A1A40">5.1 GB</div>
+            <button class="btn" onclick="goTo('manage')" style="width:100%;background:#9E8FCC;color:white">Manage →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: SPEED UP -->
+      <div id="page-speed" class="page">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3s ease-in-out infinite;flex-shrink:0"><circle cx="22" cy="22" r="21" fill="#FFE0D0" stroke="#1E1A2E" stroke-width="2.5"/><path d="M22 34 A14 14 0 1 1 10 18" fill="none" stroke="#F0A882" stroke-width="3.5" stroke-linecap="round"/><path d="M22 34 A14 14 0 0 0 34 18" fill="none" stroke="#FFFEF8" stroke-width="3.5" stroke-linecap="round"/><line x1="22" y1="36" x2="15" y2="16" stroke="#1E1A2E" stroke-width="2.5" stroke-linecap="round"/><circle cx="22" cy="36" r="4" fill="#F0A882" stroke="#1E1A2E" stroke-width="2"/><circle cx="22" cy="36" r="1.5" fill="white"/><path d="M34 6 L35.4 11 L41 13 L35.4 15 L34 20 L32.6 15 L27 13 L32.6 11Z" fill="#F2CC5A" stroke="#BFA030" stroke-width="1" style="animation:sparkPop 2s .5s infinite"/></svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Speed Up Your Mac ⚡</div>
+            <div style="font-size:12px;color:#C87040;margin-top:2px">5.1 GB recoverable · 7 issues found</div>
+          </div>
+          <div id="speed-scan-btn" style="margin-left:auto">
+            <button class="btn" onclick="runSpeedScan()" style="background:#F0A882;color:#4A1800;padding:0 20px;height:36px;font-size:13px">▷ Run Scan</button>
+          </div>
+        </div>
+
+        <div id="speed-progress" style="display:none">
+          <div class="card" style="overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <div style="width:14px;height:14px;border-radius:50%;border:2px solid #F0A882;border-top-color:transparent;animation:spin .7s linear infinite;flex-shrink:0"></div>
+              <span style="font-size:13px;color:#0A1A40;font-weight:500">Scanning your Mac...</span>
+              <span id="speed-pct" style="font-size:12px;color:#8AAAC8;margin-left:auto">0%</span>
+            </div>
+            <div style="height:10px;border-radius:5px;border:2px solid #1E1A2E;background:#F0F0F8;overflow:hidden">
+              <div id="speed-bar" style="height:100%;width:0;background:#F0A882;transition:width .1s;border-radius:3px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="speed-results" style="display:none;flex-direction:column;gap:12px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div class="card" style="text-align:center;padding:12px">
+              <div style="font-size:22px;font-weight:500;color:#F0A882">7</div>
+              <div style="font-size:11px;color:#8AAAC8">Startup items</div>
+            </div>
+            <div class="card" style="text-align:center;padding:12px">
+              <div style="font-size:22px;font-weight:500;color:#58A7D8">3.8 GB</div>
+              <div style="font-size:11px;color:#8AAAC8">Temp files</div>
+            </div>
+            <div class="card" style="text-align:center;padding:12px">
+              <div style="font-size:22px;font-weight:500;color:#9E8FCC">1.3 GB</div>
+              <div style="font-size:11px;color:#8AAAC8">Crash logs</div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:10px">Login Items</div>
+            <div id="startup-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+          <div class="card" style="padding:12px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:500;color:#0A1A40;flex:1">Memory pressure</div>
+              <span style="font-size:11px;color:#F0A882;font-weight:500">High (7.8 GB used)</span>
+            </div>
+            <div style="height:12px;border-radius:6px;border:2px solid #1E1A2E;background:#F0F0F8;overflow:hidden">
+              <div style="height:100%;width:78%;background:linear-gradient(90deg,#7DC4A8,#F2CC5A,#FF6058);border-radius:4px"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px">
+              <span style="font-size:10px;color:#7DC4A8">Normal</span>
+              <span style="font-size:10px;color:#F2CC5A">Elevated</span>
+              <span style="font-size:10px;color:#FF6058">High</span>
+            </div>
+          </div>
+          <button class="btn" onclick="optimizeNow()" style="background:#F0A882;color:#4A1800;align-self:flex-end;padding:0 24px;height:38px;font-size:14px">✦ Optimize Now</button>
+        </div>
+
+        <div id="speed-done" style="display:none">
+          <div class="card" style="text-align:center;padding:28px;display:flex;flex-direction:column;align-items:center;gap:12px">
+            <svg width="60" height="60" viewBox="0 0 60 60" style="animation:bounce 1s ease"><circle cx="30" cy="30" r="28" fill="#C8ECD8" stroke="#1E1A2E" stroke-width="2.5"/><path d="M18 30 L26 38 L42 22" fill="none" stroke="#1E1A2E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">All optimized! 🎉</div>
+            <div style="font-size:13px;color:#6892C4">5.1 GB freed · 7 startup items managed</div>
+            <button class="btn" onclick="goTo('disk')" style="background:#7DC4A8;color:#0A3020;margin-top:4px">← Back to Overview</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: CLEAN UP -->
+      <div id="page-clean" class="page">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3.2s ease-in-out infinite;flex-shrink:0"><circle cx="22" cy="22" r="21" fill="#C8ECD8" stroke="#1E1A2E" stroke-width="2.5"/><rect x="8" y="20" width="28" height="16" rx="6" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="2"/><rect x="15" y="13" width="14" height="9" rx="4" fill="#FFFEF8" stroke="#1E1A2E" stroke-width="2"/><line x1="22" y1="28" x2="22" y2="33" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="30.5" x2="27" y2="30.5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Clean Up Mac 🗑</div>
+            <div style="font-size:12px;color:#5A9478;margin-top:2px">32 GB junk found · Select what to remove</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:13px;color:#0A1A40;font-weight:500">Selected: <span id="selected-total" style="color:#7DC4A8">32.0 GB</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:13px;font-weight:500;color:#0A1A40">Junk categories</span>
+            <button onclick="selectAll()" style="font-size:11px;color:#6892C4;background:none;border:none;cursor:pointer;text-decoration:underline">Select All</button>
+          </div>
+          <div id="clean-list" style="display:flex;flex-direction:column;gap:0"></div>
+        </div>
+
+        <div id="clean-actions" style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn" onclick="cleanNow()" style="background:#7DC4A8;color:#0A3020;padding:0 24px;height:38px;font-size:14px">✦ Clean Now</button>
+        </div>
+
+        <div id="clean-progress" style="display:none">
+          <div class="card" style="overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <div style="width:14px;height:14px;border-radius:50%;border:2px solid #7DC4A8;border-top-color:transparent;animation:spin .7s linear infinite;flex-shrink:0"></div>
+              <span style="font-size:13px;color:#0A1A40;font-weight:500">Cleaning junk files...</span>
+              <span id="clean-pct" style="font-size:12px;color:#8AAAC8;margin-left:auto">0%</span>
+            </div>
+            <div style="height:10px;border-radius:5px;border:2px solid #1E1A2E;background:#F0F0F8;overflow:hidden">
+              <div id="clean-bar" style="height:100%;width:0;background:#7DC4A8;transition:width .1s;border-radius:3px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="clean-done" style="display:none">
+          <div class="card" style="text-align:center;padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px">
+            <svg width="58" height="58" viewBox="0 0 58 58" style="animation:bounce 1s ease"><circle cx="29" cy="29" r="27" fill="#C8ECD8" stroke="#1E1A2E" stroke-width="2.5"/><path d="M17 29 L25 37 L41 21" fill="none" stroke="#1E1A2E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Squeaky clean! ✦</div>
+            <div style="font-size:13px;color:#6892C4">32 GB freed · Your Mac thanks you</div>
+            <button class="btn" onclick="goTo('disk')" style="background:#7DC4A8;color:#0A3020">← Back to Overview</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: MANAGE SPACE -->
+      <div id="page-manage" class="page">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3s ease-in-out infinite;flex-shrink:0"><circle cx="22" cy="22" r="21" fill="#DDD5F7" stroke="#1E1A2E" stroke-width="2.5"/><rect x="8" y="30" width="28" height="8" rx="3" fill="#9E8FCC" stroke="#1E1A2E" stroke-width="2"/><rect x="10" y="22" width="24" height="7" rx="3" fill="#BDB0E8" stroke="#1E1A2E" stroke-width="2"/><rect x="12" y="14" width="20" height="7" rx="3" fill="#D4CCF5" stroke="#1E1A2E" stroke-width="2"/><rect x="14" y="7" width="16" height="6" rx="3" fill="#E8E4FF" stroke="#1E1A2E" stroke-width="2"/></svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Manage Space 📦</div>
+            <div style="font-size:12px;color:#7A6AB8;margin-top:2px">Large files · 20 GB of user data</div>
+          </div>
+          <div style="margin-left:auto">
+            <button class="btn" style="background:#DDD5F7;color:#4A3098;font-size:12px">⇅ Sort by size</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1.5px solid #E8E0F8;display:grid;grid-template-columns:1fr 70px 90px 80px;gap:8px;align-items:center">
+            <span style="font-size:11px;color:#8AAAC8;font-weight:500">File / Folder</span>
+            <span style="font-size:11px;color:#8AAAC8;font-weight:500;text-align:right">Size</span>
+            <span style="font-size:11px;color:#8AAAC8;font-weight:500;text-align:center">Modified</span>
+            <span style="font-size:11px;color:#8AAAC8;font-weight:500;text-align:center">Action</span>
+          </div>
+          <div id="large-files-list"></div>
+        </div>
+        <div class="card" style="background:#F0EBFF">
+          <div style="font-size:12px;color:#6A5AA8;line-height:1.6">💡 <strong>Tip:</strong> Your Downloads folder contains 3.4 GB of files older than 6 months. Consider archiving or removing items you no longer need.</div>
+        </div>
+      </div>
+
+      <!-- PAGE: DUPLICATES -->
+      <div id="page-dupes" class="page">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3s ease-in-out infinite;flex-shrink:0"><circle cx="22" cy="22" r="21" fill="#FFF3CC" stroke="#1E1A2E" stroke-width="2.5"/><rect x="7" y="12" width="14" height="18" rx="4" fill="#F2CC5A" stroke="#1E1A2E" stroke-width="2"/><rect x="23" y="12" width="14" height="18" rx="4" fill="#F2CC5A" stroke="#1E1A2E" stroke-width="2" opacity=".65"/><path d="M20 22 L24 22" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Find Duplicates ✦</div>
+            <div style="font-size:12px;color:#A08820;margin-top:2px">10.2 GB in duplicate files · 3 groups</div>
+          </div>
+          <div style="margin-left:auto">
+            <button class="btn" onclick="removeSelected()" style="background:#F2CC5A;color:#4A3000;font-size:13px">Remove selected</button>
+          </div>
+        </div>
+        <div id="dupes-list" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+
+      <!-- PAGE: UNINSTALL -->
+      <div id="page-uninstall" class="page">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3.2s ease-in-out infinite;flex-shrink:0"><circle cx="22" cy="22" r="21" fill="#FFE0EC" stroke="#1E1A2E" stroke-width="2.5"/><rect x="10" y="8" width="24" height="28" rx="5" fill="#E891B0" stroke="#1E1A2E" stroke-width="2"/><line x1="16" y1="17" x2="28" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="22" x2="28" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="27" x2="23" y2="27" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Uninstall Apps 🗂</div>
+            <div style="font-size:12px;color:#B04080;margin-top:2px">15 GB in app bundles · Remove completely</div>
+          </div>
+          <div style="margin-left:auto">
+            <input placeholder="🔍 Search apps..." style="height:32px;padding:0 12px;border:2px solid #1E1A2E;border-radius:10px 6px 10px 6px;font-size:12px;background:#FFFEF8;outline:none;width:160px" oninput="filterApps(this.value)"/>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:10px 16px;border-bottom:1.5px solid #F5E8F0;display:grid;grid-template-columns:1fr 70px 100px;gap:8px;align-items:center">
+            <span style="font-size:11px;color:#8AAAC8;font-weight:500">Application</span>
+            <span style="font-size:11px;color:#8AAAC8;font-weight:500;text-align:right">Size</span>
+            <span style="font-size:11px;color:#8AAAC8;font-weight:500;text-align:center">Action</span>
+          </div>
+          <div id="app-list"></div>
+        </div>
+      </div>
+
+      <!-- PAGE: AI ANALYSIS -->
+      <div id="page-ai" class="page">
+        <!-- header -->
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3s ease-in-out infinite;flex-shrink:0">
+            <circle cx="22" cy="22" r="21" fill="#EAE0FF" stroke="#1E1A2E" stroke-width="2.5"/>
+            <path d="M12 30 Q12 14 22 14 Q32 14 32 30" fill="none" stroke="#9E70E8" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="15" cy="30" r="3.5" fill="#9E70E8" stroke="#1E1A2E" stroke-width="1.8"/>
+            <circle cx="29" cy="30" r="3.5" fill="#9E70E8" stroke="#1E1A2E" stroke-width="1.8"/>
+            <path d="M19 20 L22 17 L25 20" fill="none" stroke="#C4A8F2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M34 6 L35.2 10 L40 12 L35.2 14 L34 18 L32.8 14 L28 12 L32.8 10Z" fill="#F2CC5A" stroke="#BFA030" stroke-width="1" style="animation:sparkPop 2s .3s infinite"/>
+          </svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">AI Analysis ✦</div>
+            <div id="ai-header-sub" style="font-size:12px;color:#7A5AB8;margin-top:2px">Powered by your local agent</div>
+          </div>
+          <div style="margin-left:auto">
+            <div id="ai-agent-badge" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px 4px 8px 4px;border:2px solid #1E1A2E;background:#EAE0FF;box-shadow:2px 2px 0 #1E1A2E">
+              <div style="width:7px;height:7px;border-radius:50%;background:#7DC4A8"></div>
+              <span id="ai-agent-label" style="font-size:11px;font-weight:500;color:#3A1A7E">claude code</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- agent config card -->
+        <div class="card" id="ai-config-card">
+          <div style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:12px">Agent configuration</div>
+
+          <!-- runtime row -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:#8AAAC8;margin-bottom:5px;font-weight:500">Runtime</div>
+            <div id="ai-runtime-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+
+          <!-- model row -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:#8AAAC8;margin-bottom:5px;font-weight:500">Model</div>
+            <div style="position:relative">
+              <select id="ai-model-select" style="width:100%;height:32px;padding:0 10px;border:2px solid #1E1A2E;border-radius:8px 4px 8px 4px;font-size:12px;background:#FFFEF8;color:#0A1A40;appearance:none;cursor:pointer;outline:none">
+                <option>Default (provider)</option>
+                <option>claude-opus-4</option>
+                <option>claude-sonnet-4</option>
+                <option>claude-haiku-4</option>
+              </select>
+              <div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#8AAAC8">▾</div>
+            </div>
+          </div>
+
+          <!-- instructions -->
+          <div>
+            <div style="font-size:11px;color:#8AAAC8;margin-bottom:5px;font-weight:500">Instructions</div>
+            <textarea id="ai-instructions" rows="3" style="width:100%;padding:8px 10px;border:2px solid #1E1A2E;border-radius:8px 4px 8px 4px;font-size:12px;font-family:inherit;background:#FFFEF8;color:#0A1A40;resize:none;outline:none;line-height:1.5" placeholder="e.g. Analyze my disk usage and suggest what to safely delete...">Analyze my Mac's disk usage. Review the scan results and give me a prioritized recommendation: what is safe to delete, what to archive, and what to keep. Be concise.</textarea>
+          </div>
+        </div>
+
+        <!-- run button -->
+        <div id="ai-run-wrap" style="display:flex;justify-content:flex-end">
+          <button class="btn" onclick="runAIAnalysis()" style="background:#9E70E8;color:white;padding:0 24px;height:38px;font-size:14px;border-color:#1E1A2E">✦ Run Analysis</button>
+        </div>
+
+        <!-- progress -->
+        <div id="ai-progress" style="display:none">
+          <div class="card" style="overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <div style="width:14px;height:14px;border-radius:50%;border:2px solid #9E70E8;border-top-color:transparent;animation:spin .7s linear infinite;flex-shrink:0"></div>
+              <span id="ai-progress-msg" style="font-size:13px;color:#0A1A40;font-weight:500">Connecting to local agent...</span>
+              <span id="ai-progress-pct" style="font-size:12px;color:#8AAAC8;margin-left:auto">0%</span>
+            </div>
+            <div style="height:10px;border-radius:5px;border:2px solid #1E1A2E;background:#F0F0F8;overflow:hidden">
+              <div id="ai-bar" style="height:100%;width:0;background:linear-gradient(90deg,#9E70E8,#C4A8F2);transition:width .2s;border-radius:3px"></div>
+            </div>
+            <div id="ai-stream" style="margin-top:10px;font-size:11px;color:#9070B8;font-family:monospace;line-height:1.6;min-height:24px;opacity:.8"></div>
+          </div>
+        </div>
+
+        <!-- result -->
+        <div id="ai-result" style="display:none;flex-direction:column;gap:12px">
+          <!-- summary chips -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="ai-chips"></div>
+          <!-- recommendations -->
+          <div class="card" id="ai-recs"></div>
+          <!-- re-run -->
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <button class="btn" onclick="resetAI()" style="background:#F0F0F8;color:#4A3098;font-size:12px">↩ New analysis</button>
+            <button class="btn" onclick="goTo('clean')" style="background:#7DC4A8;color:#0A3020;font-size:12px">Clean Now →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: ANALYZE -->
+      <div id="page-analyze" class="page">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3s ease-in-out infinite;flex-shrink:0"><circle cx="22" cy="22" r="21" fill="#C8ECD8" stroke="#1E1A2E" stroke-width="2.5"/><rect x="7" y="28" width="8" height="10" rx="2" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="1.8"/><rect x="18" y="22" width="8" height="16" rx="2" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="1.8"/><rect x="29" y="14" width="8" height="24" rx="2" fill="#7DC4A8" stroke="#1E1A2E" stroke-width="1.8"/><line x1="7" y1="40" x2="37" y2="40" stroke="#1E1A2E" stroke-width="2" stroke-linecap="round"/></svg>
+          <div>
+            <div style="font-size:18px;font-weight:500;color:#0A1A40">Analyze Space 📊</div>
+            <div style="font-size:12px;color:#5A9478;margin-top:2px">Visual breakdown · Macintosh HD</div>
+          </div>
+        </div>
+        <div class="card" style="padding:12px">
+          <div style="display:flex;gap:6px;height:120px;align-items:flex-end;margin-bottom:12px" id="space-bars"></div>
+          <div id="space-legend" style="display:flex;flex-wrap:wrap;gap:6px 14px"></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:10px">Largest folders</div>
+          <div id="folder-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+
+      <!-- PAGE: SETTINGS -->
+      <div id="page-settings" class="page">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="44" height="44" viewBox="0 0 44 44" style="animation:float 3s ease-in-out infinite;flex-shrink:0">
+            <circle cx="22" cy="22" r="21" fill="#D8E4F0" stroke="#1E1A2E" stroke-width="2.5"/>
+            <circle cx="22" cy="22" r="7" fill="none" stroke="#1E1A2E" stroke-width="2.5"/>
+            <circle cx="22" cy="22" r="2.5" fill="#1E1A2E"/>
+            <line x1="22" y1="7" x2="22" y2="13" stroke="#1E1A2E" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="22" y1="31" x2="22" y2="37" stroke="#1E1A2E" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="7" y1="22" x2="13" y2="22" stroke="#1E1A2E" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="31" y1="22" x2="37" y2="22" stroke="#1E1A2E" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <div>
+            <div id="page-settings-title" style="font-size:18px;font-weight:500;color:#0A1A40">Settings ⚙️</div>
+            <div id="page-settings-sub" style="font-size:12px;color:#6892C4;margin-top:2px">CleanMac v1.0</div>
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="card">
+          <div id="settings-sect-theme" style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:4px">Appearance</div>
+          <div id="settings-theme-desc" style="font-size:11px;color:#8AAAC8;margin-bottom:14px">Use system appearance by default</div>
+          <div class="theme-control" role="group" aria-label="Appearance">
+            <button class="theme-btn" data-theme-mode="system" onclick="setThemeMode('system')" type="button" aria-pressed="false">
+              <span id="theme-system-label">System</span>
+              <small id="theme-system-desc">Automatic</small>
+            </button>
+            <button class="theme-btn" data-theme-mode="light" onclick="setThemeMode('light')" type="button" aria-pressed="false">
+              <span id="theme-light-label">Light</span>
+              <small id="theme-light-desc">Bright</small>
+            </button>
+            <button class="theme-btn" data-theme-mode="dark" onclick="setThemeMode('dark')" type="button" aria-pressed="false">
+              <span id="theme-dark-label">Dark</span>
+              <small id="theme-dark-desc">Dimmed</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Language -->
+        <div class="card">
+          <div id="settings-sect-lang" style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:4px">Language</div>
+          <div id="settings-lang-desc" style="font-size:11px;color:#8AAAC8;margin-bottom:14px">Select display language</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="lang-grid"></div>
+        </div>
+
+        <!-- About -->
+        <div class="card" style="background:#F0EBFF">
+          <div style="font-size:13px;font-weight:500;color:#3A1A7E;margin-bottom:6px">CleanMac</div>
+          <div style="font-size:11px;color:#7A5AB8;line-height:1.7">Version 1.0 · Design prototype<br>Supports macOS 14 Sonoma and later</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// === DATA ===
+var startupApps=['Google Chrome Helper','Spotify','Dropbox','Microsoft OneDrive','Zoom','Slack','Discord'];
+var startupStates=[true,true,false,true,true,false,true];
+
+var cleanCategories=[
+  {name:'Cache files',icon:'💾',size:12.2,color:'#F0A882'},
+  {name:'System junk',icon:'🖥️',size:4.1,color:'#58A7D8'},
+  {name:'Trash',icon:'🗑️',size:2.8,color:'#9E8FCC'},
+  {name:'Mail attachments',icon:'📧',size:6.5,color:'#E891B0'},
+  {name:'Downloaded files',icon:'📥',size:5.7,color:'#7DC4A8'},
+  {name:'Crash logs',icon:'💥',size:0.7,color:'#F2CC5A'}
+];
+var cleanChecked=[true,true,true,true,true,true];
+
+var largeFiles=[
+  {icon:'🎬',name:'Final Cut Pro Media',path:'~/Movies/FCPX',size:'6.2 GB',mod:'2 months ago'},
+  {icon:'📦',name:'Xcode Archives',path:'~/Library/Developer/Archives',size:'3.8 GB',mod:'1 month ago'},
+  {icon:'🎵',name:'Logic Pro Samples',path:'~/Music/Logic',size:'2.4 GB',mod:'3 days ago'},
+  {icon:'📷',name:'Photos Library',path:'~/Pictures',size:'2.1 GB',mod:'Today'},
+  {icon:'📂',name:'Downloads',path:'~/Downloads',size:'1.9 GB',mod:'Yesterday'},
+  {icon:'🗃️',name:'Virtual Machines',path:'~/VMs',size:'1.4 GB',mod:'6 months ago'}
+];
+
+var dupeGroups=[
+  {name:'Screenshot 2024.png',count:4,size:'328 MB',color:'#F2CC5A',paths:['Desktop/','Downloads/','Docs/','Archive/']},
+  {name:'Project Backup.zip',count:3,size:'2.1 GB',color:'#F0A882',paths:['Downloads/','Desktop/','USB Backup/']},
+  {name:'Final Presentation.key',count:2,size:'894 MB',color:'#9E8FCC',paths:['Documents/','iCloud Drive/']}
+];
+
+var apps=[
+  {name:'Final Cut Pro',icon:'🎬',size:'2.7 GB',ver:'10.7.1'},
+  {name:'Xcode',icon:'🔧',size:'2.4 GB',ver:'15.2'},
+  {name:'Adobe Photoshop',icon:'🖼️',size:'1.8 GB',ver:'25.0'},
+  {name:'Logic Pro',icon:'🎵',size:'1.6 GB',ver:'11.1'},
+  {name:'Microsoft Word',icon:'📝',size:'942 MB',ver:'16.80'},
+  {name:'Slack',icon:'💬',size:'256 MB',ver:'4.36'},
+  {name:'Zoom',icon:'📹',size:'198 MB',ver:'6.0'},
+  {name:'Spotify',icon:'🎧',size:'144 MB',ver:'1.2.45'}
+];
+
+var spaceData=[
+  {label:'System',gb:30,color:'#A8B8D8'},{label:'Video',gb:120,color:'#9E8FCC'},
+  {label:'Junk',gb:75,color:'#58A7D8'},{label:'Dupes',gb:50,color:'#F2CC5A'},
+  {label:'Archives',gb:38,color:'#7DC4A8'},{label:'Pictures',gb:35,color:'#F5B896'},
+  {label:'Apps',gb:45,color:'#4A8FD4'},{label:'Docs',gb:20,color:'#E891B0'},
+  {label:'Cache',gb:12,color:'#F0A882'},{label:'Free',gb:72,color:'#EDE8E0'}
+];
+
+var folders=[
+  {name:'Movies',size:'128 GB',pct:26,color:'#9E8FCC'},
+  {name:'Library',size:'88 GB',pct:18,color:'#58A7D8'},
+  {name:'Downloads',size:'44 GB',pct:9,color:'#F0A882'},
+  {name:'Pictures',size:'38 GB',pct:8,color:'#E891B0'},
+  {name:'Documents',size:'22 GB',pct:4.4,color:'#7DC4A8'}
+];
+
+var THEME_STORAGE_KEY='cleanmac.theme';
+var currentThemeMode=document.documentElement.dataset.themePreference||'system';
+
+function normalizeThemeMode(mode){
+  return(mode==='light'||mode==='dark')?mode:'system';
+}
+
+function clearThemeQueryParam(){
+  if(!window.history||!window.history.replaceState)return;
+  var url=new URL(window.location.href);
+  if(!url.searchParams.has('theme'))return;
+  url.searchParams.delete('theme');
+  window.history.replaceState(null,'',url.pathname+url.search+url.hash);
+}
+
+function updateThemeButtons(){
+  var mode=normalizeThemeMode(currentThemeMode);
+  document.querySelectorAll('.theme-btn').forEach(function(btn){
+    var active=btn.dataset.themeMode===mode;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',active?'true':'false');
+  });
+}
+
+function setThemeMode(mode){
+  mode=normalizeThemeMode(mode);
+  currentThemeMode=mode;
+  document.documentElement.dataset.themePreference=mode;
+  if(mode==='system'){
+    document.documentElement.removeAttribute('data-theme');
+    try{localStorage.removeItem(THEME_STORAGE_KEY)}catch(e){}
+  }else{
+    document.documentElement.dataset.theme=mode;
+    try{localStorage.setItem(THEME_STORAGE_KEY,mode)}catch(e){}
+  }
+  clearThemeQueryParam();
+  updateThemeButtons();
+}
+
+// === INIT ===
+function init(){
+  buildLanguageGrid();
+  setLang(currentLang);
+  updateThemeButtons();
+  buildStartupList();
+  buildCleanList();
+  buildLargeFiles();
+  buildDupeGroups();
+  buildAppList();
+  buildSpaceBars();
+  buildFolderList();
+}
+
+function buildStartupList(){
+  var el=document.getElementById('startup-list');
+  el.innerHTML='';
+  startupApps.forEach(function(app,i){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1.5px solid #F0F0F8';
+    if(i===startupApps.length-1)row.style.borderBottom='none';
+    var on=startupStates[i];
+    row.innerHTML='<div style="width:28px;height:28px;border-radius:8px;background:#F0F0F8;border:1.5px solid #1E1A2E;display:flex;align-items:center;justify-content:center;font-size:14px">📦</div>'
+      +'<div style="flex:1;font-size:12px;color:#0A1A40">'+app+'</div>'
+      +'<div class="toggle '+(on?'on':'')+'" onclick="toggleStartup(this,'+i+')" id="tog'+i+'"></div>';
+    el.appendChild(row);
+  });
+}
+
+function toggleStartup(el,i){
+  startupStates[i]=!startupStates[i];
+  el.classList.toggle('on');
+}
+
+function buildCleanList(){
+  var el=document.getElementById('clean-list');
+  el.innerHTML='';
+  cleanCategories.forEach(function(cat,i){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1.5px solid #F0F8F4;cursor:pointer';
+    if(i===cleanCategories.length-1)row.style.borderBottom='none';
+    row.innerHTML='<div class="checkbox '+(cleanChecked[i]?'checked':'')+'" id="cb'+i+'" onclick="toggleClean('+i+')"></div>'
+      +'<span style="font-size:16px">'+cat.icon+'</span>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#0A1A40">'+cat.name+'</div>'
+      +'<div style="height:5px;background:#F0F0F8;border-radius:3px;border:1px solid #E0E0E8;margin-top:4px"><div style="height:100%;width:'+(cat.size/12.2*100)+'%;background:'+cat.color+';border-radius:3px"></div></div></div>'
+      +'<span style="font-size:12px;font-weight:500;color:#0A1A40;min-width:48px;text-align:right">'+cat.size+' GB</span>';
+    el.appendChild(row);
+  });
+  updateTotal();
+}
+
+function toggleClean(i){
+  cleanChecked[i]=!cleanChecked[i];
+  var cb=document.getElementById('cb'+i);
+  cb.classList.toggle('checked');
+  updateTotal();
+}
+
+function selectAll(){
+  cleanChecked=cleanChecked.map(function(){return true});
+  cleanCategories.forEach(function(_,i){
+    var cb=document.getElementById('cb'+i);
+    if(cb)cb.classList.add('checked');
+  });
+  updateTotal();
+}
+
+function updateTotal(){
+  var total=0;
+  cleanChecked.forEach(function(c,i){if(c)total+=cleanCategories[i].size});
+  var el=document.getElementById('selected-total');
+  if(el)el.textContent=total.toFixed(1)+' GB';
+}
+
+function buildLargeFiles(){
+  var el=document.getElementById('large-files-list');
+  el.innerHTML='';
+  largeFiles.forEach(function(f,i){
+    var row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:1fr 70px 90px 80px;gap:8px;align-items:center;padding:9px 16px;border-bottom:1.5px solid #F0EBF8;transition:background .12s;cursor:pointer';
+    if(i===largeFiles.length-1)row.style.borderBottom='none';
+    row.onmouseover=function(){this.style.background='#F8F5FF'};
+    row.onmouseout=function(){this.style.background=''};
+    row.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">'+f.icon+'</span><div><div style="font-size:12px;font-weight:500;color:#0A1A40">'+f.name+'</div><div style="font-size:10px;color:#8AAAC8">'+f.path+'</div></div></div>'
+      +'<div style="font-size:12px;font-weight:500;color:#0A1A40;text-align:right">'+f.size+'</div>'
+      +'<div style="font-size:11px;color:#8AAAC8;text-align:center">'+f.mod+'</div>'
+      +'<div style="text-align:center"><button class="btn" style="background:#DDD5F7;color:#4A3098;font-size:11px;height:26px;padding:0 10px;box-shadow:2px 2px 0 #1E1A2E">Open</button></div>';
+    el.appendChild(row);
+  });
+}
+
+function buildDupeGroups(){
+  var el=document.getElementById('dupes-list');
+  el.innerHTML='';
+  dupeGroups.forEach(function(g,i){
+    var card=document.createElement('div');
+    card.className='card';
+    card.style.cssText='animation:slideIn .3s '+(i*0.1)+'s ease both';
+    card.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+      +'<div style="width:10px;height:10px;border-radius:3px;background:'+g.color+';border:2px solid #1E1A2E;flex-shrink:0"></div>'
+      +'<div style="font-size:13px;font-weight:500;color:#0A1A40;flex:1">'+g.name+'</div>'
+      +'<span style="font-size:12px;color:#8AAAC8">'+g.count+' copies · '+g.size+'</span></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+      +g.paths.map(function(p,pi){return '<div style="padding:4px 10px;border-radius:8px 4px 8px 4px;border:1.5px solid #1E1A2E;background:'+(pi===0?g.color:'#F8F8F8')+';font-size:11px;color:'+(pi===0?'#1E1A2E':'#6892C4')+'">'+(pi===0?'✓ Keep: ':'')+p+'</div>'}).join('')
+      +'</div><div style="display:flex;gap:8px;justify-content:flex-end">'
+      +'<button class="btn" style="background:'+g.color+';color:#1E1A2E;font-size:12px;height:30px;padding:0 14px;box-shadow:2px 2px 0 #1E1A2E">Remove '+  (g.count-1)+' copies</button></div>';
+    el.appendChild(card);
+  });
+}
+
+function removeSelected(){
+  var el=document.getElementById('dupes-list');
+  el.innerHTML='<div class="card" style="text-align:center;padding:24px"><div style="font-size:30px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:500;color:#0A1A40">10.2 GB freed!</div><div style="font-size:12px;color:#8AAAC8;margin-top:4px">All duplicates removed</div></div>';
+}
+
+function buildAppList(filter){
+  var el=document.getElementById('app-list');
+  el.innerHTML='';
+  var filtered=filter?apps.filter(function(a){return a.name.toLowerCase().includes(filter.toLowerCase())}):apps;
+  filtered.forEach(function(app,i){
+    var row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:1fr 70px 100px;gap:8px;align-items:center;padding:9px 16px;border-bottom:1.5px solid #F8E8F0;transition:background .12s';
+    if(i===filtered.length-1)row.style.borderBottom='none';
+    row.onmouseover=function(){this.style.background='#FFF0F8'};
+    row.onmouseout=function(){this.style.background=''};
+    row.innerHTML='<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">'+app.icon+'</span><div><div style="font-size:12px;font-weight:500;color:#0A1A40">'+app.name+'</div><div style="font-size:10px;color:#8AAAC8">Version '+app.ver+'</div></div></div>'
+      +'<div style="font-size:12px;font-weight:500;color:#0A1A40;text-align:right">'+app.size+'</div>'
+      +'<div style="text-align:center"><button class="btn" onclick="uninstallApp(this)" style="background:#FFE0EC;color:#B04080;font-size:11px;height:26px;padding:0 10px;box-shadow:2px 2px 0 #1E1A2E">Uninstall</button></div>';
+    el.appendChild(row);
+  });
+}
+
+function filterApps(v){buildAppList(v)}
+
+function uninstallApp(btn){
+  var row=btn.closest('div[style*="grid"]');
+  if(row){row.style.opacity='0.4';btn.textContent='Removed';btn.disabled=true}
+}
+
+function buildSpaceBars(){
+  var el=document.getElementById('space-bars');
+  var maxGb=120;
+  el.innerHTML='';
+  spaceData.forEach(function(s){
+    var pct=Math.max(s.gb/maxGb*100,3);
+    var col=document.createElement('div');
+    col.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default';
+    col.innerHTML='<div style="font-size:9px;color:#8AAAC8;writing-mode:vertical-lr;transform:rotate(180deg);height:20px;overflow:hidden">'+s.gb+'GB</div>'
+      +'<div style="width:100%;border-radius:4px 4px 0 0;background:'+s.color+';border:1.5px solid #1E1A2E;height:'+pct+'%;min-height:6px;transition:height .5s ease"></div>'
+      +'<div style="font-size:9px;color:#6892C4;text-align:center;line-height:1.2">'+s.label+'</div>';
+    el.appendChild(col);
+  });
+  var leg=document.getElementById('space-legend');
+  leg.innerHTML='';
+  spaceData.forEach(function(s){
+    if(s.label==='Free')return;
+    var span=document.createElement('div');
+    span.style.cssText='display:flex;align-items:center;gap:4px';
+    span.innerHTML='<div style="width:8px;height:8px;border-radius:2px;background:'+s.color+';border:1.5px solid #1E1A2E"></div><span style="font-size:10px;color:#4A6896">'+s.label+'</span>';
+    leg.appendChild(span);
+  });
+}
+
+function buildFolderList(){
+  var el=document.getElementById('folder-list');
+  el.innerHTML='';
+  folders.forEach(function(f){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px';
+    row.innerHTML='<div style="font-size:14px">📁</div>'
+      +'<div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#0A1A40">'+f.name+'</span><span style="font-size:12px;font-weight:500;color:#0A1A40">'+f.size+'</span></div>'
+      +'<div style="height:7px;border-radius:4px;border:1.5px solid #1E1A2E;background:#F0F0F8;overflow:hidden"><div style="height:100%;width:'+f.pct+'%;background:'+f.color+';border-radius:3px"></div></div></div>';
+    el.appendChild(row);
+  });
+}
+
+// === NAV ===
+var pages=['disk','speed','clean','manage','dupes','uninstall','analyze','ai','settings'];
+var titles={'disk':'Disk Overview','speed':'Speed Up Mac','clean':'Clean Up Mac','manage':'Manage Space','dupes':'Find Duplicates','uninstall':'Uninstall Apps','analyze':'Analyze Space','ai':'AI Analysis','settings':'Settings'};
+
+function goTo(page){
+  pages.forEach(function(p){
+    var el=document.getElementById('page-'+p);
+    if(el){el.className='page';}
+    var nav=document.getElementById('nav-'+p);
+    if(nav)nav.classList.remove('active-nav');
+  });
+  var target=document.getElementById('page-'+page);
+  if(target){target.className='page active';}
+  var nav=document.getElementById('nav-'+page);
+  if(nav)nav.classList.add('active-nav');
+  var wt=document.getElementById('win-title');
+  if(wt)wt.textContent='CleanMac — '+(titles[page]||page);
+}
+
+// === SPEED SCAN ===
+function runSpeedScan(){
+  document.getElementById('speed-scan-btn').style.display='none';
+  document.getElementById('speed-progress').style.display='block';
+  var pct=0;
+  var iv=setInterval(function(){
+    pct+=Math.random()*12+3;
+    if(pct>=100){pct=100;clearInterval(iv);setTimeout(showSpeedResults,300)}
+    document.getElementById('speed-bar').style.width=pct+'%';
+    document.getElementById('speed-pct').textContent=Math.round(pct)+'%';
+  },120);
+}
+
+function showSpeedResults(){
+  document.getElementById('speed-progress').style.display='none';
+  var r=document.getElementById('speed-results');
+  r.style.display='flex';
+  buildStartupList();
+}
+
+function optimizeNow(){
+  document.getElementById('speed-results').style.display='none';
+  document.getElementById('speed-done').style.display='block';
+}
+
+// === CLEAN ===
+function cleanNow(){
+  document.getElementById('clean-list').style.opacity='0.4';
+  document.getElementById('clean-actions').style.display='none';
+  var cp=document.getElementById('clean-progress');
+  cp.style.display='block';
+  var pct=0;
+  var iv=setInterval(function(){
+    pct+=Math.random()*10+4;
+    if(pct>=100){pct=100;clearInterval(iv);setTimeout(function(){
+      cp.style.display='none';
+      document.getElementById('clean-done').style.display='block';
+    },300)}
+    document.getElementById('clean-bar').style.width=pct+'%';
+    document.getElementById('clean-pct').textContent=Math.round(pct)+'%';
+  },120);
+}
+
+// ===== AI ANALYSIS =====
+
+// Simulated local agent registry — in real app this would shell out to `which claude`, etc.
+var knownAgents=[
+  {id:'claude',label:'claude code',cmd:'claude',desc:'Anthropic · Claude Code CLI'},
+  {id:'codex',label:'openai codex',cmd:'codex',desc:'OpenAI · Codex CLI'},
+  {id:'ollama',label:'ollama',cmd:'ollama',desc:'Local · Ollama'},
+  {id:'gemini',label:'gemini cli',cmd:'gemini',desc:'Google · Gemini CLI'}
+];
+var detectedAgents=[];
+var selectedAgent=null;
+
+function detectLocalAgents(){
+  // In a real macOS app this fires shell commands; here we simulate a short delay
+  // For demo we always find "claude code" to make the feature visible
+  setTimeout(function(){
+    detectedAgents=[knownAgents[0]]; // simulate: only claude code found
+    if(detectedAgents.length>0){
+      selectedAgent=detectedAgents[0];
+      showAITab();
+      buildRuntimeList();
+    }
+  },600);
+}
+
+function showAITab(){
+  var wrap=document.getElementById('nav-ai-wrap');
+  if(wrap)wrap.style.display='block';
+  var lbl=document.getElementById('nav-ai-agent-name');
+  if(lbl)lbl.textContent=selectedAgent.label;
+  var badge=document.getElementById('ai-agent-label');
+  if(badge)badge.textContent=selectedAgent.label;
+  var sub=document.getElementById('ai-header-sub');
+  if(sub)sub.textContent='Powered by '+selectedAgent.label+' ('+selectedAgent.cmd+')';
+}
+
+function buildRuntimeList(){
+  var el=document.getElementById('ai-runtime-list');
+  if(!el)return;
+  el.innerHTML='';
+  detectedAgents.forEach(function(a){
+    var row=document.createElement('div');
+    var selected=(selectedAgent&&selectedAgent.id===a.id);
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px 4px 8px 4px;border:2px solid '+(selected?'#9E70E8':'#D0D0E8')+';background:'+(selected?'#F0E8FF':'#F8F8F8')+';cursor:pointer;transition:all .12s';
+    row.onclick=function(){selectedAgent=a;buildRuntimeList()};
+    row.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:'+(selected?'#9E70E8':'#C0C0D8')+';flex-shrink:0"></div>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#0A1A40">'+a.desc+'</div><div style="font-size:10px;color:#8AAAC8;font-family:monospace">'+a.cmd+'</div></div>'
+      +(selected?'<span style="font-size:10px;color:#9E70E8;font-weight:600">✓ selected</span>':'');
+    el.appendChild(row);
+  });
+}
+
+var aiStreamMsgs=[
+  'Connecting to '+'{agent}'+'...',
+  'Reading scan results...',
+  'Analyzing disk categories...',
+  'Identifying safe-to-delete items...',
+  'Generating recommendations...',
+  'Finalizing report...'
+];
+
+var aiRecommendations=[
+  {icon:'🗑️',title:'Remove cache files (12.2 GB)',risk:'Safe',color:'#7DC4A8',detail:'Browser caches, system caches and app caches are fully safe to delete. macOS regenerates them on demand.'},
+  {icon:'📥',title:'Clean Downloads folder (5.7 GB)',risk:'Safe',color:'#7DC4A8',detail:'Downloaded files older than 30 days detected. Review and remove installers you no longer need.'},
+  {icon:'💥',title:'Delete crash logs (0.7 GB)',risk:'Safe',color:'#7DC4A8',detail:'Crash logs from 47 apps over the past 6 months. No diagnostic value unless actively debugging.'},
+  {icon:'📧',title:'Mail attachments (6.5 GB)',risk:'Review',color:'#F2CC5A',detail:'Large email attachments cached locally. Review before deleting — some may be your only copy.'},
+  {icon:'🎬',title:'Video files in Movies/ (6.2 GB)',risk:'Keep',color:'#F0A882',detail:'These look like original project assets. Do not delete without verifying you have backups.'},
+];
+
+function runAIAnalysis(){
+  document.getElementById('ai-config-card').style.display='none';
+  document.getElementById('ai-run-wrap').style.display='none';
+  document.getElementById('ai-progress').style.display='block';
+  var pct=0;
+  var step=0;
+  var msgs=aiStreamMsgs.map(function(m){return m.replace('{agent}',selectedAgent?selectedAgent.label:'agent')});
+  var streamEl=document.getElementById('ai-stream');
+  var barEl=document.getElementById('ai-bar');
+  var pctEl=document.getElementById('ai-progress-pct');
+  var msgEl=document.getElementById('ai-progress-msg');
+  var iv=setInterval(function(){
+    pct+=Math.random()*14+4;
+    if(pct>=100){pct=100;clearInterval(iv);setTimeout(showAIResult,400)}
+    barEl.style.width=pct+'%';
+    pctEl.textContent=Math.round(pct)+'%';
+    var idx=Math.min(Math.floor(pct/18),msgs.length-1);
+    msgEl.textContent=msgs[idx];
+    if(step<idx){
+      step=idx;
+      streamEl.innerHTML+='<div style="animation:fadeIn .2s ease">› '+msgs[step]+'</div>';
+    }
+  },220);
+}
+
+function showAIResult(){
+  document.getElementById('ai-progress').style.display='none';
+  var res=document.getElementById('ai-result');
+  res.style.display='flex';
+
+  // chips
+  var chips=document.getElementById('ai-chips');
+  chips.innerHTML='';
+  var summary=[
+    {label:'19.4 GB safe to delete',c:'#7DC4A8',bg:'#E8F8F0'},
+    {label:'6.5 GB needs review',c:'#F2CC5A',bg:'#FFF8E0'},
+    {label:'6.2 GB keep',c:'#F0A882',bg:'#FFF0E8'}
+  ];
+  summary.forEach(function(s){
+    var chip=document.createElement('div');
+    chip.style.cssText='padding:5px 12px;border-radius:8px 4px 8px 4px;border:2px solid #1E1A2E;background:'+s.bg+';font-size:11px;font-weight:500;color:#0A1A40;box-shadow:2px 2px 0 #1E1A2E';
+    chip.innerHTML='<span style="color:'+s.c+'">●</span> '+s.label;
+    chips.appendChild(chip);
+  });
+
+  // recs
+  var recs=document.getElementById('ai-recs');
+  recs.innerHTML='<div style="font-size:13px;font-weight:500;color:#0A1A40;margin-bottom:12px">✦ AI Recommendations</div>';
+  aiRecommendations.forEach(function(r,i){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:'+(i<aiRecommendations.length-1?'1.5px solid #F0F0F8':'none');
+    row.innerHTML='<span style="font-size:18px;flex-shrink:0">'+r.icon+'</span>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#0A1A40;margin-bottom:2px">'+r.title+'</div>'
+      +'<div style="font-size:11px;color:#8AAAC8;line-height:1.5">'+r.detail+'</div></div>'
+      +'<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;border:1.5px solid #1E1A2E;color:'+r.color+';background:white;flex-shrink:0;white-space:nowrap">'+r.risk+'</span>';
+    recs.appendChild(row);
+  });
+}
+
+function resetAI(){
+  document.getElementById('ai-config-card').style.display='block';
+  document.getElementById('ai-run-wrap').style.display='flex';
+  document.getElementById('ai-result').style.display='none';
+  document.getElementById('ai-stream').innerHTML='';
+}
+
+// ===== I18N =====
+var LANGUAGES=[
+  {code:'en',mark:'EN',label:'English'},
+  {code:'zh',mark:'简',label:'中文（简体）'},
+  {code:'zh-Hant',mark:'繁',label:'中文（繁體）'},
+  {code:'ja',mark:'あ',label:'日本語'},
+  {code:'es',mark:'ES',label:'Español'},
+  {code:'fr',mark:'FR',label:'Français'},
+  {code:'ar',mark:'ع',label:'العربية'},
+  {code:'hi',mark:'ह',label:'हिन्दी'},
+  {code:'pt-BR',mark:'PT',label:'Português'},
+  {code:'ru',mark:'RU',label:'Русский'},
+  {code:'bn',mark:'ব',label:'বাংলা'}
+];
+
+var I18N={
+  en:{
+    sectOverview:'Overview',sectProtools:'Pro tools',sectAI:'AI · Local',sectSystem:'System',
+    lblDisk:'Disk Overview',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Speed up Mac',lblSpeedSub:'Performance',
+    lblClean:'Clean up Mac',lblCleanSub:'Junk files',
+    lblManage:'Manage space',lblManageSub:'User files',
+    lblDupes:'Find duplicates',lblDupesSub:'Exact matches',
+    lblUninstall:'Uninstall apps',lblUninstallSub:'App cleaner',
+    lblAnalyze:'Analyze space',lblAnalyzeSub:'Space map',
+    lblAI:'AI Analysis',
+    lblSettings:'Settings',lblSettingsSub:'Language & more',
+    sectTheme:'Appearance',themeDesc:'Default follows macOS system appearance',
+    themeSystem:'System',themeSystemDesc:'Automatic',themeLight:'Light',themeLightDesc:'Bright',themeDark:'Dark',themeDarkDesc:'Dimmed',
+    sectLang:'Language',langDesc:'Select display language',
+    settingsTitle:'Settings ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Disk Overview',speed:'Speed Up Mac',clean:'Clean Up Mac',manage:'Manage Space',dupes:'Find Duplicates',uninstall:'Uninstall Apps',analyze:'Analyze Space',ai:'AI Analysis',settings:'Settings'}
+  },
+  zh:{
+    sectOverview:'概览',sectProtools:'专业工具',sectAI:'AI · 本地',sectSystem:'系统',
+    lblDisk:'磁盘概览',lblDiskSub:'Macintosh HD',
+    lblSpeed:'加速 Mac',lblSpeedSub:'性能优化',
+    lblClean:'清理 Mac',lblCleanSub:'垃圾文件',
+    lblManage:'管理空间',lblManageSub:'用户文件',
+    lblDupes:'查找重复文件',lblDupesSub:'完全相同的文件',
+    lblUninstall:'卸载应用',lblUninstallSub:'应用清理',
+    lblAnalyze:'空间分析',lblAnalyzeSub:'空间地图',
+    lblAI:'AI 分析',
+    lblSettings:'设置',lblSettingsSub:'语言与更多',
+    sectTheme:'外观',themeDesc:'默认跟随 macOS 系统外观',
+    themeSystem:'跟随系统',themeSystemDesc:'自动',themeLight:'浅色',themeLightDesc:'明亮',themeDark:'深色',themeDarkDesc:'柔和',
+    sectLang:'语言',langDesc:'选择显示语言',
+    settingsTitle:'设置 ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'磁盘概览',speed:'加速 Mac',clean:'清理 Mac',manage:'管理空间',dupes:'查找重复文件',uninstall:'卸载应用',analyze:'空间分析',ai:'AI 分析',settings:'设置'}
+  },
+  'zh-Hant':{
+    sectOverview:'概覽',sectProtools:'專業工具',sectAI:'AI · 本機',sectSystem:'系統',
+    lblDisk:'磁碟概覽',lblDiskSub:'Macintosh HD',
+    lblSpeed:'加速 Mac',lblSpeedSub:'效能',
+    lblClean:'清理 Mac',lblCleanSub:'垃圾檔案',
+    lblManage:'管理空間',lblManageSub:'使用者檔案',
+    lblDupes:'尋找重複檔案',lblDupesSub:'完全相同',
+    lblUninstall:'解除安裝應用程式',lblUninstallSub:'App 清理器',
+    lblAnalyze:'分析空間',lblAnalyzeSub:'空間地圖',
+    lblAI:'AI 分析',
+    lblSettings:'設定',lblSettingsSub:'語言與更多',
+    sectTheme:'外觀',themeDesc:'預設跟隨 macOS 系統外觀',
+    themeSystem:'跟隨系統',themeSystemDesc:'自動',themeLight:'淺色',themeLightDesc:'明亮',themeDark:'深色',themeDarkDesc:'柔和',
+    sectLang:'語言',langDesc:'選擇顯示語言',
+    settingsTitle:'設定 ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'磁碟概覽',speed:'加速 Mac',clean:'清理 Mac',manage:'管理空間',dupes:'尋找重複檔案',uninstall:'解除安裝應用程式',analyze:'分析空間',ai:'AI 分析',settings:'設定'}
+  },
+  ja:{
+    sectOverview:'概要',sectProtools:'プロツール',sectAI:'AI · ローカル',sectSystem:'システム',
+    lblDisk:'ディスク概要',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Macを高速化',lblSpeedSub:'パフォーマンス',
+    lblClean:'Macをクリーン',lblCleanSub:'ジャンクファイル',
+    lblManage:'容量管理',lblManageSub:'ユーザーファイル',
+    lblDupes:'重複を検索',lblDupesSub:'完全一致',
+    lblUninstall:'アプリをアンインストール',lblUninstallSub:'アプリクリーナー',
+    lblAnalyze:'容量を分析',lblAnalyzeSub:'スペースマップ',
+    lblAI:'AI分析',
+    lblSettings:'設定',lblSettingsSub:'言語とその他',
+    sectTheme:'外観',themeDesc:'初期設定ではmacOSの外観に従います',
+    themeSystem:'システム',themeSystemDesc:'自動',themeLight:'ライト',themeLightDesc:'明るい',themeDark:'ダーク',themeDarkDesc:'控えめ',
+    sectLang:'言語',langDesc:'表示言語を選択',
+    settingsTitle:'設定 ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'ディスク概要',speed:'Macを高速化',clean:'Macをクリーン',manage:'容量管理',dupes:'重複を検索',uninstall:'アプリをアンインストール',analyze:'容量を分析',ai:'AI分析',settings:'設定'}
+  },
+  es:{
+    sectOverview:'Resumen',sectProtools:'Herramientas pro',sectAI:'AI · Local',sectSystem:'Sistema',
+    lblDisk:'Resumen de disco',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Acelerar Mac',lblSpeedSub:'Rendimiento',
+    lblClean:'Limpiar Mac',lblCleanSub:'Archivos basura',
+    lblManage:'Gestionar espacio',lblManageSub:'Archivos de usuario',
+    lblDupes:'Buscar duplicados',lblDupesSub:'Coincidencias exactas',
+    lblUninstall:'Desinstalar apps',lblUninstallSub:'Limpiador de apps',
+    lblAnalyze:'Analizar espacio',lblAnalyzeSub:'Mapa de espacio',
+    lblAI:'Análisis de AI',
+    lblSettings:'Ajustes',lblSettingsSub:'Idioma y más',
+    sectTheme:'Apariencia',themeDesc:'Por defecto sigue la apariencia de macOS',
+    themeSystem:'Sistema',themeSystemDesc:'Automático',themeLight:'Claro',themeLightDesc:'Brillante',themeDark:'Oscuro',themeDarkDesc:'Suave',
+    sectLang:'Idioma',langDesc:'Selecciona idioma de pantalla',
+    settingsTitle:'Ajustes ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Resumen de disco',speed:'Acelerar Mac',clean:'Limpiar Mac',manage:'Gestionar espacio',dupes:'Buscar duplicados',uninstall:'Desinstalar apps',analyze:'Analizar espacio',ai:'Análisis de AI',settings:'Ajustes'}
+  },
+  fr:{
+    sectOverview:'Vue générale',sectProtools:'Outils pro',sectAI:'AI · Local',sectSystem:'Système',
+    lblDisk:'Vue du disque',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Accélérer Mac',lblSpeedSub:'Performance',
+    lblClean:'Nettoyer Mac',lblCleanSub:'Fichiers inutiles',
+    lblManage:'Gérer espace',lblManageSub:'Fichiers utilisateur',
+    lblDupes:'Trouver doublons',lblDupesSub:'Correspondances exactes',
+    lblUninstall:'Désinstaller apps',lblUninstallSub:'Nettoyeur apps',
+    lblAnalyze:'Analyser espace',lblAnalyzeSub:'Carte espace',
+    lblAI:'Analyse AI',
+    lblSettings:'Réglages',lblSettingsSub:'Langue et plus',
+    sectTheme:'Apparence',themeDesc:'Suit macOS par défaut',
+    themeSystem:'Système',themeSystemDesc:'Auto',themeLight:'Clair',themeLightDesc:'Lumineux',themeDark:'Sombre',themeDarkDesc:'Doux',
+    sectLang:'Langue',langDesc:'Choisir la langue affichée',
+    settingsTitle:'Réglages ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Vue du disque',speed:'Accélérer Mac',clean:'Nettoyer Mac',manage:'Gérer espace',dupes:'Trouver doublons',uninstall:'Désinstaller apps',analyze:'Analyser espace',ai:'Analyse AI',settings:'Réglages'}
+  },
+  ar:{
+    sectOverview:'نظرة عامة',sectProtools:'أدوات متقدمة',sectAI:'AI · محلي',sectSystem:'النظام',
+    lblDisk:'نظرة القرص',lblDiskSub:'Macintosh HD',
+    lblSpeed:'تسريع Mac',lblSpeedSub:'الأداء',
+    lblClean:'تنظيف Mac',lblCleanSub:'ملفات غير ضرورية',
+    lblManage:'إدارة المساحة',lblManageSub:'ملفات المستخدم',
+    lblDupes:'البحث عن التكرارات',lblDupesSub:'تطابقات تامة',
+    lblUninstall:'إزالة التطبيقات',lblUninstallSub:'منظف التطبيقات',
+    lblAnalyze:'تحليل المساحة',lblAnalyzeSub:'خريطة المساحة',
+    lblAI:'تحليل AI',
+    lblSettings:'الإعدادات',lblSettingsSub:'اللغة والمزيد',
+    sectTheme:'المظهر',themeDesc:'يتبع مظهر macOS افتراضياً',
+    themeSystem:'النظام',themeSystemDesc:'تلقائي',themeLight:'فاتح',themeLightDesc:'مضيء',themeDark:'داكن',themeDarkDesc:'هادئ',
+    sectLang:'اللغة',langDesc:'اختر لغة العرض',
+    settingsTitle:'الإعدادات ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'نظرة القرص',speed:'تسريع Mac',clean:'تنظيف Mac',manage:'إدارة المساحة',dupes:'البحث عن التكرارات',uninstall:'إزالة التطبيقات',analyze:'تحليل المساحة',ai:'تحليل AI',settings:'الإعدادات'}
+  },
+  hi:{
+    sectOverview:'अवलोकन',sectProtools:'प्रो टूल्स',sectAI:'AI · स्थानीय',sectSystem:'सिस्टम',
+    lblDisk:'डिस्क अवलोकन',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Mac तेज करें',lblSpeedSub:'प्रदर्शन',
+    lblClean:'Mac साफ करें',lblCleanSub:'जंक फाइलें',
+    lblManage:'स्थान प्रबंधित करें',lblManageSub:'उपयोगकर्ता फाइलें',
+    lblDupes:'डुप्लिकेट खोजें',lblDupesSub:'सटीक मिलान',
+    lblUninstall:'ऐप हटाएं',lblUninstallSub:'ऐप क्लीनर',
+    lblAnalyze:'स्थान विश्लेषण',lblAnalyzeSub:'स्पेस मैप',
+    lblAI:'AI विश्लेषण',
+    lblSettings:'सेटिंग्स',lblSettingsSub:'भाषा और अधिक',
+    sectTheme:'रूप',themeDesc:'डिफ़ॉल्ट रूप से macOS सिस्टम रूप का पालन करता है',
+    themeSystem:'सिस्टम',themeSystemDesc:'स्वचालित',themeLight:'हल्का',themeLightDesc:'उज्ज्वल',themeDark:'गहरा',themeDarkDesc:'मंद',
+    sectLang:'भाषा',langDesc:'प्रदर्शन भाषा चुनें',
+    settingsTitle:'सेटिंग्स ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'डिस्क अवलोकन',speed:'Mac तेज करें',clean:'Mac साफ करें',manage:'स्थान प्रबंधित करें',dupes:'डुप्लिकेट खोजें',uninstall:'ऐप हटाएं',analyze:'स्थान विश्लेषण',ai:'AI विश्लेषण',settings:'सेटिंग्स'}
+  },
+  'pt-BR':{
+    sectOverview:'Visão geral',sectProtools:'Ferramentas pro',sectAI:'AI · Local',sectSystem:'Sistema',
+    lblDisk:'Visão do disco',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Acelerar Mac',lblSpeedSub:'Desempenho',
+    lblClean:'Limpar Mac',lblCleanSub:'Arquivos lixo',
+    lblManage:'Gerenciar espaço',lblManageSub:'Arquivos do usuário',
+    lblDupes:'Encontrar duplicados',lblDupesSub:'Correspondências exatas',
+    lblUninstall:'Desinstalar apps',lblUninstallSub:'Limpador de apps',
+    lblAnalyze:'Analisar espaço',lblAnalyzeSub:'Mapa de espaço',
+    lblAI:'Análise de AI',
+    lblSettings:'Configurações',lblSettingsSub:'Idioma e mais',
+    sectTheme:'Aparência',themeDesc:'Por padrão segue a aparência do macOS',
+    themeSystem:'Sistema',themeSystemDesc:'Automático',themeLight:'Claro',themeLightDesc:'Brilhante',themeDark:'Escuro',themeDarkDesc:'Suave',
+    sectLang:'Idioma',langDesc:'Selecionar idioma de exibição',
+    settingsTitle:'Configurações ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Visão do disco',speed:'Acelerar Mac',clean:'Limpar Mac',manage:'Gerenciar espaço',dupes:'Encontrar duplicados',uninstall:'Desinstalar apps',analyze:'Analisar espaço',ai:'Análise de AI',settings:'Configurações'}
+  },
+  ru:{
+    sectOverview:'Обзор',sectProtools:'Профи-инструменты',sectAI:'AI · Локально',sectSystem:'Система',
+    lblDisk:'Обзор диска',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Ускорить Mac',lblSpeedSub:'Производительность',
+    lblClean:'Очистить Mac',lblCleanSub:'Ненужные файлы',
+    lblManage:'Управление местом',lblManageSub:'Файлы пользователя',
+    lblDupes:'Найти дубликаты',lblDupesSub:'Точные совпадения',
+    lblUninstall:'Удалить приложения',lblUninstallSub:'Очистка приложений',
+    lblAnalyze:'Анализ места',lblAnalyzeSub:'Карта пространства',
+    lblAI:'AI-анализ',
+    lblSettings:'Настройки',lblSettingsSub:'Язык и другое',
+    sectTheme:'Внешний вид',themeDesc:'По умолчанию следует оформлению macOS',
+    themeSystem:'Система',themeSystemDesc:'Авто',themeLight:'Светлая',themeLightDesc:'Ярко',themeDark:'Тёмная',themeDarkDesc:'Мягко',
+    sectLang:'Язык',langDesc:'Выберите язык интерфейса',
+    settingsTitle:'Настройки ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'Обзор диска',speed:'Ускорить Mac',clean:'Очистить Mac',manage:'Управление местом',dupes:'Найти дубликаты',uninstall:'Удалить приложения',analyze:'Анализ места',ai:'AI-анализ',settings:'Настройки'}
+  },
+  bn:{
+    sectOverview:'সংক্ষিপ্ত বিবরণ',sectProtools:'প্রো টুলস',sectAI:'AI · লোকাল',sectSystem:'সিস্টেম',
+    lblDisk:'ডিস্ক ওভারভিউ',lblDiskSub:'Macintosh HD',
+    lblSpeed:'Mac দ্রুত করুন',lblSpeedSub:'পারফরম্যান্স',
+    lblClean:'Mac পরিষ্কার করুন',lblCleanSub:'জাঙ্ক ফাইল',
+    lblManage:'জায়গা পরিচালনা',lblManageSub:'ব্যবহারকারীর ফাইল',
+    lblDupes:'ডুপ্লিকেট খুঁজুন',lblDupesSub:'হুবহু মিল',
+    lblUninstall:'অ্যাপ আনইনস্টল',lblUninstallSub:'অ্যাপ ক্লিনার',
+    lblAnalyze:'জায়গা বিশ্লেষণ',lblAnalyzeSub:'স্পেস ম্যাপ',
+    lblAI:'AI বিশ্লেষণ',
+    lblSettings:'সেটিংস',lblSettingsSub:'ভাষা ও আরও',
+    sectTheme:'চেহারা',themeDesc:'ডিফল্টভাবে macOS সিস্টেম চেহারা অনুসরণ করে',
+    themeSystem:'সিস্টেম',themeSystemDesc:'স্বয়ংক্রিয়',themeLight:'হালকা',themeLightDesc:'উজ্জ্বল',themeDark:'গাঢ়',themeDarkDesc:'নরম',
+    sectLang:'ভাষা',langDesc:'প্রদর্শনের ভাষা নির্বাচন',
+    settingsTitle:'সেটিংস ⚙️',settingsSub:'CleanMac v1.0',
+    winTitles:{disk:'ডিস্ক ওভারভিউ',speed:'Mac দ্রুত করুন',clean:'Mac পরিষ্কার করুন',manage:'জায়গা পরিচালনা',dupes:'ডুপ্লিকেট খুঁজুন',uninstall:'অ্যাপ আনইনস্টল',analyze:'জায়গা বিশ্লেষণ',ai:'AI বিশ্লেষণ',settings:'সেটিংস'}
+  }
+};
+var currentLang='en';
+
+function t(k){return(I18N[currentLang]&&I18N[currentLang][k])||I18N['en'][k]||k;}
+
+function buildLanguageGrid(){
+  var grid=document.getElementById('lang-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  LANGUAGES.forEach(function(language){
+    var btn=document.createElement('button');
+    btn.className='lang-btn';
+    btn.dataset.lang=language.code;
+    btn.onclick=function(){setLang(language.code)};
+    btn.style.cssText='min-height:46px;border-radius:10px 6px 10px 6px;border:2.5px solid #1E1A2E;background:#F8F8F8;box-shadow:3px 3px 0 #1E1A2E;cursor:pointer;display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:0 9px;text-align:left;overflow:hidden';
+    btn.innerHTML='<span style="font-size:12px;font-weight:900;line-height:1;flex:0 0 22px;text-align:center;color:#9E70E8">'+language.mark+'</span>'
+      +'<span style="font-size:11px;font-weight:600;color:#4A4060;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+language.label+'</span>';
+    grid.appendChild(btn);
+  });
+}
+
+function applyLang(){
+  var s=I18N[currentLang];
+  if(!s)return;
+  var set=function(id,val){var el=document.getElementById(id);if(el&&val)el.textContent=val;};
+  set('sect-overview',s.sectOverview);
+  set('sect-protools',s.sectProtools);
+  set('sect-ai',s.sectAI);
+  set('sect-system',s.sectSystem);
+  set('lbl-disk',s.lblDisk);set('lbl-disk-sub',s.lblDiskSub);
+  set('lbl-speed',s.lblSpeed);set('lbl-speed-sub',s.lblSpeedSub);
+  set('lbl-clean',s.lblClean);set('lbl-clean-sub',s.lblCleanSub);
+  set('lbl-manage',s.lblManage);set('lbl-manage-sub',s.lblManageSub);
+  set('lbl-dupes',s.lblDupes);set('lbl-dupes-sub',s.lblDupesSub);
+  set('lbl-uninstall',s.lblUninstall);set('lbl-uninstall-sub',s.lblUninstallSub);
+  set('lbl-analyze',s.lblAnalyze);set('lbl-analyze-sub',s.lblAnalyzeSub);
+  set('lbl-ai',s.lblAI);
+  set('lbl-settings',s.lblSettings);set('lbl-settings-sub',s.lblSettingsSub);
+  set('settings-sect-theme',s.sectTheme);set('settings-theme-desc',s.themeDesc);
+  set('theme-system-label',s.themeSystem);set('theme-system-desc',s.themeSystemDesc);
+  set('theme-light-label',s.themeLight);set('theme-light-desc',s.themeLightDesc);
+  set('theme-dark-label',s.themeDark);set('theme-dark-desc',s.themeDarkDesc);
+  set('settings-sect-lang',s.sectLang);set('settings-lang-desc',s.langDesc);
+  set('page-settings-title',s.settingsTitle);set('page-settings-sub',s.settingsSub);
+  // update winTitles for current page
+  if(s.winTitles){
+    titles=s.winTitles;
+    var cur=pages.find(function(p){return document.getElementById('page-'+p)&&document.getElementById('page-'+p).classList.contains('active')});
+    if(cur){var wt=document.getElementById('win-title');if(wt)wt.textContent='CleanMac — '+(titles[cur]||cur);}
+  }
+}
+
+function setLang(lang){
+  currentLang=lang;
+  applyLang();
+  document.querySelectorAll('.lang-btn').forEach(function(btn){
+    var active=(btn.dataset.lang===lang);
+    btn.style.border=active?'2.5px solid #9E70E8':'2.5px solid #1E1A2E';
+    btn.style.background=active?'#F0E8FF':'#F8F8F8';
+    btn.querySelector('span:last-child').style.color=active?'#3A1A7E':'#4A4060';
+  });
+}
+
+detectLocalAgents();
+
+init();
+</script>

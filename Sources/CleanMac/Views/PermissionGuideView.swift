@@ -14,16 +14,15 @@ struct PermissionGuideView: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        CleanMacPanel(padding: 14) {
+        CleanMacPanel(padding: 14, tint: statusColor) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top, spacing: 12) {
-                    CleanMacPulseIcon(
-                        symbolName: statusSymbolName,
+                    CleanMacFeatureImage(
+                        asset: .permissionShield,
                         tint: statusColor,
                         isActive: guide.status == .needsAttention
                     )
-                    .font(.title3)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 42, height: 42)
 
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 8) {
@@ -40,7 +39,7 @@ struct PermissionGuideView: View {
 
                         Text(L10n.permissionExplanation(guide, language: language))
                             .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(CleanMacTheme.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
@@ -52,6 +51,7 @@ struct PermissionGuideView: View {
                         } label: {
                             Label(L10n.text(.openSettings, language: language), systemImage: "gearshape")
                         }
+                        .buttonStyle(CleanMacRaisedButtonStyle(tint: statusColor))
                     }
                 }
 
@@ -60,10 +60,10 @@ struct PermissionGuideView: View {
                         ForEach(Array(L10n.permissionInstructions(guide, language: language).enumerated()), id: \.offset) { index, instruction in
                             HStack(alignment: .firstTextBaseline, spacing: 8) {
                                 Text("\(index + 1).")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(CleanMacTheme.secondaryText)
                                     .monospacedDigit()
                                 Text(instruction)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(CleanMacTheme.secondaryText)
                             }
                             .font(.caption)
                         }

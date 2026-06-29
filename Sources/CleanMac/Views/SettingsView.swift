@@ -7,57 +7,82 @@ struct SettingsView: View {
     @AppStorage("aiArguments") private var aiArguments = "codex exec"
 
     var body: some View {
-        TabView {
-            VStack(spacing: 16) {
-                CleanMacHeroHeader(
-                    title: L10n.text(.aiCLI, language: resolvedLanguage),
-                    subtitle: L10n.text(.command, language: resolvedLanguage),
-                    symbolName: "sparkles",
-                    tint: CleanMacTheme.sectionTint(.aiReview)
-                )
+        CleanMacPage(accent: CleanMacTheme.purple) {
+            CleanMacHeroHeader(
+                title: L10n.text(.settings, language: resolvedLanguage),
+                subtitle: "\(L10n.text(.aiCLI, language: resolvedLanguage)) / \(L10n.text(.permissions, language: resolvedLanguage))",
+                symbolName: "gearshape",
+                asset: .permissionShield,
+                tint: CleanMacTheme.purple
+            )
 
-                Form {
-                    Picker(L10n.text(.appLanguage, language: resolvedLanguage), selection: $appLanguageRaw) {
-                        ForEach(AppLanguage.allCases) { preference in
-                            Text(L10n.languagePreferenceName(preference, language: resolvedLanguage))
-                                .tag(preference.rawValue)
-                        }
-                    }
+            CleanMacPanel(tint: CleanMacTheme.sectionTint(.aiReview)) {
+                VStack(alignment: .leading, spacing: 12) {
+                    CleanMacSectionHeader(
+                        title: L10n.text(.aiCLI, language: resolvedLanguage),
+                        symbolName: "sparkles",
+                        tint: CleanMacTheme.sectionTint(.aiReview)
+                    )
+
+                    languageMenu
 
                     TextField(L10n.text(.executable, language: resolvedLanguage), text: $aiExecutable)
+                        .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
+
                     TextField(L10n.text(.arguments, language: resolvedLanguage), text: $aiArguments)
+                        .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
                 }
-                .formStyle(.grouped)
-            }
-            .padding(20)
-            .tabItem {
-                Label(L10n.text(.aiCLI, language: resolvedLanguage), systemImage: "sparkles")
             }
 
-            VStack(spacing: 16) {
-                CleanMacHeroHeader(
-                    title: L10n.text(.permissions, language: resolvedLanguage),
-                    subtitle: L10n.permissionStatusName(fullDiskAccessGuide.status, language: resolvedLanguage),
-                    symbolName: "lock.shield",
-                    tint: CleanMacTheme.permissionColor(fullDiskAccessGuide.status)
-                )
-
-                PermissionGuideView(
-                    guide: fullDiskAccessGuide,
-                    language: resolvedLanguage,
-                    displayStyle: .detailed
-                )
-
-                Spacer(minLength: 0)
-            }
-            .padding(20)
-            .tabItem {
-                Label(L10n.text(.permissions, language: resolvedLanguage), systemImage: "lock.shield")
-            }
+            PermissionGuideView(
+                guide: fullDiskAccessGuide,
+                language: resolvedLanguage,
+                displayStyle: .detailed
+            )
         }
         .tint(CleanMacTheme.accent)
-        .frame(width: 640, height: 420)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
+        .buttonStyle(CleanMacRaisedButtonStyle())
+        .foregroundStyle(CleanMacTheme.ink)
+    }
+
+    @ViewBuilder
+    private var languageMenu: some View {
+        Menu {
+            ForEach(AppLanguage.allCases) { preference in
+                Button {
+                    appLanguageRaw = preference.rawValue
+                } label: {
+                    if preference.rawValue == appLanguageRaw {
+                        Label(
+                            L10n.languagePreferenceName(preference, language: resolvedLanguage),
+                            systemImage: "checkmark"
+                        )
+                    } else {
+                        Text(L10n.languagePreferenceName(preference, language: resolvedLanguage))
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Text(L10n.text(.appLanguage, language: resolvedLanguage))
+                    .foregroundStyle(CleanMacTheme.ink)
+
+                Spacer(minLength: 12)
+
+                Text(selectedLanguageName)
+                    .foregroundStyle(CleanMacTheme.secondaryText)
+                    .lineLimit(1)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .imageScale(.small)
+            }
+        }
+        .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.purple))
+    }
+
+    private var selectedLanguageName: String {
+        let preference = AppLanguage(storedRawValue: appLanguageRaw)
+        return L10n.languagePreferenceName(preference, language: resolvedLanguage)
     }
 
     private var resolvedLanguage: ResolvedLanguage {

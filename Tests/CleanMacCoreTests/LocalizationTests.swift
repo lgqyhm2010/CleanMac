@@ -100,6 +100,23 @@ struct LocalizationTests {
         }
     }
 
+    @Test("HTML prototype exposes every supported language")
+    func htmlPrototypeExposesEverySupportedLanguage() throws {
+        let htmlURL = packageRoot().appending(path: "cleanmac_with_ai.html")
+        let html = try String(contentsOf: htmlURL, encoding: .utf8)
+        let expectedCodes = ["en", "zh", "zh-Hant", "ja", "es", "fr", "ar", "hi", "pt-BR", "ru", "bn"]
+
+        let languageCodeCount = html.components(separatedBy: "{code:'").count - 1
+        #expect(languageCodeCount == expectedCodes.count)
+
+        for code in expectedCodes {
+            #expect(html.contains("{code:'\(code)'"))
+
+            let i18nKey = code.contains("-") ? "'\(code)':{" : "\(code):{"
+            #expect(html.contains(i18nKey))
+        }
+    }
+
     @Test("Localized copy is not stored in hardcoded language tables")
     func localizedCopyIsNotStoredInHardcodedLanguageTables() throws {
         let l10nSourceURL = packageRoot().appending(path: "Sources/CleanMacCore/Localization/L10n.swift")

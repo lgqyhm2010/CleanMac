@@ -16,7 +16,10 @@ let package = Package(
         .executableTarget(
             name: "CleanMac",
             dependencies: ["CleanMacCore"],
-            path: "Sources/CleanMac"
+            path: "Sources/CleanMac",
+            resources: [
+                .process("Resources")
+            ]
         ),
         .target(
             name: "CleanMacCore",
@@ -29,6 +32,11 @@ let package = Package(
             name: "CleanMacCoreTests",
             dependencies: ["CleanMacCore"],
             path: "Tests/CleanMacCoreTests"
+        ),
+        .testTarget(
+            name: "CleanMacUITests",
+            dependencies: ["CleanMac", "CleanMacCore"],
+            path: "Tests/CleanMacUITests"
         )
     ]
 )

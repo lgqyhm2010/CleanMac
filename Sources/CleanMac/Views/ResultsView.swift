@@ -8,102 +8,33 @@ struct ResultsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(spacing: 0) {
-            CleanMacPanel(padding: 14) {
-                resultsHeader
-            }
-                .padding(16)
+        ZStack {
+            CleanMacPageBackground(accent: CleanMacTheme.sectionTint(.cleanUp))
 
-            Divider()
-
-            if store.candidates.isEmpty {
-                if store.isScanning {
-                    CleanMacProgressState(
-                        title: L10n.text(.scanning, language: language),
-                        symbolName: "magnifyingglass",
-                        tint: CleanMacTheme.accent
-                    )
-                } else {
-                    CleanMacEmptyState(
-                        title: L10n.text(.noCandidates, language: language),
-                        symbolName: "checkmark.seal",
-                        tint: CleanMacTheme.mint
-                    )
+            VStack(spacing: 14) {
+                CleanMacPanel(padding: 14, tint: CleanMacTheme.sectionTint(.cleanUp)) {
+                    resultsHeader
                 }
-            } else {
-                Table(store.candidates, selection: $store.selectedCandidateID) {
-                    TableColumn("") { candidate in
-                        Toggle("", isOn: Binding(
-                            get: { store.selection.contains(candidate) },
-                            set: { store.toggle(candidate, selected: $0) }
-                        ))
-                        .labelsHidden()
-                    }
-                    .width(34)
 
-                    TableColumn(L10n.text(.name, language: language)) { candidate in
-                        HStack(spacing: 8) {
-                            Image(systemName: candidate.category.symbolName)
-                                .symbolRenderingMode(.hierarchical)
-                                .foregroundStyle(categoryTint(candidate.category))
-                                .frame(width: 18)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(candidate.url.lastPathComponent)
-                                    .lineLimit(1)
-                                Text(candidate.url.deletingLastPathComponent().path)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
+                CleanMacPanel(padding: 0, tint: CleanMacTheme.sectionTint(.cleanUp)) {
+                    resultsTableContent
+                }
+                .frame(minHeight: 280, maxHeight: .infinity)
 
-                    TableColumn(L10n.text(.category, language: language)) { candidate in
-                        Text(candidate.category.displayName(language: language))
-                    }
-                    .width(min: 110, ideal: 130)
-
-                    TableColumn(L10n.text(.risk, language: language)) { candidate in
-                        StatusBadge(
-                            text: candidate.risk.displayName(language: language),
-                            symbolName: "exclamationmark.triangle",
-                            tint: CleanMacTheme.riskColor(candidate.risk)
-                        )
-                    }
-                    .width(min: 120, ideal: 140)
-
-                    TableColumn(L10n.text(.protection, language: language)) { candidate in
-                        StatusBadge(
-                            text: candidate.protection.displayName(language: language),
-                            symbolName: candidate.protection.symbolName,
-                            tint: CleanMacTheme.protectionColor(candidate.protection)
-                        )
-                    }
-                    .width(min: 140, ideal: 165)
-
-                    TableColumn(L10n.text(.size, language: language)) { candidate in
-                        Text(Formatters.bytes(candidate.sizeBytes))
-                            .monospacedDigit()
-                    }
-                    .width(min: 90, ideal: 110)
+                CleanMacPanel(padding: 14, tint: CleanMacTheme.sectionTint(.cleanUp)) {
+                    CandidateDetailView(
+                        candidate: store.selectedCandidate,
+                        duplicateGroup: store.duplicateGroup(containing: store.selectedCandidate),
+                        uninstallPlan: store.uninstallPlan(containing: store.selectedCandidate),
+                        language: language
+                    )
+                    .id(store.selectedCandidate?.id ?? "empty")
+                    .transition(.opacity)
                 }
             }
-
-            Divider()
-
-            CleanMacPanel(padding: 14) {
-                CandidateDetailView(
-                    candidate: store.selectedCandidate,
-                    duplicateGroup: store.duplicateGroup(containing: store.selectedCandidate),
-                    uninstallPlan: store.uninstallPlan(containing: store.selectedCandidate),
-                    language: language
-                )
-                .id(store.selectedCandidate?.id ?? "empty")
-                .transition(.opacity)
-            }
-                .padding(16)
+            .padding(16)
         }
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
+        .foregroundStyle(CleanMacTheme.ink)
         .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.candidates.count)
         .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.selectedCandidateID)
         .alert(L10n.text(.moveSelectedItemsToTrash, language: language), isPresented: $confirmTrash) {
@@ -121,23 +52,100 @@ struct ResultsView: View {
         }
     }
 
+    @ViewBuilder
+    private var resultsTableContent: some View {
+        if store.candidates.isEmpty {
+            if store.isScanning {
+                CleanMacProgressState(
+                    title: L10n.text(.scanning, language: language),
+                    symbolName: "magnifyingglass",
+                    asset: .diskOverview,
+                    tint: CleanMacTheme.accent
+                )
+            } else {
+                CleanMacEmptyState(
+                    title: L10n.text(.noCandidates, language: language),
+                    symbolName: "checkmark.seal",
+                    asset: .cleanupTrash,
+                    tint: CleanMacTheme.mint
+                )
+            }
+        } else {
+            Table(store.candidates, selection: $store.selectedCandidateID) {
+                TableColumn("") { candidate in
+                    Toggle("", isOn: Binding(
+                        get: { store.selection.contains(candidate) },
+                        set: { store.toggle(candidate, selected: $0) }
+                    ))
+                    .labelsHidden()
+                }
+                .width(34)
+
+                TableColumn(L10n.text(.name, language: language)) { candidate in
+                    HStack(spacing: 8) {
+                        Image(systemName: candidate.category.symbolName)
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(categoryTint(candidate.category))
+                            .frame(width: 18)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(candidate.url.lastPathComponent)
+                                .lineLimit(1)
+                            Text(candidate.url.deletingLastPathComponent().path)
+                                .font(.caption)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+
+                TableColumn(L10n.text(.category, language: language)) { candidate in
+                    Text(candidate.category.displayName(language: language))
+                }
+                .width(min: 110, ideal: 130)
+
+                TableColumn(L10n.text(.risk, language: language)) { candidate in
+                    StatusBadge(
+                        text: candidate.risk.displayName(language: language),
+                        symbolName: "exclamationmark.triangle",
+                        tint: CleanMacTheme.riskColor(candidate.risk)
+                    )
+                }
+                .width(min: 120, ideal: 140)
+
+                TableColumn(L10n.text(.protection, language: language)) { candidate in
+                    StatusBadge(
+                        text: candidate.protection.displayName(language: language),
+                        symbolName: candidate.protection.symbolName,
+                        tint: CleanMacTheme.protectionColor(candidate.protection)
+                    )
+                }
+                .width(min: 140, ideal: 165)
+
+                TableColumn(L10n.text(.size, language: language)) { candidate in
+                    Text(Formatters.bytes(candidate.sizeBytes))
+                        .monospacedDigit()
+                }
+                .width(min: 90, ideal: 110)
+            }
+        }
+    }
+
     private var resultsHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                CleanMacPulseIcon(
-                    symbolName: "list.bullet.rectangle",
-                    tint: CleanMacTheme.sectionTint(.results),
+                CleanMacFeatureImage(
+                    asset: .cleanupTrash,
+                    tint: CleanMacTheme.sectionTint(.cleanUp),
                     isActive: store.isCleaning || store.isScanning
                 )
-                .font(.title3)
-                .frame(width: 38, height: 38)
+                .frame(width: 48, height: 48)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(L10n.candidatesHeadline(store.candidates.count, language: language))
                         .font(.headline)
                     Text(selectedDetailText)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(CleanMacTheme.secondaryText)
                 }
 
                 Spacer()
@@ -182,6 +190,7 @@ struct ResultsView: View {
                         systemImage: "trash"
                     )
                 }
+                .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.danger, prominent: true))
                 .disabled(store.selectedMovableCandidates.isEmpty || store.isCleaning)
             }
         }
@@ -199,7 +208,7 @@ struct ResultsView: View {
         case .cache, .temporary:
             CleanMacTheme.accent
         case .logs, .developer:
-            Color.indigo
+            CleanMacTheme.purple
         case .downloads, .largeFile:
             CleanMacTheme.amber
         case .trash:
@@ -223,20 +232,19 @@ private struct CandidateDetailView: View {
             if let candidate {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        CleanMacPulseIcon(
-                            symbolName: candidate.category.symbolName,
+                        CleanMacFeatureImage(
+                            asset: .cleanupTrash,
                             tint: CleanMacTheme.riskColor(candidate.risk),
                             isActive: false
                         )
-                        .font(.headline)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 38, height: 38)
 
                         Text(candidate.category.displayName(language: language))
                             .font(.headline)
                         Spacer()
-                        Text(Formatters.bytes(candidate.sizeBytes))
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
+                    Text(Formatters.bytes(candidate.sizeBytes))
+                        .monospacedDigit()
+                        .foregroundStyle(CleanMacTheme.secondaryText)
                     }
 
                     Text(candidate.url.path)
@@ -258,12 +266,12 @@ private struct CandidateDetailView: View {
                         Label(Formatters.date(candidate.modifiedAt, language: language), systemImage: "calendar")
                     }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(CleanMacTheme.secondaryText)
 
                     if !candidate.reasons.isEmpty {
                         Text(candidate.reasons.map { L10n.scanReason($0, language: language) }.joined(separator: " · "))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(CleanMacTheme.secondaryText)
                     }
 
                     if !candidate.userVisibleRules.isEmpty {
@@ -271,12 +279,12 @@ private struct CandidateDetailView: View {
                             Text(L10n.text(.rules, language: language))
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
 
                             ForEach(candidate.userVisibleRules, id: \.self) { rule in
                                 Label(rule, systemImage: "list.bullet.clipboard")
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(CleanMacTheme.secondaryText)
                                     .lineLimit(2)
                             }
                         }
@@ -287,14 +295,14 @@ private struct CandidateDetailView: View {
                             Text(L10n.text(.duplicateGroup, language: language))
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
 
                             Label(
                                 L10n.duplicateGroupDetail(duplicateGroup, language: language),
                                 systemImage: "doc.on.doc"
                             )
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(CleanMacTheme.secondaryText)
                             .lineLimit(2)
                         }
                     }
@@ -304,21 +312,21 @@ private struct CandidateDetailView: View {
                             Text(L10n.text(.appUninstaller, language: language))
                                 .font(.caption)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
 
                             Label(
                                 L10n.appUninstallPlanDetail(uninstallPlan, language: language),
                                 systemImage: "app.badge"
                             )
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(CleanMacTheme.secondaryText)
                             .lineLimit(2)
                         }
                     }
                 }
             } else {
                 Text(L10n.text(.noItemSelected, language: language))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(CleanMacTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

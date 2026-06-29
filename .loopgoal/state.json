@@ -1,39 +1,80 @@
 {
   "mode": "goal",
-  "objective": "Resource CleanMac localization through .lproj/Localizable.strings and commit the verified result.",
-  "exit_condition": "The goal is complete when CleanMacCore localizations live in en.lproj and zh-Hans.lproj Localizable.strings, L10n loads copy via Bundle.module instead of hardcoded language tables, localization tests prove resource coverage, plutil validates both strings files, swift test passes, and the resulting changes are committed.",
+  "objective": "Make the local CleanMac app match the updated HTML design and animation direction while keeping existing app functionality intact.",
+  "exit_condition": "The goal is complete when the SwiftUI app visually follows cleanmac_with_ai.html, includes the corresponding generated image assets, preserves the existing local feature flow, builds successfully, and the checkpoint plus implementation changes are committed.",
   "status": "done",
   "iteration": 1,
   "phases": [
-    {"name": "Inspect existing localization surface", "status": "done"},
-    {"name": "Add failing localization resource tests", "status": "done"},
-    {"name": "Move strings into .lproj resources and load them through Bundle.module", "status": "done"},
-    {"name": "Verify strings syntax and full SwiftPM test suite", "status": "done"},
-    {"name": "Commit the verified result", "status": "done"}
+    {"name": "Extract HTML design and animation requirements", "status": "done"},
+    {"name": "Generate image assets that match the HTML design", "status": "done"},
+    {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "done"},
+    {"name": "Verify the app builds and the preserved behavior still compiles", "status": "done"},
+    {"name": "Commit the verified result", "status": "done"},
+    {"name": "Retest every sidebar page and remove black controls", "status": "done"}
   ],
   "current": {
-    "focus": "Goal complete: localization resources are implemented, verified, and ready to be committed in this checkpoint.",
-    "next_action": "Stop scheduling after the commit succeeds.",
+    "focus": "Goal complete after follow-up: all nine sidebar pages are covered by screenshot smoke tests, black system controls were replaced, full tests pass, and the local app window launches successfully.",
+    "next_action": "Stop scheduling; future local feature behavior changes can be handled in a separate goal.",
     "blockers": ""
   },
   "decisions": [
     {
-      "decision": "Use SwiftPM package resources with en.lproj and zh-Hans.lproj instead of adding L10nKit.",
-      "reason": "CleanMac is a package-first macOS app with an existing lightweight L10n API; resource-backed lookup satisfies the requested .lproj migration without adding an unnecessary remote dependency."
+      "decision": "Treat this as GOAL mode.",
+      "reason": "The task has a concrete completion condition: the local app should match the already-updated HTML design and animation direction."
     },
     {
-      "decision": "Keep AppLanguage storage values unchanged while mapping ResolvedLanguage to lproj folder names.",
-      "reason": "Existing user defaults and tests expect english/chinese values, while Bundle resources need en and zh-Hans names."
+      "decision": "Keep local app functionality unchanged for this pass.",
+      "reason": "The user explicitly asked to leave local functionality alone and handle it later."
     },
     {
-      "decision": "Try both zh-Hans and lowercase zh-hans when locating resource bundles.",
-      "reason": "SwiftPM normalizes the built resource directory to zh-hans.lproj even though the source folder is zh-Hans.lproj."
+      "decision": "Use env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build as the verification command.",
+      "reason": "Plain swift build tried to write toolchain cache under the home directory, and sandboxed SwiftPM manifest evaluation hit sandbox-exec restrictions."
     },
     {
-      "decision": "Do not stage the pre-existing untracked Assets directory.",
-      "reason": "Those files are unrelated to the localization resource migration."
+      "decision": "Treat cleanmac_with_ai.html as visual direction rather than a request to add every prototype page as product behavior.",
+      "reason": "This phase must not change product behavior, and the existing app flow should keep the trust-first cleanup path intact."
+    },
+    {
+      "decision": "Generate a compact reusable asset set instead of copying every inline SVG from the HTML prototype.",
+      "reason": "The HTML has no external image assets, and a smaller mascot plus feature-illustration set is easier to maintain in SwiftUI."
+    },
+    {
+      "decision": "Keep later SwiftUI motion state-driven and Reduce Motion aware.",
+      "reason": "The HTML relies on playful looping cues, but the app should only animate active/progress/celebration states and respect accessibility settings."
+    },
+    {
+      "decision": "Use SwiftPM target resources for the app image set.",
+      "reason": "Package.swift processes Sources/CleanMac/Resources for the CleanMac executable target, so the next SwiftUI phase can load packaged assets from the app bundle instead of relying on external file paths."
+    },
+    {
+      "decision": "Keep chroma-key source PNGs and ship cleaned RGBA runtime PNGs.",
+      "reason": "ImagesSource preserves the generated key-color inputs for provenance, while Images contains the chroma-key-removed assets verified as RGBA with transparent corners for runtime use."
+    },
+    {
+      "decision": "Keep the SwiftUI pass visual-only and preserve the existing store/core calls.",
+      "reason": "This phase maps the HTML design direction onto current Scan, Results, App Uninstaller, AI Review, Permission, and Settings flows without changing local behavior."
+    },
+    {
+      "decision": "Load generated PNG illustrations through Bundle.module with system-symbol fallbacks.",
+      "reason": "Package.swift already processes Sources/CleanMac/Resources, and fallbacks keep the UI usable if a packaged image cannot be loaded."
+    },
+    {
+      "decision": "Use swift build, swift test, and script/build_and_run.sh --verify for final verification.",
+      "reason": "The implementation is SwiftUI-only but should still compile, preserve core behavior tests, and launch as a packaged macOS app with resources."
+    },
+    {
+      "decision": "Add a CleanMacUITests screenshot smoke test for every SidebarSection.",
+      "reason": "The user saw black pages and left-side routing issues, so every sidebar entry now renders into a snapshot and checks for visible non-black main content."
+    },
+    {
+      "decision": "Replace macOS default rounded text fields and the Settings TabView with project-owned light controls.",
+      "reason": "The default AppKit controls rendered dark inside the custom SwiftUI chrome, especially in AI Review and Settings."
+    },
+    {
+      "decision": "Keep the follow-up focused on UI chrome and page mapping, not cleaner behavior.",
+      "reason": "The user asked to keep local functionality unchanged for now and handle functionality details later."
     }
   ],
-  "verify_cmd": "swift test && plutil -lint Sources/CleanMacCore/Resources/en.lproj/Localizable.strings && plutil -lint Sources/CleanMacCore/Resources/zh-Hans.lproj/Localizable.strings",
-  "updated_at": "2026-06-28T12:37:09Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift test",
+  "updated_at": "2026-06-29T01:23:19Z"
 }
