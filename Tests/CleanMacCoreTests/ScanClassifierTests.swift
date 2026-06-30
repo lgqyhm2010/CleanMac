@@ -38,4 +38,44 @@ final class ScanClassifierTests: XCTestCase {
         XCTAssertEqual(large.category, .largeFile)
         XCTAssertEqual(large.risk, .reviewRecommended)
     }
+
+    func testDoesNotTreatUserFoldersNamedTrashOrTmpAsSafeToDelete() {
+        let classifier = ScanClassifier(largeFileThresholdBytes: 100)
+
+        let userTrash = classifier.classify(
+            url: URL(filePath: "/Users/me/Documents/trash/keepsake.txt"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertNotEqual(userTrash.category, .trash)
+        XCTAssertNotEqual(userTrash.risk, .usuallySafe)
+
+        let userTmp = classifier.classify(
+            url: URL(filePath: "/Users/me/Projects/app/tmp/build.o"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertNotEqual(userTmp.category, .temporary)
+        XCTAssertNotEqual(userTmp.risk, .usuallySafe)
+    }
+
+    func testStillClassifiesRealTrashAndTempLocations() {
+        let classifier = ScanClassifier(largeFileThresholdBytes: 100)
+
+        let realTrash = classifier.classify(
+            url: URL(filePath: "/Users/me/.Trash/old-installer.dmg"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(realTrash.category, .trash)
+        XCTAssertEqual(realTrash.risk, .usuallySafe)
+
+        let realTemp = classifier.classify(
+            url: URL(filePath: "/private/tmp/scratch.dat"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(realTemp.category, .temporary)
+        XCTAssertEqual(realTemp.risk, .usuallySafe)
+    }
 }

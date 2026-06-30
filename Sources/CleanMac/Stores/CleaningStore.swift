@@ -109,6 +109,7 @@ final class CleaningStore: ObservableObject {
             errorMessage = .addFolderToScan
             return
         }
+        guard !isScanning, !isScanningApplications else { return }
 
         let roots = roots
         let options = ScanOptions(
@@ -147,6 +148,7 @@ final class CleaningStore: ObservableObject {
             errorMessage = .addFolderToScan
             return
         }
+        guard !isScanning, !isScanningApplications else { return }
 
         let appRoots = appRoots
         let userLibrary = FileManager.default.homeDirectoryForCurrentUser
@@ -224,6 +226,7 @@ final class CleaningStore: ObservableObject {
     func cleanSelected() {
         let targets = selectedCandidates
         guard !targets.isEmpty else { return }
+        guard !isCleaning else { return }
 
         isCleaning = true
         errorMessage = nil
@@ -279,6 +282,7 @@ final class CleaningStore: ObservableObject {
             errorMessage = .setAIExecutable
             return
         }
+        guard !isReviewingWithAI else { return }
 
         isReviewingWithAI = true
         errorMessage = nil

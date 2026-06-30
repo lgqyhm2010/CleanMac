@@ -13,8 +13,13 @@ public struct DuplicateFileFinder: Sendable {
         var groups: [DuplicateFileGroup] = []
 
         for (sizeBytes, sameSizeCandidates) in candidatesBySize {
-            let candidatesByHash = try Dictionary(grouping: sameSizeCandidates) { candidate in
-                try contentHash(for: candidate.url)
+            // Hash each file independently and skip any that cannot be read (permission
+            // denied, vanished between scan and hash, transient I/O error) so one bad
+            // file never aborts the entire duplicate scan.
+            var candidatesByHash: [String: [CleaningCandidate]] = [:]
+            for candidate in sameSizeCandidates {
+                guard let hash = contentHash(for: candidate.url) else { continue }
+                candidatesByHash[hash, default: []].append(candidate)
             }
 
             let duplicateGroups = candidatesByHash
@@ -43,8 +48,12 @@ public struct DuplicateFileFinder: Sendable {
         !candidate.isDirectory && candidate.sizeBytes > 0
     }
 
-    private func contentHash(for url: URL) throws -> String {
-        let data = try Data(contentsOf: url)
+    private func contentHash(for url: URL) -> String? {
+        // Memory-map when safe so two same-size multi-gigabyte files are not both pulled
+        // fully into RAM just to be compared.
+        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else {
+            return nil
+        }
         let digest = SHA256.hash(data: data)
         return digest.map { String(format: "%02x", $0) }.joined()
     }

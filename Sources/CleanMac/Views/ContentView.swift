@@ -70,22 +70,6 @@ struct ContentView: View {
         .shadow(color: Color.black.opacity(0.14), radius: 18, x: 0, y: 14)
         .padding(1)
         .frame(minWidth: 1_020, minHeight: 660)
-        .focusedSceneValue(\.cleanerActions, CleanerActions(
-            scan: {
-                store.scan()
-                selection = .cleanUp
-            },
-            selectAll: {
-                store.selectAll()
-            },
-            clearSelection: {
-                store.clearSelection()
-            },
-            askAI: {
-                store.askAI(executable: aiExecutable, argumentsText: aiArguments)
-                selection = .aiReview
-            }
-        ))
         .onChange(of: resolvedLanguage) { _, newLanguage in
             store.updateDefaultAIQuestionIfNeeded(language: newLanguage)
         }

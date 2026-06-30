@@ -34,6 +34,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenuShowItem: NSMenuItem?
     private var statusMenuSettingsItem: NSMenuItem?
     private var statusMenuQuitItem: NSMenuItem?
+    private var cleanerMenu: NSMenu?
+    private var cleanerScanItem: NSMenuItem?
+    private var cleanerSelectAllItem: NSMenuItem?
+    private var cleanerClearItem: NSMenuItem?
+    private var cleanerAskAIItem: NSMenuItem?
     private var statusCancellables: Set<AnyCancellable> = []
     private lazy var store = CleaningStore(language: resolvedLanguage)
 
@@ -84,6 +89,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appMenu.addItem(quitItem)
         appMenuItem.submenu = appMenu
         mainMenu.addItem(appMenuItem)
+        mainMenu.addItem(makeEditMenuItem())
+        mainMenu.addItem(makeCleanerMenuItem())
         NSApp.mainMenu = mainMenu
         configureStatusItem()
         updateLocalizedChrome()
@@ -93,6 +100,81 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: UserDefaults.didChangeNotification,
             object: nil,
         )
+    }
+
+    /// Standard Edit menu so Undo/Redo/Cut/Copy/Paste/Select All work in every text field
+    /// and editor. The actions target the first responder via the responder chain.
+    private func makeEditMenuItem() -> NSMenuItem {
+        let editMenuItem = NSMenuItem()
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redoItem = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redoItem.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenuItem.submenu = editMenu
+        return editMenuItem
+    }
+
+    /// Cleaner menu whose items drive the shared store directly, so the keyboard shortcuts
+    /// (Scan ⌘R, Select All ⌘⇧A, Clear ⌘⇧⌫, Ask AI ⌘⇧I) actually fire in this AppKit app.
+    private func makeCleanerMenuItem() -> NSMenuItem {
+        let language = resolvedLanguage
+        let cleanerMenuItem = NSMenuItem()
+        let menu = NSMenu(title: L10n.text(.cleaner, language: language))
+
+        let scanItem = NSMenuItem(title: L10n.text(.scan, language: language), action: #selector(scanFromMenu), keyEquivalent: "r")
+        let selectAllItem = NSMenuItem(title: L10n.text(.selectAllCandidates, language: language), action: #selector(selectAllCandidatesFromMenu), keyEquivalent: "a")
+        selectAllItem.keyEquivalentModifierMask = [.command, .shift]
+        let clearItem = NSMenuItem(title: L10n.text(.clearSelection, language: language), action: #selector(clearSelectionFromMenu), keyEquivalent: String(UnicodeScalar(NSBackspaceCharacter)!))
+        clearItem.keyEquivalentModifierMask = [.command, .shift]
+        let askAIItem = NSMenuItem(title: L10n.text(.askAI, language: language), action: #selector(askAIFromMenu), keyEquivalent: "i")
+        askAIItem.keyEquivalentModifierMask = [.command, .shift]
+
+        [scanItem, selectAllItem, clearItem, askAIItem].forEach { $0.target = self }
+
+        menu.addItem(scanItem)
+        menu.addItem(.separator())
+        menu.addItem(selectAllItem)
+        menu.addItem(clearItem)
+        menu.addItem(.separator())
+        menu.addItem(askAIItem)
+
+        cleanerMenuItem.submenu = menu
+        cleanerMenu = menu
+        cleanerScanItem = scanItem
+        cleanerSelectAllItem = selectAllItem
+        cleanerClearItem = clearItem
+        cleanerAskAIItem = askAIItem
+        return cleanerMenuItem
+    }
+
+    @objc
+    private func scanFromMenu() {
+        showMainWindow()
+        store.scan()
+    }
+
+    @objc
+    private func selectAllCandidatesFromMenu() {
+        store.selectAll()
+    }
+
+    @objc
+    private func clearSelectionFromMenu() {
+        store.clearSelection()
+    }
+
+    @objc
+    private func askAIFromMenu() {
+        showMainWindow()
+        let executable = UserDefaults.standard.string(forKey: "aiExecutable") ?? "/usr/bin/env"
+        let arguments = UserDefaults.standard.string(forKey: "aiArguments") ?? "codex exec"
+        store.askAI(executable: executable, argumentsText: arguments)
     }
 
     func showMainWindow() {
@@ -265,6 +347,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMenuSettingsItem?.title = L10n.text(.settings, language: language)
         statusMenuQuitItem?.title = L10n.text(.quitCleanMac, language: language)
         settingsWindow?.title = L10n.text(.settings, language: language)
+        cleanerMenu?.title = L10n.text(.cleaner, language: language)
+        cleanerScanItem?.title = L10n.text(.scan, language: language)
+        cleanerSelectAllItem?.title = L10n.text(.selectAllCandidates, language: language)
+        cleanerClearItem?.title = L10n.text(.clearSelection, language: language)
+        cleanerAskAIItem?.title = L10n.text(.askAI, language: language)
     }
 
     @objc

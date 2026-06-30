@@ -19,6 +19,24 @@ final class DuplicateFileFinderTests: XCTestCase {
         XCTAssertEqual(groups[0].reclaimableBytes, 4)
     }
 
+    func testSkipsUnreadableFilesInsteadOfFailingEntireScan() throws {
+        let root = try makeTemporaryDirectory()
+        let first = try writeFile(root.appending(path: "a/report.txt"), contents: "same")
+        let second = try writeFile(root.appending(path: "b/copy.txt"), contents: "same")
+        // A candidate that vanished between scan and hashing (or is permission-denied):
+        // the file is never created on disk, so reading it would throw.
+        let missing = root.appending(path: "c/ghost.txt")
+
+        let groups = try DuplicateFileFinder().findDuplicates(in: [
+            candidate(url: first, size: 4),
+            candidate(url: second, size: 4),
+            candidate(url: missing, size: 4)
+        ])
+
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups[0].candidates.map(\.url.lastPathComponent).sorted(), ["copy.txt", "report.txt"])
+    }
+
     func testIgnoresDirectoriesEmptyFilesAndSingleFiles() throws {
         let root = try makeTemporaryDirectory()
         let file = try writeFile(root.appending(path: "lonely.txt"), contents: "only")

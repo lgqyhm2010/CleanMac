@@ -50,6 +50,24 @@ final class DiskScannerTests: XCTestCase {
         XCTAssertEqual(report.duplicateReclaimableBytes, 4)
     }
 
+    func testReportsFileSystemPackagesAsSingleSizedCandidates() throws {
+        let root = try makeTemporaryDirectory()
+        // A .app is a file-system package: it must be reported as one sized item, not
+        // skipped entirely (old behavior) and not exploded into its inner files.
+        try writeFile(root.appending(path: "Big.app/Contents/MacOS/bin"), byteCount: 50)
+        try writeFile(root.appending(path: "Big.app/Contents/Resources/data.bin"), byteCount: 70)
+
+        let report = try DiskScanner(classifier: ScanClassifier(largeFileThresholdBytes: 1_000))
+            .scan(roots: [root], options: ScanOptions(minimumFileSizeBytes: 1, includeHiddenFiles: false))
+
+        let package = report.candidates.first { $0.url.lastPathComponent == "Big.app" }
+        XCTAssertNotNil(package, "Package was skipped instead of reported")
+        XCTAssertEqual(package?.isDirectory, true)
+        XCTAssertEqual(package?.sizeBytes, 120)
+        XCTAssertFalse(report.candidates.contains { $0.url.lastPathComponent == "bin" })
+        XCTAssertFalse(report.candidates.contains { $0.url.lastPathComponent == "data.bin" })
+    }
+
     private func makeTemporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appending(path: UUID().uuidString, directoryHint: .isDirectory)

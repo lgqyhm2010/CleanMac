@@ -32,13 +32,16 @@ public struct ScanClassifier: Sendable {
                 risk: .reviewRecommended,
                 reasons: ["Downloads folder item"]
             )
-        } else if lowerComponents.contains(".trash") || lowerComponents.contains("trash") {
+        } else if lowerComponents.contains(".trash") || lowerComponents.contains(".trashes") {
             baseClassification = ScanClassification(
                 category: .trash,
                 risk: .usuallySafe,
                 reasons: ["Already in Trash"]
             )
-        } else if lowerComponents.contains("tmp")
+        } else if lowerPath.hasPrefix("/tmp/")
+            || lowerPath.hasPrefix("/private/tmp/")
+            || lowerPath.hasPrefix("/var/tmp/")
+            || lowerPath.hasPrefix("/private/var/tmp/")
             || lowerComponents.contains("temporaryitems")
             || url.pathExtension.lowercased() == "tmp" {
             baseClassification = ScanClassification(
