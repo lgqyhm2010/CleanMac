@@ -655,31 +655,39 @@ struct CleanMacPulseIcon: View {
     var isActive: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var pulsing = false
+    @State private var activationDate: Date?
 
     var body: some View {
-        Image(systemName: symbolName)
-            .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(tint)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(tint.opacity(isActive ? 0.24 : 0.16), in: CleanMacTheme.panelShape)
-            .overlay {
-                CleanMacTheme.panelShape
-                    .strokeBorder(CleanMacTheme.ink, lineWidth: 2)
-            }
-            .scaleEffect(pulsing ? 1.06 : 1.0)
-            .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.pulse), value: pulsing)
-            .onAppear(perform: updatePulse)
-            .onChange(of: isActive) { _, _ in updatePulse() }
-            .onChange(of: reduceMotion) { _, _ in updatePulse() }
+        TimelineView(.animation) { timeline in
+            let progress = animationProgress(at: timeline.date)
+
+            Image(systemName: symbolName)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(tint)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(tint.opacity(isActive ? 0.24 : 0.16), in: CleanMacTheme.panelShape)
+                .overlay {
+                    CleanMacTheme.panelShape
+                        .strokeBorder(CleanMacTheme.ink, lineWidth: 2)
+                }
+                .scaleEffect(1.0 + (progress * 0.06))
+        }
+        .onAppear(perform: updateActivationDate)
+        .onChange(of: isActive) { _, _ in updateActivationDate() }
+        .onChange(of: reduceMotion) { _, _ in updateActivationDate() }
     }
 
-    private func updatePulse() {
-        guard isActive, !reduceMotion else {
-            pulsing = false
-            return
+    private func updateActivationDate() {
+        activationDate = isActive && !reduceMotion ? Date() : nil
+    }
+
+    private func animationProgress(at date: Date) -> CGFloat {
+        guard let activationDate else {
+            return 0
         }
-        pulsing = true
+
+        let elapsed = date.timeIntervalSince(activationDate)
+        return oscillatingProgress(elapsed: elapsed, period: 0.9)
     }
 }
 
@@ -689,24 +697,27 @@ struct CleanMacFeatureImage: View {
     var isActive = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var floating = false
+    @State private var activationDate: Date?
 
     var body: some View {
-        Group {
-            if let image = image {
-                Image(nsImage: image)
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                CleanMacPulseIcon(symbolName: asset.fallbackSymbolName, tint: tint, isActive: isActive)
+        TimelineView(.animation) { timeline in
+            let progress = animationProgress(at: timeline.date)
+
+            Group {
+                if let image = image {
+                    Image(nsImage: image)
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    CleanMacPulseIcon(symbolName: asset.fallbackSymbolName, tint: tint, isActive: isActive)
+                }
             }
+            .offset(y: -5 * progress)
+            .scaleEffect(1.0 + (0.04 * progress))
         }
-        .offset(y: floating ? -5 : 0)
-        .scaleEffect(floating ? 1.04 : 1.0)
-        .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.float), value: floating)
-        .onAppear(perform: updateFloat)
-        .onChange(of: isActive) { _, _ in updateFloat() }
-        .onChange(of: reduceMotion) { _, _ in updateFloat() }
+        .onAppear(perform: updateActivationDate)
+        .onChange(of: isActive) { _, _ in updateActivationDate() }
+        .onChange(of: reduceMotion) { _, _ in updateActivationDate() }
     }
 
     private var image: NSImage? {
@@ -716,9 +727,25 @@ struct CleanMacFeatureImage: View {
         return NSImage(contentsOf: url)
     }
 
-    private func updateFloat() {
-        floating = isActive && !reduceMotion
+    private func updateActivationDate() {
+        activationDate = isActive && !reduceMotion ? Date() : nil
     }
+
+    private func animationProgress(at date: Date) -> CGFloat {
+        guard let activationDate else {
+            return 0
+        }
+
+        let elapsed = date.timeIntervalSince(activationDate)
+        return oscillatingProgress(elapsed: elapsed, period: 3.0)
+    }
+}
+
+private func oscillatingProgress(elapsed: TimeInterval, period: TimeInterval) -> CGFloat {
+    guard period > 0 else { return 0 }
+
+    let phase = (elapsed / period) * 2 * Double.pi
+    return CGFloat((1 - cos(phase)) / 2)
 }
 
 struct CleanMacProgressBeam: View {

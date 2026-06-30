@@ -6,10 +6,12 @@ struct SidebarView: View {
     @ObservedObject var store: CleaningStore
     var language: ResolvedLanguage
 
+    @State private var hoveredSection: SidebarSection?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
-                CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent, isActive: selection == .diskOverview)
+                CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent, isActive: false)
                     .frame(width: 42, height: 42)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -88,12 +90,15 @@ struct SidebarView: View {
     private func sidebarRow(_ section: SidebarSection, value: String) -> some View {
         let tint = CleanMacTheme.sectionTint(section)
         let isSelected = selection == section
+        let isHovered = hoveredSection == section
+        let shouldAnimateIcon = isHovered && !isSelected
 
         return Button {
+            hoveredSection = nil
             selection = section
         } label: {
             HStack(spacing: 10) {
-                CleanMacFeatureImage(asset: section.illustrationAsset, tint: tint, isActive: isSelected)
+                CleanMacFeatureImage(asset: section.illustrationAsset, tint: tint, isActive: shouldAnimateIcon)
                     .frame(width: 38, height: 38)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -127,6 +132,22 @@ struct SidebarView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { isHovering in
+            updateHover(isHovering, section: section)
+        }
+        .onChange(of: selection) { _, newValue in
+            if newValue == section {
+                hoveredSection = nil
+            }
+        }
+    }
+
+    private func updateHover(_ isHovering: Bool, section: SidebarSection) {
+        if isHovering {
+            hoveredSection = section
+        } else if hoveredSection == section {
+            hoveredSection = nil
+        }
     }
 
     private func sidebarValue(for section: SidebarSection) -> String {

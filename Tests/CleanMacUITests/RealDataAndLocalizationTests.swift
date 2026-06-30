@@ -63,6 +63,31 @@ final class RealDataAndLocalizationTests: XCTestCase {
         }
     }
 
+    func testSidebarTabIconAnimationIsDrivenByHoverOnly() throws {
+        let source = try sourceFile("Sources/CleanMac/Views/SidebarView.swift")
+
+        XCTAssertTrue(source.contains("@State private var hoveredSection: SidebarSection?"))
+        XCTAssertTrue(source.contains("let isHovered = hoveredSection == section"))
+        XCTAssertTrue(source.contains("let shouldAnimateIcon = isHovered && !isSelected"))
+        XCTAssertTrue(source.contains("CleanMacFeatureImage(asset: section.illustrationAsset, tint: tint, isActive: shouldAnimateIcon)"))
+        XCTAssertTrue(source.contains("hoveredSection = nil"))
+        XCTAssertTrue(source.contains(".onHover"))
+        XCTAssertFalse(source.contains("CleanMacFeatureImage(asset: section.illustrationAsset, tint: tint, isActive: isHovered)"))
+        XCTAssertFalse(source.contains("CleanMacFeatureImage(asset: section.illustrationAsset, tint: tint, isActive: isSelected)"))
+    }
+
+    func testFeatureImagesResetWithoutAnimatingWhenInactive() throws {
+        let source = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
+
+        XCTAssertTrue(source.contains("TimelineView(.animation)"))
+        XCTAssertTrue(source.contains("let progress = animationProgress(at: timeline.date)"))
+        XCTAssertTrue(source.contains("return 0"))
+        XCTAssertFalse(source.contains("@State private var floating = false"))
+        XCTAssertFalse(source.contains("@State private var pulsing = false"))
+        XCTAssertFalse(source.contains("withAnimation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.float))"))
+        XCTAssertFalse(source.contains(".animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.float), value: floating)"))
+    }
+
     func testAppKitMenusUseLocalizedResources() throws {
         let source = try sourceFile("Sources/CleanMac/App/CleanMacApp.swift")
         let rawMenuLiterals = [
