@@ -17,7 +17,12 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            CleanMacAppTitleBar(title: "CleanMac - \((selection ?? .diskOverview).title(language: resolvedLanguage))")
+            CleanMacAppTitleBar(
+                title: L10n.windowTitle(
+                    (selection ?? .diskOverview).title(language: resolvedLanguage),
+                    language: resolvedLanguage
+                )
+            )
 
             HStack(spacing: 0) {
                 SidebarView(selection: $selection, store: store, language: resolvedLanguage)

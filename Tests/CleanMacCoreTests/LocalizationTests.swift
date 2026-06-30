@@ -78,7 +78,9 @@ struct LocalizationTests {
             "status.candidatesFound",
             "status.movedToTrash",
             "error.itemsCouldNotBeMoved",
-            "defaultAIQuestion"
+            "defaultAIQuestion",
+            "storage.freeOfTotal",
+            "windowTitle"
         ])
 
         for strings in try loadAllLanguageStrings() {
@@ -127,6 +129,22 @@ struct LocalizationTests {
         #expect(!source.contains("private static func chineseText"))
     }
 
+    @Test("Every localized string keeps English format placeholder parity")
+    func everyLocalizedStringKeepsEnglishFormatPlaceholderParity() throws {
+        let english = try loadStrings(for: .english)
+
+        for language in ResolvedLanguage.allCases where language != .english {
+            let localized = try loadStrings(for: language)
+
+            for key in english.keys.sorted() {
+                #expect(
+                    formatPlaceholders(in: localized[key] ?? "") == formatPlaceholders(in: english[key] ?? ""),
+                    "\(language.lprojName) placeholder mismatch for \(key)"
+                )
+            }
+        }
+    }
+
     private func packageRoot() -> URL {
         URL(filePath: #filePath)
             .deletingLastPathComponent()
@@ -157,5 +175,16 @@ struct LocalizationTests {
         }
 
         return strings
+    }
+
+    private func formatPlaceholders(in value: String) -> [String] {
+        let pattern = #"%(?:\d+\$)?[-+ 0#]?(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|h|ll|l|L|z|j|t)?[@diuoxXfFeEgGcCsSp]"#
+        let regex = try! NSRegularExpression(pattern: pattern)
+        let range = NSRange(value.startIndex..<value.endIndex, in: value)
+
+        return regex.matches(in: value, range: range).compactMap { match in
+            guard let matchRange = Range(match.range, in: value) else { return nil }
+            return String(value[matchRange])
+        }
     }
 }

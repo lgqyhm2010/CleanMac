@@ -4,7 +4,9 @@ import Foundation
 
 @MainActor
 final class CleaningStore: ObservableObject {
-    @Published var roots: [URL] = DefaultScanRoots.urls
+    @Published var roots: [URL] = DefaultScanRoots.urls {
+        didSet { refreshVolumeSnapshot() }
+    }
     @Published var appRoots: [URL] = DefaultApplicationRoots.urls
     @Published var candidates: [CleaningCandidate] = []
     @Published var selection = CleaningSelection()
@@ -23,9 +25,11 @@ final class CleaningStore: ObservableObject {
     @Published var includeHiddenFiles = false
     @Published var minimumSizeMegabytes = 1.0
     @Published var largeFileThresholdMegabytes = 500.0
+    @Published var volumeSnapshot: StorageVolumeSnapshot?
 
     init(language: ResolvedLanguage = AppLanguage.system.resolved()) {
         aiQuestion = L10n.defaultAIQuestion(language: language)
+        refreshVolumeSnapshot()
     }
 
     var selectedCandidates: [CleaningCandidate] {
@@ -110,6 +114,7 @@ final class CleaningStore: ObservableObject {
             return
         }
         guard !isScanning, !isScanningApplications else { return }
+        refreshVolumeSnapshot()
 
         let roots = roots
         let options = ScanOptions(
@@ -318,6 +323,13 @@ final class CleaningStore: ObservableObject {
             totalBytes: candidates.reduce(0) { $0 + $1.sizeBytes },
             scannedFileCount: lastReport.scannedFileCount,
             skippedFileCount: lastReport.skippedFileCount
+        )
+    }
+
+    private func refreshVolumeSnapshot() {
+        volumeSnapshot = StorageVolumeReporter().snapshot(
+            for: roots,
+            fallback: FileManager.default.homeDirectoryForCurrentUser
         )
     }
 }

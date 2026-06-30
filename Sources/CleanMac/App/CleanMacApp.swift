@@ -34,6 +34,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenuShowItem: NSMenuItem?
     private var statusMenuSettingsItem: NSMenuItem?
     private var statusMenuQuitItem: NSMenuItem?
+    private var editMenu: NSMenu?
+    private var editUndoItem: NSMenuItem?
+    private var editRedoItem: NSMenuItem?
+    private var editCutItem: NSMenuItem?
+    private var editCopyItem: NSMenuItem?
+    private var editPasteItem: NSMenuItem?
+    private var editSelectAllItem: NSMenuItem?
     private var cleanerMenu: NSMenu?
     private var cleanerScanItem: NSMenuItem?
     private var cleanerSelectAllItem: NSMenuItem?
@@ -105,18 +112,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Standard Edit menu so Undo/Redo/Cut/Copy/Paste/Select All work in every text field
     /// and editor. The actions target the first responder via the responder chain.
     private func makeEditMenuItem() -> NSMenuItem {
+        let language = resolvedLanguage
         let editMenuItem = NSMenuItem()
-        let editMenu = NSMenu(title: "Edit")
-        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
-        let redoItem = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        let editMenu = NSMenu(title: L10n.text(.edit, language: language))
+        let undoItem = editMenu.addItem(withTitle: L10n.text(.undo, language: language), action: Selector(("undo:")), keyEquivalent: "z")
+        let redoItem = editMenu.addItem(withTitle: L10n.text(.redo, language: language), action: Selector(("redo:")), keyEquivalent: "z")
         redoItem.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        let cutItem = editMenu.addItem(withTitle: L10n.text(.cut, language: language), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        let copyItem = editMenu.addItem(withTitle: L10n.text(.copy, language: language), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        let pasteItem = editMenu.addItem(withTitle: L10n.text(.paste, language: language), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let selectAllItem = editMenu.addItem(withTitle: L10n.text(.selectAll, language: language), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenuItem.submenu = editMenu
+        self.editMenu = editMenu
+        editUndoItem = undoItem
+        editRedoItem = redoItem
+        editCutItem = cutItem
+        editCopyItem = copyItem
+        editPasteItem = pasteItem
+        editSelectAllItem = selectAllItem
         return editMenuItem
     }
 
@@ -293,7 +308,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let title = MenuBarMonitorSummary.title(
             status: status,
             candidateCount: candidateCount,
-            isScanning: isScanning
+            isScanning: isScanning,
+            language: resolvedLanguage
         )
         statusItem?.button?.title = title
         statusMenuStatusItem?.title = title
@@ -347,6 +363,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMenuSettingsItem?.title = L10n.text(.settings, language: language)
         statusMenuQuitItem?.title = L10n.text(.quitCleanMac, language: language)
         settingsWindow?.title = L10n.text(.settings, language: language)
+        editMenu?.title = L10n.text(.edit, language: language)
+        editUndoItem?.title = L10n.text(.undo, language: language)
+        editRedoItem?.title = L10n.text(.redo, language: language)
+        editCutItem?.title = L10n.text(.cut, language: language)
+        editCopyItem?.title = L10n.text(.copy, language: language)
+        editPasteItem?.title = L10n.text(.paste, language: language)
+        editSelectAllItem?.title = L10n.text(.selectAll, language: language)
         cleanerMenu?.title = L10n.text(.cleaner, language: language)
         cleanerScanItem?.title = L10n.text(.scan, language: language)
         cleanerSelectAllItem?.title = L10n.text(.selectAllCandidates, language: language)

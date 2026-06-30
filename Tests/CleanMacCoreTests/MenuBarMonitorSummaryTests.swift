@@ -12,7 +12,7 @@ final class MenuBarMonitorSummaryTests: XCTestCase {
     func testTitleShowsCandidateCountWhenResultsExist() {
         XCTAssertEqual(
             MenuBarMonitorSummary.title(status: .candidatesFound(12), candidateCount: 12, isScanning: false),
-            "12 items"
+            "12 candidates"
         )
     }
 
@@ -24,6 +24,21 @@ final class MenuBarMonitorSummaryTests: XCTestCase {
         XCTAssertEqual(
             MenuBarMonitorSummary.title(status: .candidatesFound(0), candidateCount: 0, isScanning: false),
             "CleanMac"
+        )
+    }
+
+    func testTitleLocalizesCompactStatus() {
+        XCTAssertEqual(
+            MenuBarMonitorSummary.title(status: .candidatesFound(3), candidateCount: 3, isScanning: false, language: .chinese),
+            "3 个候选项"
+        )
+        XCTAssertEqual(
+            MenuBarMonitorSummary.title(status: .movingToTrash, candidateCount: 3, isScanning: false, language: .chinese),
+            "正在移动"
+        )
+        XCTAssertEqual(
+            MenuBarMonitorSummary.title(status: .askingAI, candidateCount: 3, isScanning: false, language: .chinese),
+            "AI 审查"
         )
     }
 }
