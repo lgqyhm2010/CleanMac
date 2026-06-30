@@ -66,6 +66,25 @@ public struct ProcessCommandRunner: CommandRunning {
     public init() {}
 
     public func run(command: AICommand, standardInput: String) async throws -> CommandResult {
+        // A broken pipe (child exits before reading all of stdin) must surface as a
+        // non-zero exit code, not a SIGPIPE that kills the whole app.
+        _ = Self.sigpipeIgnored
+
+        let payload = UnsafeTransfer((command, standardInput))
+        return try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    let (command, standardInput) = payload.value
+                    let result = try Self.runSynchronously(command: command, standardInput: standardInput)
+                    continuation.resume(returning: result)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    private static func runSynchronously(command: AICommand, standardInput: String) throws -> CommandResult {
         let process = Process()
         process.executableURL = URL(filePath: command.executable)
         process.arguments = command.arguments
@@ -79,20 +98,59 @@ public struct ProcessCommandRunner: CommandRunning {
 
         try process.run()
 
-        if let input = standardInput.data(using: .utf8) {
-            inputPipe.fileHandleForWriting.write(input)
+        // Drain stdout and stderr concurrently *while* the child runs. macOS pipe
+        // buffers are small (~64KB); if we waited for the process to exit before
+        // reading, a chatty command would block on a full pipe and never exit,
+        // deadlocking against waitUntilExit().
+        let outputSink = UnsafeTransfer(outputPipe.fileHandleForReading)
+        let errorSink = UnsafeTransfer(errorPipe.fileHandleForReading)
+        let outputBox = DataBox()
+        let errorBox = DataBox()
+        let drainGroup = DispatchGroup()
+
+        drainGroup.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            outputBox.value = outputSink.value.readDataToEndOfFile()
+            drainGroup.leave()
         }
-        try inputPipe.fileHandleForWriting.close()
+        drainGroup.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            errorBox.value = errorSink.value.readDataToEndOfFile()
+            drainGroup.leave()
+        }
 
+        // Writing can fail with a broken pipe if the child already exited; that is
+        // not fatal — the child's exit code is what the caller cares about.
+        let writeHandle = inputPipe.fileHandleForWriting
+        if let input = standardInput.data(using: .utf8) {
+            try? writeHandle.write(contentsOf: input)
+        }
+        try? writeHandle.close()
+
+        drainGroup.wait()
         process.waitUntilExit()
-
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
 
         return CommandResult(
             exitCode: process.terminationStatus,
-            standardOutput: String(data: outputData, encoding: .utf8) ?? "",
-            standardError: String(data: errorData, encoding: .utf8) ?? ""
+            standardOutput: String(data: outputBox.value, encoding: .utf8) ?? "",
+            standardError: String(data: errorBox.value, encoding: .utf8) ?? ""
         )
     }
+
+    private static let sigpipeIgnored: Void = {
+        signal(SIGPIPE, SIG_IGN)
+    }()
+}
+
+/// Carries a non-`Sendable` value across a concurrency boundary when the caller
+/// guarantees it is only touched on one thread at a time.
+private struct UnsafeTransfer<Value>: @unchecked Sendable {
+    let value: Value
+    init(_ value: Value) { self.value = value }
+}
+
+/// A reference box used to hand a drained pipe's data back from a background
+/// queue; written once before `DispatchGroup.wait()` establishes happens-before.
+private final class DataBox: @unchecked Sendable {
+    var value = Data()
 }

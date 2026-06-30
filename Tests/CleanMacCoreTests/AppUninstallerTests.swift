@@ -27,6 +27,40 @@ final class AppUninstallerTests: XCTestCase {
         XCTAssertTrue(plans[0].allCandidates.allSatisfy { !$0.userVisibleRules.isEmpty })
     }
 
+    func testDoesNotClaimSharedSupportFolderMatchedOnlyByDisplayName() throws {
+        let sandbox = try makeTemporaryDirectory()
+        let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
+        let library = sandbox.appending(path: "Library", directoryHint: .isDirectory)
+        // The app's display name ("Vendor") collides with a shared vendor folder used by
+        // many apps. Only the reverse-DNS bundle id should be trusted for matching.
+        try makeAppBundle(apps.appending(path: "Vendor.app"), bundleIdentifier: "com.vendor.flagship")
+        try writeFile(library.appending(path: "Application Support/Vendor/shared-across-apps.db"), contents: "shared")
+
+        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: library)
+
+        XCTAssertEqual(plans.count, 1)
+        XCTAssertTrue(
+            plans[0].supportCandidates.isEmpty,
+            "Must not claim a shared folder matched only by generic display name"
+        )
+    }
+
+    func testAppBundleSizeIncludesHiddenFiles() throws {
+        let sandbox = try makeTemporaryDirectory()
+        let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
+        let app = try makeAppBundle(apps.appending(path: "Demo.app"), bundleIdentifier: "com.example.demo")
+        // Hidden payload inside the bundle (apps store dot-prefixed databases/resources).
+        try writeFile(app.appending(path: "Contents/.hidden-db"), contents: "0123456789") // 10 bytes
+
+        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+
+        let plistSize = try app.appending(path: "Contents/Info.plist")
+            .resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+        // Info.plist + Contents/MacOS/demo ("binary" = 6 bytes) + hidden 10 bytes.
+        let expected = Int64(plistSize) + 6 + 10
+        XCTAssertEqual(plans[0].appCandidate.sizeBytes, expected)
+    }
+
     func testIgnoresNonAppDirectoriesAndRequiresBundleIdentifier() throws {
         let sandbox = try makeTemporaryDirectory()
         let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)

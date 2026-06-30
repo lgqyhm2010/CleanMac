@@ -275,10 +275,7 @@ private struct OverviewFeatureGrid: View {
                 buttonTitle: L10n.text(.results, language: language),
                 buttonSymbol: "arrow.right",
                 isActive: store.isScanning,
-                action: {
-                    store.scan()
-                    openResults()
-                }
+                action: openResults
             )
 
             OverviewActionCard(

@@ -25,6 +25,7 @@ public final class DiskScanner {
             .fileSizeKey,
             .isDirectoryKey,
             .isHiddenKey,
+            .isPackageKey,
             .isRegularFileKey
         ]
 
@@ -52,6 +53,47 @@ public final class DiskScanner {
                 }
 
                 if values.isDirectory == true {
+                    if isPackage(url: url, values: values) {
+                        // A file-system package (.app, .photoslibrary, .bundle, …) is one
+                        // logical item. Report it as a single sized candidate rather than
+                        // skipping it, and do not descend into or list its internals.
+                        enumerator.skipDescendants()
+
+                        guard options.includeHiddenFiles || !isHidden(url: url, values: values) else {
+                            skippedFileCount += 1
+                            continue
+                        }
+
+                        scannedFileCount += 1
+                        let sizeBytes = packageSize(at: url)
+                        guard sizeBytes >= options.minimumFileSizeBytes else {
+                            skippedFileCount += 1
+                            continue
+                        }
+
+                        let classification = activeClassifier.classify(
+                            url: url,
+                            sizeBytes: sizeBytes,
+                            isDirectory: true
+                        )
+
+                        candidates.append(
+                            CleaningCandidate(
+                                url: url,
+                                sizeBytes: sizeBytes,
+                                modifiedAt: values.contentModificationDate,
+                                category: classification.category,
+                                risk: classification.risk,
+                                reasons: classification.reasons,
+                                isDirectory: true,
+                                protection: classification.protection,
+                                ruleMatches: classification.ruleMatches,
+                                userVisibleRules: classification.userVisibleRules
+                            )
+                        )
+                        continue
+                    }
+
                     if !options.includeHiddenFiles, isHidden(url: url, values: values) {
                         enumerator.skipDescendants()
                     }
@@ -121,5 +163,38 @@ public final class DiskScanner {
             return true
         }
         return url.lastPathComponent.hasPrefix(".")
+    }
+
+    private func isPackage(url: URL, values: URLResourceValues) -> Bool {
+        if values.isPackage == true {
+            return true
+        }
+        // Fall back to well-known package extensions in case LaunchServices has not
+        // registered the bundle type (e.g. a copied app on an external volume).
+        let packageExtensions: Set<String> = [
+            "app", "bundle", "framework", "photoslibrary", "rtfd",
+            "imovielibrary", "tvlibrary", "aplibrary", "xcdatamodeld"
+        ]
+        return packageExtensions.contains(url.pathExtension.lowercased())
+    }
+
+    private func packageSize(at url: URL) -> Int64 {
+        guard let enumerator = fileManager.enumerator(
+            at: url,
+            includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
+            options: []
+        ) else {
+            return 0
+        }
+
+        var total: Int64 = 0
+        for case let child as URL in enumerator {
+            guard let values = try? child.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
+                  values.isRegularFile == true else {
+                continue
+            }
+            total += Int64(values.fileSize ?? 0)
+        }
+        return total
     }
 }

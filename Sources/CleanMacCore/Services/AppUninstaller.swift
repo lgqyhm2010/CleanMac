@@ -68,7 +68,6 @@ public struct AppUninstaller {
         )
 
         let supportCandidates = try supportURLs(
-            appName: metadata.appName,
             bundleIdentifier: metadata.bundleIdentifier,
             userLibrary: userLibrary
         )
@@ -107,10 +106,13 @@ public struct AppUninstaller {
         return AppMetadata(appName: appName, bundleIdentifier: bundleIdentifier)
     }
 
-    private func supportURLs(appName: String, bundleIdentifier: String, userLibrary: URL) throws -> [URL] {
+    private func supportURLs(bundleIdentifier: String, userLibrary: URL) throws -> [URL] {
+        // Match support data only by the reverse-DNS bundle identifier. The display name
+        // is frequently a generic vendor name (e.g. "Google") shared by many apps, so
+        // matching `Application Support/<appName>` would claim folders that belong to
+        // unrelated apps.
         let directMatches = [
             userLibrary.appending(path: "Application Support/\(bundleIdentifier)"),
-            userLibrary.appending(path: "Application Support/\(appName)"),
             userLibrary.appending(path: "Caches/\(bundleIdentifier)"),
             userLibrary.appending(path: "Preferences/\(bundleIdentifier).plist"),
             userLibrary.appending(path: "Saved Application State/\(bundleIdentifier).savedState"),
@@ -192,10 +194,13 @@ public struct AppUninstaller {
 
     private func itemSize(_ url: URL) throws -> Int64 {
         if isDirectory(url) {
+            // Count hidden files too — app bundles and support folders routinely store
+            // dot-prefixed databases and resources, so skipping them undercounts the size
+            // shown to the user.
             guard let enumerator = fileManager.enumerator(
                 at: url,
                 includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
-                options: [.skipsHiddenFiles]
+                options: []
             ) else {
                 return 0
             }
