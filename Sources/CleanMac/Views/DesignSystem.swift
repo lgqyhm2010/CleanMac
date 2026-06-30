@@ -295,12 +295,15 @@ struct CleanMacPanel<Content: View>: View {
         content
             .padding(padding)
             .foregroundStyle(CleanMacTheme.ink)
-            .background(CleanMacTheme.paper, in: CleanMacTheme.panelShape)
+            .background {
+                CleanMacTheme.panelShape
+                    .fill(CleanMacTheme.paper)
+                    .shadow(color: CleanMacTheme.shadow, radius: 0, x: 0, y: 5)
+            }
             .overlay {
                 CleanMacTheme.panelShape
                     .strokeBorder(CleanMacTheme.ink, lineWidth: CleanMacTheme.outlineWidth)
             }
-            .shadow(color: CleanMacTheme.shadow, radius: 0, x: 0, y: 5)
     }
 }
 
@@ -466,12 +469,15 @@ struct MetricTileView: View {
         }
         .padding(14)
         .frame(minWidth: 150, maxWidth: .infinity, minHeight: 86)
-        .background(CleanMacTheme.paper, in: CleanMacTheme.panelShape)
+        .background {
+            CleanMacTheme.panelShape
+                .fill(CleanMacTheme.paper)
+                .shadow(color: CleanMacTheme.shadow, radius: 0, x: 0, y: 4)
+        }
         .overlay {
             CleanMacTheme.panelShape
                 .strokeBorder(CleanMacTheme.ink, lineWidth: 2)
         }
-        .shadow(color: CleanMacTheme.shadow, radius: 0, x: 0, y: 4)
         .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.settle), value: value)
         .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: isActive)
     }
@@ -771,12 +777,20 @@ struct CleanMacRaisedButtonStyle: ButtonStyle {
             .foregroundStyle(prominent ? CleanMacTheme.ink : tint)
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .background((prominent ? tint : CleanMacTheme.paper).opacity(isEnabled ? 1 : 0.55), in: CleanMacTheme.panelShape)
+            .background {
+                CleanMacTheme.panelShape
+                    .fill((prominent ? tint : CleanMacTheme.paper).opacity(isEnabled ? 1 : 0.55))
+                    .shadow(
+                        color: CleanMacTheme.shadow.opacity(isEnabled ? 1 : 0.45),
+                        radius: 0,
+                        x: 0,
+                        y: configuration.isPressed ? 1 : 4
+                    )
+            }
             .overlay {
                 CleanMacTheme.panelShape
                     .strokeBorder(CleanMacTheme.ink.opacity(isEnabled ? 1 : 0.38), lineWidth: 2)
             }
-            .shadow(color: CleanMacTheme.shadow.opacity(isEnabled ? 1 : 0.45), radius: 0, x: 0, y: configuration.isPressed ? 1 : 4)
             .offset(y: configuration.isPressed ? 2 : 0)
             .opacity(isEnabled ? 1 : 0.58)
             .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: configuration.isPressed)
