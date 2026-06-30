@@ -1,80 +1,40 @@
 {
   "mode": "goal",
-  "objective": "Make the local CleanMac app match the updated HTML design and animation direction while keeping existing app functionality intact.",
-  "exit_condition": "The goal is complete when the SwiftUI app visually follows cleanmac_with_ai.html, includes the corresponding generated image assets, preserves the existing local feature flow, builds successfully, and the checkpoint plus implementation changes are committed.",
-  "status": "done",
-  "iteration": 1,
+  "objective": "Complete CleanMac real local functionality and localization coverage on a new branch.",
+  "exit_condition": "The goal is complete when current CleanMac features use real local data instead of fake, demo, placeholder, or hardcoded sample data; incomplete localization has been replaced with resource-backed strings across supported locales with placeholder parity; relevant tests prove the behavior; swift test passes; and checkpoint plus implementation changes are committed.",
+  "status": "in_progress",
+  "iteration": 0,
   "phases": [
-    {"name": "Extract HTML design and animation requirements", "status": "done"},
-    {"name": "Generate image assets that match the HTML design", "status": "done"},
-    {"name": "Apply the design and animations to SwiftUI views without changing core behavior", "status": "done"},
-    {"name": "Verify the app builds and the preserved behavior still compiles", "status": "done"},
-    {"name": "Commit the verified result", "status": "done"},
-    {"name": "Retest every sidebar page and remove black controls", "status": "done"}
+    {"name": "Create feature branch and checkpoint", "status": "in_progress"},
+    {"name": "Audit fake data and incomplete localization gaps", "status": "todo"},
+    {"name": "Add failing tests for real-data and localization gaps", "status": "todo"},
+    {"name": "Implement real-data behavior and localization fixes", "status": "todo"},
+    {"name": "Verify with SwiftPM tests and build", "status": "todo"},
+    {"name": "Commit verified checkpoint and implementation", "status": "todo"}
   ],
   "current": {
-    "focus": "Goal complete after follow-up: all nine sidebar pages are covered by screenshot smoke tests, black system controls were replaced, full tests pass, and the local app window launches successfully.",
-    "next_action": "Stop scheduling; future local feature behavior changes can be handled in a separate goal.",
+    "focus": "New goal initialized after pulling main to 1c01973 and creating codex/real-features-localization.",
+    "next_action": "Audit the current source for placeholder/fake data paths and localization gaps before editing production code.",
     "blockers": ""
   },
   "decisions": [
     {
       "decision": "Treat this as GOAL mode.",
-      "reason": "The task has a concrete completion condition: the local app should match the already-updated HTML design and animation direction."
+      "reason": "The objective is result-driven: real features and complete localization are the explicit end state."
     },
     {
-      "decision": "Keep local app functionality unchanged for this pass.",
-      "reason": "The user explicitly asked to leave local functionality alone and handle it later."
+      "decision": "Use a normal feature branch in the current checkout instead of creating an extra worktree.",
+      "reason": "The user explicitly asked to checkout a new branch, and the working tree was clean on main before branching."
     },
     {
-      "decision": "Use env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift build as the verification command.",
-      "reason": "Plain swift build tried to write toolchain cache under the home directory, and sandboxed SwiftPM manifest evaluation hit sandbox-exec restrictions."
+      "decision": "Use SwiftPM for verification.",
+      "reason": "CleanMac is package-first, and prior verified workflows use SwiftPM tests and builds."
     },
     {
-      "decision": "Treat cleanmac_with_ai.html as visual direction rather than a request to add every prototype page as product behavior.",
-      "reason": "This phase must not change product behavior, and the existing app flow should keep the trust-first cleanup path intact."
-    },
-    {
-      "decision": "Generate a compact reusable asset set instead of copying every inline SVG from the HTML prototype.",
-      "reason": "The HTML has no external image assets, and a smaller mascot plus feature-illustration set is easier to maintain in SwiftUI."
-    },
-    {
-      "decision": "Keep later SwiftUI motion state-driven and Reduce Motion aware.",
-      "reason": "The HTML relies on playful looping cues, but the app should only animate active/progress/celebration states and respect accessibility settings."
-    },
-    {
-      "decision": "Use SwiftPM target resources for the app image set.",
-      "reason": "Package.swift processes Sources/CleanMac/Resources for the CleanMac executable target, so the next SwiftUI phase can load packaged assets from the app bundle instead of relying on external file paths."
-    },
-    {
-      "decision": "Keep chroma-key source PNGs and ship cleaned RGBA runtime PNGs.",
-      "reason": "ImagesSource preserves the generated key-color inputs for provenance, while Images contains the chroma-key-removed assets verified as RGBA with transparent corners for runtime use."
-    },
-    {
-      "decision": "Keep the SwiftUI pass visual-only and preserve the existing store/core calls.",
-      "reason": "This phase maps the HTML design direction onto current Scan, Results, App Uninstaller, AI Review, Permission, and Settings flows without changing local behavior."
-    },
-    {
-      "decision": "Load generated PNG illustrations through Bundle.module with system-symbol fallbacks.",
-      "reason": "Package.swift already processes Sources/CleanMac/Resources, and fallbacks keep the UI usable if a packaged image cannot be loaded."
-    },
-    {
-      "decision": "Use swift build, swift test, and script/build_and_run.sh --verify for final verification.",
-      "reason": "The implementation is SwiftUI-only but should still compile, preserve core behavior tests, and launch as a packaged macOS app with resources."
-    },
-    {
-      "decision": "Add a CleanMacUITests screenshot smoke test for every SidebarSection.",
-      "reason": "The user saw black pages and left-side routing issues, so every sidebar entry now renders into a snapshot and checks for visible non-black main content."
-    },
-    {
-      "decision": "Replace macOS default rounded text fields and the Settings TabView with project-owned light controls.",
-      "reason": "The default AppKit controls rendered dark inside the custom SwiftUI chrome, especially in AI Review and Settings."
-    },
-    {
-      "decision": "Keep the follow-up focused on UI chrome and page mapping, not cleaner behavior.",
-      "reason": "The user asked to keep local functionality unchanged for now and handle functionality details later."
+      "decision": "Use tests-first for behavior changes.",
+      "reason": "Real-data behavior and localization fixes should be proven by failing tests before production changes."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift test",
-  "updated_at": "2026-06-29T01:23:19Z"
+  "updated_at": "2026-06-30T01:08:11Z"
 }
