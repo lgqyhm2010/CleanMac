@@ -1,10 +1,8 @@
 "add" = "Add";
-"aiCLI" = "AI CLI";
 "aiReview" = "AI Review";
 "appLanguage" = "Language";
 "applications" = "Applications";
 "appUninstaller" = "App Uninstaller";
-"arguments" = "Arguments";
 "askAI" = "Ask AI";
 "candidates" = "Candidates";
 "category" = "Category";
@@ -12,11 +10,10 @@
 "cleaner" = "Cleaner";
 "clear" = "Clear";
 "clearSelection" = "Clear Selection";
-"command" = "Command";
+"aiTool" = "AI Tool";
 "duplicateGroup" = "Duplicate Group";
 "duplicates" = "Duplicates";
 "english" = "English";
-"executable" = "Executable";
 "folders" = "Folders";
 "followSystem" = "Follow System";
 "french" = "French";
@@ -176,6 +173,6 @@
 "error.itemsCouldNotBeMoved" = "%ld items could not be moved.";
 "error.itemsWereProtected" = "%ld protected items were skipped.";
 "error.selectItemForAIReview" = "Select at least one item for AI review.";
-"error.setAIExecutable" = "Set an AI CLI executable in Settings.";
+"error.noAIToolDetected" = "No AI CLI tool found. Install codex, claude, or gemini.";
 
 "defaultAIQuestion" = "Please decide whether these files are suitable to move to Trash, and list anything I should manually confirm.";

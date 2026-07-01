@@ -1,10 +1,8 @@
 "add" = "新增";
-"aiCLI" = "AI CLI";
 "aiReview" = "AI 審查";
 "appLanguage" = "語言";
 "applications" = "應用程式";
 "appUninstaller" = "應用程式解除安裝器";
-"arguments" = "參數";
 "askAI" = "詢問 AI";
 "candidates" = "候選項";
 "category" = "類別";
@@ -12,11 +10,10 @@
 "cleaner" = "清理器";
 "clear" = "清除";
 "clearSelection" = "清除選取";
-"command" = "指令";
+"aiTool" = "AI 工具";
 "duplicateGroup" = "重複群組";
 "duplicates" = "重複檔案";
 "english" = "英文";
-"executable" = "可執行檔";
 "folders" = "資料夾";
 "followSystem" = "跟隨系統";
 "french" = "法文";
@@ -176,6 +173,6 @@
 "error.itemsCouldNotBeMoved" = "%ld 個項目無法移動。";
 "error.itemsWereProtected" = "%ld 個受保護項目已略過。";
 "error.selectItemForAIReview" = "請至少選取一個項目供 AI 審查。";
-"error.setAIExecutable" = "請在設定中配置 AI CLI 可執行檔。";
+"error.noAIToolDetected" = "未偵測到 AI CLI 工具，請安裝 codex、claude 或 gemini。";
 
 "defaultAIQuestion" = "請判斷這些檔案是否適合移到垃圾桶，並列出需要我手動確認的項目。";

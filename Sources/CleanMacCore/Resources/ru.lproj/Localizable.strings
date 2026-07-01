@@ -1,10 +1,8 @@
 "add" = "Добавить";
-"aiCLI" = "AI CLI";
 "aiReview" = "Проверка AI";
 "appLanguage" = "Язык";
 "applications" = "Приложения";
 "appUninstaller" = "Удаление приложений";
-"arguments" = "Аргументы";
 "askAI" = "Спросить AI";
 "candidates" = "Кандидаты";
 "category" = "Категория";
@@ -12,11 +10,10 @@
 "cleaner" = "Очистка";
 "clear" = "Очистить";
 "clearSelection" = "Снять выбор";
-"command" = "Команда";
+"aiTool" = "Инструмент ИИ";
 "duplicateGroup" = "Группа дубликатов";
 "duplicates" = "Дубликаты";
 "english" = "Английский";
-"executable" = "Исполняемый файл";
 "folders" = "Папки";
 "followSystem" = "Как в системе";
 "french" = "Французский";
@@ -176,6 +173,6 @@
 "error.itemsCouldNotBeMoved" = "Не удалось переместить %ld элементов.";
 "error.itemsWereProtected" = "%ld защищенных элементов пропущено.";
 "error.selectItemForAIReview" = "Выберите хотя бы один элемент для проверки AI.";
-"error.setAIExecutable" = "Укажите исполняемый файл AI CLI в Настройках.";
+"error.noAIToolDetected" = "Инструмент AI CLI не найден. Установите codex, claude или gemini.";
 
 "defaultAIQuestion" = "Определите, подходят ли эти файлы для перемещения в Корзину, и перечислите все, что мне следует подтвердить вручную.";

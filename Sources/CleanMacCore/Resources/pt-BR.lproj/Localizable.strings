@@ -1,10 +1,8 @@
 "add" = "Adicionar";
-"aiCLI" = "AI CLI";
 "aiReview" = "Revisão de IA";
 "appLanguage" = "Idioma";
 "applications" = "Aplicativos";
 "appUninstaller" = "Desinstalador de apps";
-"arguments" = "Argumentos";
 "askAI" = "Perguntar à IA";
 "candidates" = "Candidatos";
 "category" = "Categoria";
@@ -12,11 +10,10 @@
 "cleaner" = "Limpador";
 "clear" = "Limpar";
 "clearSelection" = "Limpar seleção";
-"command" = "Comando";
+"aiTool" = "Ferramenta de IA";
 "duplicateGroup" = "Grupo duplicado";
 "duplicates" = "Duplicados";
 "english" = "Inglês";
-"executable" = "Executável";
 "folders" = "Pastas";
 "followSystem" = "Seguir o sistema";
 "french" = "Francês";
@@ -176,6 +173,6 @@
 "error.itemsCouldNotBeMoved" = "%ld itens não puderam ser movidos.";
 "error.itemsWereProtected" = "%ld itens protegidos foram ignorados.";
 "error.selectItemForAIReview" = "Selecione pelo menos um item para revisão de IA.";
-"error.setAIExecutable" = "Defina um executável de AI CLI em Ajustes.";
+"error.noAIToolDetected" = "Nenhuma ferramenta de AI CLI encontrada. Instale o codex, claude ou gemini.";
 
 "defaultAIQuestion" = "Decida se estes arquivos são adequados para mover para o Lixo e liste qualquer coisa que eu deva confirmar manualmente.";
