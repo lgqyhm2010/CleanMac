@@ -3,8 +3,6 @@ import SwiftUI
 
 struct AIReviewView: View {
     @ObservedObject var store: CleaningStore
-    @Binding var aiExecutable: String
-    @Binding var aiArguments: String
     var language: ResolvedLanguage
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -22,7 +20,7 @@ struct AIReviewView: View {
                     isActive: store.isReviewingWithAI
                 ) {
                     Button {
-                        store.askAI(executable: aiExecutable, argumentsText: aiArguments)
+                        store.askAI()
                     } label: {
                         Label(
                             store.isReviewingWithAI ? L10n.text(.reviewing, language: language) : L10n.text(.askAI, language: language),
@@ -30,7 +28,7 @@ struct AIReviewView: View {
                         )
                     }
                     .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.sectionTint(.aiReview), prominent: true))
-                    .disabled(store.selectedSummary.selectedCount == 0 || store.isReviewingWithAI)
+                    .disabled(store.selectedSummary.selectedCount == 0 || store.isReviewingWithAI || store.selectedAIToolID == nil)
                 }
 
                 if let error = store.errorMessage {
@@ -42,16 +40,30 @@ struct AIReviewView: View {
                 CleanMacPanel(tint: CleanMacTheme.sectionTint(.aiReview)) {
                     VStack(alignment: .leading, spacing: 12) {
                         CleanMacSectionHeader(
-                            title: L10n.text(.command, language: language),
+                            title: L10n.text(.aiTool, language: language),
                             symbolName: "terminal",
                             tint: CleanMacTheme.sectionTint(.aiReview)
                         )
 
-                        TextField(L10n.text(.executable, language: language), text: $aiExecutable)
-                            .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
-
-                        TextField(L10n.text(.arguments, language: language), text: $aiArguments)
-                            .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
+                        if store.detectedAITools.isEmpty {
+                            Text(L10n.error(.noAIToolDetected, language: language))
+                                .font(.callout)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
+                        } else {
+                            HStack(spacing: 8) {
+                                ForEach(store.detectedAITools) { tool in
+                                    Button {
+                                        store.selectAITool(tool.id)
+                                    } label: {
+                                        Text(tool.profile.displayName)
+                                    }
+                                    .buttonStyle(CleanMacRaisedButtonStyle(
+                                        tint: CleanMacTheme.sectionTint(.aiReview),
+                                        prominent: store.selectedAIToolID == tool.id
+                                    ))
+                                }
+                            }
+                        }
 
                         CleanMacSectionHeader(
                             title: L10n.text(.question, language: language),
@@ -80,6 +92,9 @@ struct AIReviewView: View {
         }
         .foregroundStyle(CleanMacTheme.ink)
         .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.isReviewingWithAI)
+        .onAppear {
+            store.refreshDetectedAITools()
+        }
     }
 
     @ViewBuilder

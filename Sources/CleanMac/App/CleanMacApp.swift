@@ -187,9 +187,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc
     private func askAIFromMenu() {
         showMainWindow()
-        let executable = UserDefaults.standard.string(forKey: "aiExecutable") ?? "/usr/bin/env"
-        let arguments = UserDefaults.standard.string(forKey: "aiArguments") ?? "codex exec"
-        store.askAI(executable: executable, argumentsText: arguments)
+        store.askAI()
     }
 
     func showMainWindow() {

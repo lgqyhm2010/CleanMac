@@ -3,35 +3,19 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
-    @AppStorage("aiExecutable") private var aiExecutable = "/usr/bin/env"
-    @AppStorage("aiArguments") private var aiArguments = "codex exec"
 
     var body: some View {
         CleanMacPage(accent: CleanMacTheme.purple) {
             CleanMacHeroHeader(
                 title: L10n.text(.settings, language: resolvedLanguage),
-                subtitle: "\(L10n.text(.aiCLI, language: resolvedLanguage)) / \(L10n.text(.permissions, language: resolvedLanguage))",
+                subtitle: L10n.text(.permissions, language: resolvedLanguage),
                 symbolName: "gearshape",
                 asset: .permissionShield,
                 tint: CleanMacTheme.purple
             )
 
-            CleanMacPanel(tint: CleanMacTheme.sectionTint(.aiReview)) {
-                VStack(alignment: .leading, spacing: 12) {
-                    CleanMacSectionHeader(
-                        title: L10n.text(.aiCLI, language: resolvedLanguage),
-                        symbolName: "sparkles",
-                        tint: CleanMacTheme.sectionTint(.aiReview)
-                    )
-
-                    languageMenu
-
-                    TextField(L10n.text(.executable, language: resolvedLanguage), text: $aiExecutable)
-                        .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
-
-                    TextField(L10n.text(.arguments, language: resolvedLanguage), text: $aiArguments)
-                        .cleanMacTextField(tint: CleanMacTheme.sectionTint(.aiReview))
-                }
+            CleanMacPanel(tint: CleanMacTheme.purple) {
+                languageMenu
             }
 
             PermissionGuideView(
