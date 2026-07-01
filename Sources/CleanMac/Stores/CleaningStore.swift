@@ -26,10 +26,39 @@ final class CleaningStore: ObservableObject {
     @Published var minimumSizeMegabytes = 1.0
     @Published var largeFileThresholdMegabytes = 500.0
     @Published var volumeSnapshot: StorageVolumeSnapshot?
+    @Published var detectedAITools: [DetectedAITool] = []
+    @Published var selectedAIToolID: String?
 
-    init(language: ResolvedLanguage = AppLanguage.system.resolved()) {
+    private let aiToolDetector: AIToolDetector
+    private static let aiToolPreferenceKey = "aiSelectedToolID"
+
+    init(language: ResolvedLanguage = AppLanguage.system.resolved(), aiToolDetector: AIToolDetector = AIToolDetector()) {
+        self.aiToolDetector = aiToolDetector
         aiQuestion = L10n.defaultAIQuestion(language: language)
         refreshVolumeSnapshot()
+        refreshDetectedAITools()
+    }
+
+    func refreshDetectedAITools() {
+        detectedAITools = aiToolDetector.detectAvailableTools()
+
+        if let selectedAIToolID, detectedAITools.contains(where: { $0.id == selectedAIToolID }) {
+            return
+        }
+
+        let storedID = UserDefaults.standard.string(forKey: Self.aiToolPreferenceKey)
+        if let storedID, detectedAITools.contains(where: { $0.id == storedID }) {
+            selectedAIToolID = storedID
+        } else if detectedAITools.count == 1 {
+            selectedAIToolID = detectedAITools[0].id
+        } else {
+            selectedAIToolID = nil
+        }
+    }
+
+    func selectAITool(_ id: String) {
+        selectedAIToolID = id
+        UserDefaults.standard.set(id, forKey: Self.aiToolPreferenceKey)
     }
 
     var selectedCandidates: [CleaningCandidate] {
@@ -277,14 +306,15 @@ final class CleaningStore: ObservableObject {
         }
     }
 
-    func askAI(executable: String, argumentsText: String) {
+    func askAI() {
         let targets = selectedCandidates
         guard !targets.isEmpty else {
             errorMessage = .selectItemForAIReview
             return
         }
-        guard !executable.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = .setAIExecutable
+        refreshDetectedAITools()
+        guard let selectedAIToolID, let tool = detectedAITools.first(where: { $0.id == selectedAIToolID }) else {
+            errorMessage = .noAIToolDetected
             return
         }
         guard !isReviewingWithAI else { return }
@@ -294,15 +324,11 @@ final class CleaningStore: ObservableObject {
         aiOutput = ""
         status = .askingAI
 
-        let command = AICommand(
-            executable: executable,
-            arguments: CommandLineArguments.split(argumentsText)
-        )
         let question = aiQuestion
 
         Task {
             do {
-                let review = try await AIReviewService(command: command)
+                let review = try await AIReviewService(tool: tool)
                     .review(candidates: targets, userQuestion: question)
                 aiOutput = review.output
                 status = .aiReviewFinished
