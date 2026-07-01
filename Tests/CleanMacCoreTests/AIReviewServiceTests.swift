@@ -4,7 +4,10 @@ import XCTest
 final class AIReviewServiceTests: XCTestCase {
     func testPromptIncludesCandidateContextAndUserQuestion() {
         let service = AIReviewService(
-            command: AICommand(executable: "/usr/bin/ai", arguments: ["--quiet"]),
+            tool: DetectedAITool(
+                profile: AIToolProfile(id: "test", displayName: "Test", binaryName: "test-ai", arguments: ["--quiet"], promptDelivery: .standardInput),
+                executablePath: "/usr/bin/ai"
+            ),
             runner: RecordingCommandRunner()
         )
         let prompt = service.makePrompt(
@@ -30,10 +33,13 @@ final class AIReviewServiceTests: XCTestCase {
         XCTAssertTrue(prompt.contains("JSON"))
     }
 
-    func testReviewRunsConfiguredCommandWithGeneratedPrompt() async throws {
+    func testReviewSendsPromptViaStandardInputWhenToolUsesStandardInputDelivery() async throws {
         let runner = RecordingCommandRunner()
-        let command = AICommand(executable: "/usr/bin/ai", arguments: ["review"])
-        let service = AIReviewService(command: command, runner: runner)
+        let tool = DetectedAITool(
+            profile: AIToolProfile(id: "codex", displayName: "Codex", binaryName: "codex", arguments: ["exec"], promptDelivery: .standardInput),
+            executablePath: "/usr/bin/ai"
+        )
+        let service = AIReviewService(tool: tool, runner: runner)
         let candidate = CleaningCandidate(
             url: URL(filePath: "/tmp/cache.bin"),
             sizeBytes: 64,
@@ -47,9 +53,35 @@ final class AIReviewServiceTests: XCTestCase {
         let review = try await service.review(candidates: [candidate], userQuestion: "safe?")
 
         XCTAssertEqual(review.output, "safe to remove")
-        XCTAssertEqual(runner.commands, [command])
+        XCTAssertEqual(runner.commands, [AICommand(executable: "/usr/bin/ai", arguments: ["exec"])])
         XCTAssertEqual(runner.standardInputs.count, 1)
         XCTAssertTrue(runner.standardInputs[0].contains("/tmp/cache.bin"))
+    }
+
+    func testReviewAppendsPromptAsArgumentWhenToolUsesArgumentDelivery() async throws {
+        let runner = RecordingCommandRunner()
+        let tool = DetectedAITool(
+            profile: AIToolProfile(id: "gemini", displayName: "Gemini CLI", binaryName: "gemini", arguments: ["-p"], promptDelivery: .argument),
+            executablePath: "/usr/bin/ai"
+        )
+        let service = AIReviewService(tool: tool, runner: runner)
+        let candidate = CleaningCandidate(
+            url: URL(filePath: "/tmp/cache.bin"),
+            sizeBytes: 64,
+            modifiedAt: nil,
+            category: .cache,
+            risk: .usuallySafe,
+            reasons: ["Cache file"],
+            isDirectory: false
+        )
+
+        _ = try await service.review(candidates: [candidate], userQuestion: "safe?")
+
+        XCTAssertEqual(runner.commands.count, 1)
+        XCTAssertEqual(runner.commands[0].executable, "/usr/bin/ai")
+        XCTAssertEqual(runner.commands[0].arguments.first, "-p")
+        XCTAssertTrue(runner.commands[0].arguments.last?.contains("/tmp/cache.bin") ?? false)
+        XCTAssertEqual(runner.standardInputs, [""])
     }
 
     func testReviewThrowsErrorDescribingWhyTheCommandFailed() async {
@@ -57,10 +89,11 @@ final class AIReviewServiceTests: XCTestCase {
             exitCode: 1,
             standardError: "Error loading config.toml: unknown variant `default`, expected `fast` or `flex` in `service_tier`"
         )
-        let service = AIReviewService(
-            command: AICommand(executable: "/usr/bin/env", arguments: ["codex", "exec"]),
-            runner: runner
+        let tool = DetectedAITool(
+            profile: AIToolProfile(id: "codex", displayName: "Codex", binaryName: "codex", arguments: ["exec"], promptDelivery: .standardInput),
+            executablePath: "/usr/bin/env"
         )
+        let service = AIReviewService(tool: tool, runner: runner)
         let candidate = CleaningCandidate(
             url: URL(filePath: "/tmp/cache.bin"),
             sizeBytes: 64,

@@ -18,11 +18,11 @@ public enum AIReviewError: Error, Equatable, LocalizedError {
 }
 
 public final class AIReviewService {
-    private let command: AICommand
+    private let tool: DetectedAITool
     private let runner: CommandRunning
 
-    public init(command: AICommand, runner: CommandRunning = ProcessCommandRunner()) {
-        self.command = command
+    public init(tool: DetectedAITool, runner: CommandRunning = ProcessCommandRunner()) {
+        self.tool = tool
         self.runner = runner
     }
 
@@ -60,7 +60,17 @@ public final class AIReviewService {
 
     public func review(candidates: [CleaningCandidate], userQuestion: String) async throws -> AIReview {
         let prompt = makePrompt(candidates: candidates, userQuestion: userQuestion)
-        let result = try await runner.run(command: command, standardInput: prompt)
+        let command: AICommand
+        let standardInput: String
+        switch tool.profile.promptDelivery {
+        case .standardInput:
+            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments)
+            standardInput = prompt
+        case .argument:
+            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + [prompt])
+            standardInput = ""
+        }
+        let result = try await runner.run(command: command, standardInput: standardInput)
         guard result.exitCode == 0 else {
             throw AIReviewError.commandFailed(
                 exitCode: result.exitCode,
