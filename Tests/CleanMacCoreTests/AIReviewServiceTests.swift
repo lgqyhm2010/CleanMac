@@ -51,6 +51,37 @@ final class AIReviewServiceTests: XCTestCase {
         XCTAssertEqual(runner.standardInputs.count, 1)
         XCTAssertTrue(runner.standardInputs[0].contains("/tmp/cache.bin"))
     }
+
+    func testReviewThrowsErrorDescribingWhyTheCommandFailed() async {
+        let runner = FailingCommandRunner(
+            exitCode: 1,
+            standardError: "Error loading config.toml: unknown variant `default`, expected `fast` or `flex` in `service_tier`"
+        )
+        let service = AIReviewService(
+            command: AICommand(executable: "/usr/bin/env", arguments: ["codex", "exec"]),
+            runner: runner
+        )
+        let candidate = CleaningCandidate(
+            url: URL(filePath: "/tmp/cache.bin"),
+            sizeBytes: 64,
+            modifiedAt: nil,
+            category: .cache,
+            risk: .usuallySafe,
+            reasons: ["Cache file"],
+            isDirectory: false
+        )
+
+        do {
+            _ = try await service.review(candidates: [candidate], userQuestion: "safe?")
+            XCTFail("expected review to throw")
+        } catch {
+            let description = error.localizedDescription
+            XCTAssertTrue(
+                description.contains("service_tier"),
+                "error shown to the user should include the AI command's actual stderr, got: \(description)"
+            )
+        }
+    }
 }
 
 private final class RecordingCommandRunner: CommandRunning {
@@ -61,5 +92,19 @@ private final class RecordingCommandRunner: CommandRunning {
         commands.append(command)
         standardInputs.append(standardInput)
         return CommandResult(exitCode: 0, standardOutput: "safe to remove", standardError: "")
+    }
+}
+
+private final class FailingCommandRunner: CommandRunning {
+    private let exitCode: Int32
+    private let standardError: String
+
+    init(exitCode: Int32, standardError: String) {
+        self.exitCode = exitCode
+        self.standardError = standardError
+    }
+
+    func run(command: AICommand, standardInput: String) async throws -> CommandResult {
+        CommandResult(exitCode: exitCode, standardOutput: "", standardError: standardError)
     }
 }

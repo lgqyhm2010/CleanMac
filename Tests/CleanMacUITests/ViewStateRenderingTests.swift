@@ -50,6 +50,14 @@ final class ViewStateRenderingTests: XCTestCase {
         try assertContentIsVisible(image, "AI review page rendered blank with output present")
     }
 
+    func testAIReviewPageRendersErrorMessageAfterFailure() throws {
+        let store = makeStoreWithCandidates(language: .english)
+        store.errorMessage = .system("AI command exited with code 1: something went wrong")
+        store.status = .aiReviewFailed
+        let image = render(ContentView(store: store, initialSelection: .aiReview))
+        try assertContentIsVisible(image, "AI review page rendered blank with a failure error message present")
+    }
+
     func testDiskOverviewRendersAfterScanReport() throws {
         let store = makeStoreWithCandidates(language: .english)
         let image = render(ContentView(store: store, initialSelection: .diskOverview))

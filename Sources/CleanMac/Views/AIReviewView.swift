@@ -33,6 +33,12 @@ struct AIReviewView: View {
                     .disabled(store.selectedSummary.selectedCount == 0 || store.isReviewingWithAI)
                 }
 
+                if let error = store.errorMessage {
+                    Text(L10n.error(error, language: language))
+                        .font(.caption)
+                        .foregroundStyle(CleanMacTheme.danger)
+                }
+
                 CleanMacPanel(tint: CleanMacTheme.sectionTint(.aiReview)) {
                     VStack(alignment: .leading, spacing: 12) {
                         CleanMacSectionHeader(

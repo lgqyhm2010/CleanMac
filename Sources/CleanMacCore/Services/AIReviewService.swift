@@ -4,8 +4,17 @@ public protocol CommandRunning {
     func run(command: AICommand, standardInput: String) async throws -> CommandResult
 }
 
-public enum AIReviewError: Error, Equatable {
+public enum AIReviewError: Error, Equatable, LocalizedError {
     case commandFailed(exitCode: Int32, standardError: String)
+
+    public var errorDescription: String? {
+        switch self {
+        case let .commandFailed(exitCode, standardError):
+            let trimmed = standardError.trimmingCharacters(in: .whitespacesAndNewlines)
+            let detail = trimmed.isEmpty ? "no output" : trimmed
+            return "AI command exited with code \(exitCode): \(detail)"
+        }
+    }
 }
 
 public final class AIReviewService {
