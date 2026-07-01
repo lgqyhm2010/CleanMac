@@ -440,15 +440,17 @@ with:
 
 `makePrompt(candidates:userQuestion:)`, `AIReviewError`, and `ProcessCommandRunner` stay exactly as-is — only the class's stored property and `review()`'s command construction change.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [ ] **Step 4: Verify `CleanMacCore` builds cleanly on its own**
 
-Run: `swift test --filter AIReviewServiceTests`
-Expected: PASS — 4 tests, 0 failures
+`swift test` (even with `--filter`) builds every target in the package, including the `CleanMac` executable target — and `Sources/CleanMac/Stores/CleaningStore.swift:305` still calls the old `AIReviewService(command: command)` API, which Step 3 just removed. That call site is intentionally fixed in Task 4, not here, so a whole-package `swift test` run is expected to fail at this point. To verify Step 3's change in isolation, build only the library target it lives in:
 
-- [ ] **Step 5: Run the full test suite to confirm nothing else references the old `init(command:)`**
+Run: `swift build --target CleanMacCore`
+Expected: Build complete, no errors (this target has no dependency on `CleanMac`/`CleaningStore.swift`)
 
-Run: `swift build && swift test`
-Expected: `Sources/CleanMac/Stores/CleaningStore.swift:305` (`AIReviewService(command: command)`) will fail to build here; that call site is intentionally fixed in Task 4, not this task. If Task 4 hasn't run yet, expect a build failure only at that one call site — confirm no other file breaks.
+- [ ] **Step 5: Confirm the only whole-package build failure is the expected one**
+
+Run: `swift build`
+Expected: FAILS at `Sources/CleanMac/Stores/CleaningStore.swift:305` (`AIReviewService(command: command)` — the old signature no longer exists). Confirm this is the *only* error reported — no other file should fail to build. This is expected until Task 4 lands; do not fix it here.
 
 - [ ] **Step 6: Commit**
 
@@ -590,12 +592,19 @@ In `Tests/CleanMacCoreTests/LocalizationTests.swift`, in `localizableStringsReso
         ])
 ```
 
-- [ ] **Step 5: Run the localization test suite**
+- [ ] **Step 5: Verify `CleanMacCore` builds cleanly on its own**
 
-Run: `swift test --filter LocalizationTests`
-Expected: PASS — every locale file has `aiTool` and `error.noAIToolDetected`, and none still reference `command`/`executable`/`arguments`/`aiCLI`/`error.setAIExecutable` (those become build errors in Task 5 where the last Swift references get removed, not here).
+As in Task 2, a whole-package `swift test` run builds the `CleanMac` executable target too — and `CleaningStore.swift` still references the now-removed `.setAIExecutable` case (fixed in Task 4), while `AIReviewView.swift`/`SettingsView.swift` still reference the now-removed `.command`/`.executable`/`.arguments`/`.aiCLI` keys (fixed in Task 5). To verify this task's own change in isolation:
 
-- [ ] **Step 6: Commit**
+Run: `swift build --target CleanMacCore`
+Expected: Build complete, no errors
+
+- [ ] **Step 6: Confirm the whole-package build fails only at the expected (not-yet-fixed) call sites**
+
+Run: `swift build`
+Expected: FAILS — errors only at `Sources/CleanMac/Stores/CleaningStore.swift` (`.setAIExecutable` no longer exists), `Sources/CleanMac/Views/AIReviewView.swift`, and `Sources/CleanMac/Views/SettingsView.swift` (`.command`/`.executable`/`.arguments`/`.aiCLI` no longer exist). These are fixed in Task 4 and Task 5 respectively — do not fix them here. Confirm no *other* file fails to build.
+
+- [ ] **Step 7: Commit**
 
 ```bash
 git add Sources/CleanMacCore/Localization Sources/CleanMacCore/Resources Tests/CleanMacCoreTests/LocalizationTests.swift
