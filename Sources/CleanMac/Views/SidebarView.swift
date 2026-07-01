@@ -6,17 +6,19 @@ struct SidebarView: View {
     @ObservedObject var store: CleaningStore
     var language: ResolvedLanguage
 
+    @State private var hoveredSection: SidebarSection?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
-                CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent, isActive: selection == .diskOverview)
+                CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent, isActive: false)
                     .frame(width: 42, height: 42)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("CleanMac")
                         .font(.callout.weight(.bold))
                         .foregroundStyle(CleanMacTheme.sidebarPrimaryText)
-                    Text("Keep it sparkly")
+                    Text(L10n.text(.appTagline, language: language))
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(CleanMacTheme.sidebarText)
                         .lineLimit(1)
@@ -32,23 +34,23 @@ struct SidebarView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 3) {
-                    sidebarSection("Overview")
-                    sidebarRow(.diskOverview, value: store.lastReport == nil ? "500 GB" : Formatters.bytes(store.lastReport?.totalBytes ?? 0))
-                    sidebarRow(.speedUp, value: store.isScanning ? L10n.text(.scanning, language: language) : "5.1 GB")
-                    sidebarRow(.cleanUp, value: store.lastReport == nil ? "32 GB" : Formatters.bytes(store.lastReport?.totalBytes ?? 0))
-                    sidebarRow(.manageSpace, value: store.selectedSummary.totalBytes == 0 ? "20 GB" : Formatters.bytes(store.selectedSummary.totalBytes))
+                    sidebarSection(.diskOverview)
+                    sidebarRow(.diskOverview, value: sidebarValue(for: .diskOverview))
+                    sidebarRow(.speedUp, value: sidebarValue(for: .speedUp))
+                    sidebarRow(.cleanUp, value: sidebarValue(for: .cleanUp))
+                    sidebarRow(.manageSpace, value: sidebarValue(for: .manageSpace))
 
-                    sidebarSection("Pro tools")
+                    sidebarSection(.duplicates)
                         .padding(.top, 8)
-                    sidebarRow(.duplicates, value: store.duplicateReclaimableBytes == 0 ? "10.2 GB" : Formatters.bytes(store.duplicateReclaimableBytes))
-                    sidebarRow(.uninstaller, value: store.uninstallReclaimableBytes == 0 ? "15 GB" : Formatters.bytes(store.uninstallReclaimableBytes))
-                    sidebarRow(.analyzeSpace, value: store.candidates.isEmpty ? "6.4 GB" : "\(store.candidates.count)")
+                    sidebarRow(.duplicates, value: sidebarValue(for: .duplicates))
+                    sidebarRow(.uninstaller, value: sidebarValue(for: .uninstaller))
+                    sidebarRow(.analyzeSpace, value: sidebarValue(for: .analyzeSpace))
 
-                    sidebarSection("AI - Local")
+                    sidebarSection(.aiReview)
                         .padding(.top, 8)
-                    sidebarRow(.aiReview, value: store.isReviewingWithAI ? L10n.text(.reviewing, language: language) : "NEW")
+                    sidebarRow(.aiReview, value: sidebarValue(for: .aiReview))
 
-                    sidebarSection("System")
+                    sidebarSection(.settings)
                         .padding(.top, 8)
                     sidebarRow(.settings, value: "")
                 }
@@ -76,8 +78,8 @@ struct SidebarView: View {
         }
     }
 
-    private func sidebarSection(_ title: String) -> some View {
-        Text(title.uppercased())
+    private func sidebarSection(_ section: SidebarSection) -> some View {
+        Text(section.groupTitle(language: language).uppercased())
             .font(.system(size: 9, weight: .bold))
             .tracking(0.8)
             .foregroundStyle(CleanMacTheme.sidebarText)
@@ -88,12 +90,15 @@ struct SidebarView: View {
     private func sidebarRow(_ section: SidebarSection, value: String) -> some View {
         let tint = CleanMacTheme.sectionTint(section)
         let isSelected = selection == section
+        let isHovered = hoveredSection == section
+        let shouldAnimateIcon = isHovered && !isSelected
 
         return Button {
+            hoveredSection = nil
             selection = section
         } label: {
             HStack(spacing: 10) {
-                CleanMacFeatureImage(asset: section.illustrationAsset, tint: tint, isActive: isSelected)
+                CleanMacFeatureImage(asset: section.illustrationAsset, tint: tint, isActive: shouldAnimateIcon)
                     .frame(width: 38, height: 38)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -127,5 +132,59 @@ struct SidebarView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { isHovering in
+            updateHover(isHovering, section: section)
+        }
+        .onChange(of: selection) { _, newValue in
+            if newValue == section {
+                hoveredSection = nil
+            }
+        }
+    }
+
+    private func updateHover(_ isHovering: Bool, section: SidebarSection) {
+        if isHovering {
+            hoveredSection = section
+        } else if hoveredSection == section {
+            hoveredSection = nil
+        }
+    }
+
+    private func sidebarValue(for section: SidebarSection) -> String {
+        switch section {
+        case .diskOverview:
+            return store.volumeSnapshot.map { Formatters.bytes($0.usedCapacityBytes) } ?? ""
+        case .speedUp:
+            if store.isScanning {
+                return L10n.text(.scanning, language: language)
+            }
+            return formattedBytes(cleanupBytes(for: [.cache, .logs, .temporary, .developer]))
+        case .cleanUp:
+            return formattedBytes(store.lastReport?.totalBytes ?? 0)
+        case .manageSpace:
+            return formattedBytes(store.selectedSummary.totalBytes)
+        case .duplicates:
+            return formattedBytes(store.duplicateReclaimableBytes)
+        case .uninstaller:
+            return formattedBytes(store.uninstallReclaimableBytes)
+        case .analyzeSpace:
+            return store.candidates.isEmpty ? "" : "\(store.candidates.count)"
+        case .aiReview:
+            return store.isReviewingWithAI
+                ? L10n.text(.reviewing, language: language)
+                : L10n.status(store.status, language: language)
+        case .settings:
+            return ""
+        }
+    }
+
+    private func cleanupBytes(for categories: Set<CandidateCategory>) -> Int64 {
+        store.candidates
+            .filter { categories.contains($0.category) }
+            .reduce(0) { $0 + $1.sizeBytes }
+    }
+
+    private func formattedBytes(_ bytes: Int64) -> String {
+        bytes > 0 ? Formatters.bytes(bytes) : ""
     }
 }

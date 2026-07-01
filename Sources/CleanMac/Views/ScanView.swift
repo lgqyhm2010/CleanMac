@@ -122,11 +122,11 @@ private struct DiskOverviewHeader: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent, isActive: store.isScanning)
-                .frame(width: 46, height: 46)
+                CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent, isActive: store.isScanning)
+                    .frame(width: 46, height: 46)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("Macintosh HD")
+                Text(volumeName)
                     .font(.title3.weight(.bold))
                     .foregroundStyle(CleanMacTheme.ink)
                 Text(subtitle)
@@ -141,16 +141,23 @@ private struct DiskOverviewHeader: View {
                 Text(primaryValue)
                     .font(.title2.weight(.bold))
                     .monospacedDigit()
-                Text(store.lastReport == nil ? "used" : L10n.text(.potential, language: language).lowercased())
+                Text(store.lastReport == nil ? L10n.text(.used, language: language).lowercased() : L10n.text(.potential, language: language).lowercased())
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(CleanMacTheme.secondaryText)
             }
         }
     }
 
+    private var volumeName: String {
+        store.volumeSnapshot?.name ?? L10n.text(.unknown, language: language)
+    }
+
     private var primaryValue: String {
-        guard let report = store.lastReport else { return "428 GB" }
-        return Formatters.bytes(report.totalBytes)
+        if let report = store.lastReport {
+            return Formatters.bytes(report.totalBytes)
+        }
+        guard let snapshot = store.volumeSnapshot else { return Formatters.bytes(0) }
+        return Formatters.bytes(snapshot.usedCapacityBytes)
     }
 
     private var subtitle: String {
@@ -158,11 +165,19 @@ private struct DiskOverviewHeader: View {
             return L10n.text(.scanning, language: language)
         }
 
-        guard let report = store.lastReport else {
-            return "72 GB free of 500 GB total"
+        if let report = store.lastReport {
+            return "\(L10n.candidateCount(report.candidates.count, language: language)) - \(Formatters.bytes(report.totalBytes))"
         }
 
-        return "\(L10n.candidateCount(report.candidates.count, language: language)) - \(Formatters.bytes(report.totalBytes))"
+        guard let snapshot = store.volumeSnapshot else {
+            return L10n.text(.unknown, language: language)
+        }
+
+        return L10n.storageFreeOfTotal(
+            availableBytes: snapshot.availableCapacityBytes,
+            totalBytes: snapshot.totalCapacityBytes,
+            language: language
+        )
     }
 }
 
@@ -170,70 +185,127 @@ private struct DiskUsageOverviewCard: View {
     @ObservedObject var store: CleaningStore
     var language: ResolvedLanguage
 
-    private let segments: [DiskSegment] = [
-        .init(label: "System", value: "30 GB", color: Color(red: 0.66, green: 0.72, blue: 0.85), weight: 6),
-        .init(label: "Cache", value: "12 GB", color: CleanMacTheme.peach, weight: 2.4),
-        .init(label: "Junk", value: "75 GB", color: CleanMacTheme.accent, weight: 15),
-        .init(label: "Video", value: "120 GB", color: CleanMacTheme.purple, weight: 24),
-        .init(label: "Docs", value: "20 GB", color: CleanMacTheme.pink, weight: 4),
-        .init(label: "Archives", value: "38 GB", color: CleanMacTheme.mint, weight: 7.6),
-        .init(label: "Duplicates", value: "50 GB", color: CleanMacTheme.amber, weight: 10),
-        .init(label: "Pictures", value: "35 GB", color: Color(red: 0.96, green: 0.72, blue: 0.59), weight: 7)
-    ]
+    private var segments: [DiskSegment] {
+        if let report = store.lastReport, !report.candidates.isEmpty {
+            return candidateSegments(for: report)
+        }
+
+        guard let snapshot = store.volumeSnapshot else { return [] }
+        return volumeSegments(for: snapshot)
+    }
 
     var body: some View {
         CleanMacPanel(tint: CleanMacTheme.accent) {
             VStack(alignment: .leading, spacing: 12) {
-                GeometryReader { proxy in
-                    HStack(spacing: 0) {
-                        ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
-                            segment.color
-                                .frame(width: max(8, proxy.size.width * segment.weight / 100))
-                                .overlay(alignment: .leading) {
-                                    Rectangle()
-                                        .fill(CleanMacTheme.ink)
-                                        .frame(width: 2)
-                                        .opacity(segment.label == segments.first?.label ? 0 : 1)
-                                }
+                if segments.isEmpty {
+                    Text(L10n.text(.unknown, language: language))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(CleanMacTheme.secondaryText)
+                } else {
+                    GeometryReader { proxy in
+                        HStack(spacing: 0) {
+                            ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
+                                segment.color
+                                    .frame(width: max(8, proxy.size.width * segment.weight))
+                                    .overlay(alignment: .leading) {
+                                        Rectangle()
+                                            .fill(CleanMacTheme.ink)
+                                            .frame(width: 2)
+                                            .opacity(index == 0 ? 0 : 1)
+                                    }
+                            }
                         }
-
-                        ZStack {
-                            Color(red: 0.93, green: 0.91, blue: 0.86)
-                            Text(store.lastReport == nil ? "72 GB free" : "free")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(CleanMacTheme.accent)
+                        .clipShape(Capsule())
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(CleanMacTheme.ink, lineWidth: 2.5)
                         }
+                        .shadow(color: CleanMacTheme.ink, radius: 0, x: 2, y: 2)
                     }
-                    .clipShape(Capsule())
-                    .overlay {
-                        Capsule()
-                            .strokeBorder(CleanMacTheme.ink, lineWidth: 2.5)
-                    }
-                    .shadow(color: CleanMacTheme.ink, radius: 0, x: 2, y: 2)
-                }
-                .frame(height: 26)
+                    .frame(height: 26)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], alignment: .leading, spacing: 7) {
-                    ForEach(segments) { segment in
-                        HStack(spacing: 5) {
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(segment.color)
-                                .frame(width: 9, height: 9)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                        .strokeBorder(CleanMacTheme.ink, lineWidth: 1.2)
-                                }
-                            Text(segment.label)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(CleanMacTheme.secondaryText)
-                            Text(segment.value)
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(CleanMacTheme.ink)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], alignment: .leading, spacing: 7) {
+                        ForEach(segments) { segment in
+                            HStack(spacing: 5) {
+                                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                    .fill(segment.color)
+                                    .frame(width: 9, height: 9)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                            .strokeBorder(CleanMacTheme.ink, lineWidth: 1.2)
+                                    }
+                                Text(segment.label)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(CleanMacTheme.secondaryText)
+                                Text(segment.value)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(CleanMacTheme.ink)
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    private func volumeSegments(for snapshot: StorageVolumeSnapshot) -> [DiskSegment] {
+        weightedSegments([
+            .init(label: L10n.text(.used, language: language), bytes: snapshot.usedCapacityBytes, color: CleanMacTheme.accent),
+            .init(label: L10n.text(.free, language: language), bytes: snapshot.availableCapacityBytes, color: Color(red: 0.93, green: 0.91, blue: 0.86))
+        ])
+    }
+
+    private func candidateSegments(for report: ScanReport) -> [DiskSegment] {
+        let totals = Dictionary(grouping: report.candidates, by: \.category)
+            .mapValues { candidates in
+                candidates.reduce(0) { $0 + $1.sizeBytes }
+            }
+
+        let orderedCategories = CandidateCategory.allCases.filter { (totals[$0] ?? 0) > 0 }
+        return weightedSegments(
+            orderedCategories.map { category in
+                .init(
+                    label: category.displayName(language: language),
+                    bytes: totals[category] ?? 0,
+                    color: color(for: category)
+                )
+            }
+        )
+    }
+
+    private func weightedSegments(_ inputs: [SegmentInput]) -> [DiskSegment] {
+        let total = max(1, inputs.reduce(0) { $0 + $1.bytes })
+        return inputs
+            .filter { $0.bytes > 0 }
+            .map { input in
+                DiskSegment(
+                    label: input.label,
+                    value: Formatters.bytes(input.bytes),
+                    color: input.color,
+                    weight: CGFloat(input.bytes) / CGFloat(total)
+                )
+            }
+    }
+
+    private func color(for category: CandidateCategory) -> Color {
+        switch category {
+        case .cache: CleanMacTheme.peach
+        case .logs: CleanMacTheme.mint
+        case .downloads: CleanMacTheme.purple
+        case .trash: CleanMacTheme.accent
+        case .temporary: CleanMacTheme.amber
+        case .developer: CleanMacTheme.pink
+        case .largeFile: Color(red: 0.96, green: 0.72, blue: 0.59)
+        case .application: CleanMacTheme.accent
+        case .applicationSupport: Color(red: 0.66, green: 0.72, blue: 0.85)
+        case .other: Color(red: 0.93, green: 0.91, blue: 0.86)
+        }
+    }
+
+    private struct SegmentInput {
+        var label: String
+        var bytes: Int64
+        var color: Color
     }
 }
 
@@ -253,9 +325,9 @@ private struct OverviewFeatureGrid: View {
     var body: some View {
         HStack(spacing: 12) {
             OverviewActionCard(
-                title: "Performance",
-                detail: "Temp files and scan options that affect cleanup.",
-                value: Formatters.bytes(store.lastReport?.totalBytes ?? 20_000_000_000),
+                title: L10n.text(.overviewPerformanceTitle, language: language),
+                detail: L10n.text(.overviewPerformanceDetail, language: language),
+                value: Formatters.bytes(cleanupBytes(for: [.cache, .logs, .temporary, .developer])),
                 asset: .permissionShield,
                 tint: CleanMacTheme.peach,
                 buttonTitle: store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.scan, language: language),
@@ -267,9 +339,9 @@ private struct OverviewFeatureGrid: View {
             )
 
             OverviewActionCard(
-                title: "Junk Files",
-                detail: "Cache, temporary files and logs ready for review.",
-                value: Formatters.bytes(store.lastReport?.totalBytes ?? 32_000_000_000),
+                title: L10n.text(.overviewJunkFilesTitle, language: language),
+                detail: L10n.text(.overviewJunkFilesDetail, language: language),
+                value: Formatters.bytes(store.lastReport?.totalBytes ?? 0),
                 asset: .cleanupTrash,
                 tint: CleanMacTheme.accent,
                 buttonTitle: L10n.text(.results, language: language),
@@ -279,19 +351,31 @@ private struct OverviewFeatureGrid: View {
             )
 
             OverviewActionCard(
-                title: "User Files",
-                detail: "Large files, duplicate groups and selected cleanup items.",
-                value: Formatters.bytes(store.selectedSummary.totalBytes == 0 ? store.duplicateReclaimableBytes : store.selectedSummary.totalBytes),
+                title: L10n.text(.overviewUserFilesTitle, language: language),
+                detail: L10n.text(.overviewUserFilesDetail, language: language),
+                value: Formatters.bytes(userFileBytes),
                 asset: .duplicates,
                 tint: CleanMacTheme.purple,
-                buttonTitle: "Manage",
+                buttonTitle: L10n.text(.manage, language: language),
                 buttonSymbol: "folder",
                 action: openResults
             )
         }
     }
-}
 
+    private var userFileBytes: Int64 {
+        if store.selectedSummary.totalBytes > 0 {
+            return store.selectedSummary.totalBytes
+        }
+        return store.duplicateReclaimableBytes
+    }
+
+    private func cleanupBytes(for categories: Set<CandidateCategory>) -> Int64 {
+        store.candidates
+            .filter { categories.contains($0.category) }
+            .reduce(0) { $0 + $1.sizeBytes }
+    }
+}
 private struct OverviewActionCard: View {
     var title: String
     var detail: String

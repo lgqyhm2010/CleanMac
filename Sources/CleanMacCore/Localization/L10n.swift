@@ -6,6 +6,7 @@ public enum L10n {
         case aiCLI
         case aiReview
         case appLanguage
+        case appTagline
         case applications
         case appUninstaller
         case arguments
@@ -19,6 +20,7 @@ public enum L10n {
         case command
         case duplicateGroup
         case duplicates
+        case edit
         case english
         case executable
         case folders
@@ -29,6 +31,7 @@ public enum L10n {
         case include
         case japanese
         case largeFile
+        case manage
         case minimumSize
         case moveToTrash
         case moveSelectedItemsToTrash
@@ -62,12 +65,47 @@ public enum L10n {
         case spanish
         case status
         case openSettings
+        case free
+        case used
         case arabic
         case bengali
         case chinese
         case chineseTraditional
         case portuguese
+        case copy
+        case cut
+        case paste
+        case redo
         case russian
+        case overviewPerformanceTitle
+        case overviewPerformanceDetail
+        case overviewJunkFilesTitle
+        case overviewJunkFilesDetail
+        case overviewUserFilesTitle
+        case overviewUserFilesDetail
+        case sidebarDiskOverviewTitle
+        case sidebarDiskOverviewSubtitle
+        case sidebarSpeedUpTitle
+        case sidebarSpeedUpSubtitle
+        case sidebarCleanUpTitle
+        case sidebarCleanUpSubtitle
+        case sidebarManageSpaceTitle
+        case sidebarManageSpaceSubtitle
+        case sidebarDuplicatesTitle
+        case sidebarDuplicatesSubtitle
+        case sidebarUninstallerTitle
+        case sidebarUninstallerSubtitle
+        case sidebarAnalyzeSpaceTitle
+        case sidebarAnalyzeSpaceSubtitle
+        case sidebarAIReviewTitle
+        case sidebarAIReviewSubtitle
+        case sidebarSettingsTitle
+        case sidebarSettingsSubtitle
+        case sidebarGroupOverview
+        case sidebarGroupProTools
+        case sidebarGroupAILocal
+        case sidebarGroupSystem
+        case undo
         case unknown
 
         fileprivate var resourceKey: String {
@@ -241,6 +279,20 @@ public enum L10n {
 
     public static func candidatesHeadline(_ count: Int, language: ResolvedLanguage) -> String {
         format("candidatesHeadline", language: language, count)
+    }
+
+    public static func storageFreeOfTotal(
+        availableBytes: Int64,
+        totalBytes: Int64,
+        language: ResolvedLanguage
+    ) -> String {
+        let available = ByteCountFormatter.string(fromByteCount: availableBytes, countStyle: .file)
+        let total = ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
+        return format("storage.freeOfTotal", language: language, available, total)
+    }
+
+    public static func windowTitle(_ sectionTitle: String, language: ResolvedLanguage) -> String {
+        format("windowTitle", language: language, sectionTitle)
     }
 
     public static func status(_ status: CleaningStatus, language: ResolvedLanguage) -> String {

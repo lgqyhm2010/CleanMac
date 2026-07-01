@@ -4,24 +4,25 @@ public enum MenuBarMonitorSummary {
     public static func title(
         status: CleaningStatus,
         candidateCount: Int,
-        isScanning: Bool
+        isScanning: Bool,
+        language: ResolvedLanguage = .english
     ) -> String {
         if isScanning || status == .scanning {
-            return "Scanning..."
+            return L10n.status(.scanning, language: language)
         }
 
         switch status {
         case .scanning:
-            return "Scanning..."
+            return L10n.status(.scanning, language: language)
         case .movingToTrash:
-            return "Moving..."
+            return L10n.text(.moving, language: language)
         case .askingAI:
-            return "AI review"
+            return L10n.text(.aiReview, language: language)
         case .candidatesFound(let statusCount):
             let count = max(statusCount, candidateCount)
-            return count > 0 ? "\(count) items" : "CleanMac"
+            return count > 0 ? L10n.candidateCount(count, language: language) : "CleanMac"
         case .movedToTrash, .aiReviewFinished:
-            return candidateCount > 0 ? "\(candidateCount) items" : "CleanMac"
+            return candidateCount > 0 ? L10n.candidateCount(candidateCount, language: language) : "CleanMac"
         case .ready, .scanFailed, .cleanupFailed, .aiReviewFailed:
             return "CleanMac"
         }
