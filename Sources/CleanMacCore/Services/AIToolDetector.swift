@@ -135,7 +135,7 @@ public struct PATHExecutableLocator: ExecutableLocating {
     }
 }
 
-public struct AIToolDetector {
+public struct AIToolDetector: Sendable {
     private let locator: ExecutableLocating
 
     public init(locator: ExecutableLocating = PATHExecutableLocator()) {

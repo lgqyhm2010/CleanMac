@@ -31,7 +31,10 @@ struct AIReviewView: View {
                     .disabled(store.selectedSummary.selectedCount == 0 || store.isReviewingWithAI || store.selectedAIToolID == nil)
                 }
 
-                if let error = store.errorMessage {
+                // The empty-tool state is already shown inline in the panel below, so don't
+                // also surface it as a banner — otherwise the same message appears twice
+                // (e.g. when Ask AI is triggered from the menu shortcut with no tool found).
+                if let error = store.errorMessage, error != .noAIToolDetected {
                     Text(L10n.error(error, language: language))
                         .font(.caption)
                         .foregroundStyle(CleanMacTheme.danger)
@@ -61,6 +64,7 @@ struct AIReviewView: View {
                                         tint: CleanMacTheme.sectionTint(.aiReview),
                                         prominent: store.selectedAIToolID == tool.id
                                     ))
+                                    .accessibilityAddTraits(store.selectedAIToolID == tool.id ? [.isSelected] : [])
                                 }
                             }
                         }
@@ -92,8 +96,8 @@ struct AIReviewView: View {
         }
         .foregroundStyle(CleanMacTheme.ink)
         .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.isReviewingWithAI)
-        .onAppear {
-            store.refreshDetectedAITools()
+        .task {
+            await store.prepareAIReviewScreen()
         }
     }
 

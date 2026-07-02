@@ -41,6 +41,18 @@ final class CleaningStoreAIToolSelectionTests: XCTestCase {
         XCTAssertEqual(store.errorMessage, .noAIToolDetected)
     }
 
+    func testPreparingAIReviewScreenClearsErrorBledOverFromOtherScreensAndDetectsTools() async {
+        let store = makeStore(found: ["codex": "/opt/homebrew/bin/codex"])
+        // An error raised on a different screen (e.g. the Cleaner) must not linger on the
+        // AI Review screen when the user navigates to it.
+        store.errorMessage = .system("scan failed on another screen")
+
+        await store.prepareAIReviewScreen()
+
+        XCTAssertNil(store.errorMessage, "entering the AI Review screen clears stale cross-screen errors")
+        XCTAssertEqual(store.detectedAITools.map(\.id), ["codex"], "entering the screen refreshes the detected tools")
+    }
+
     private func makeStore(found: [String: String]) -> CleaningStore {
         CleaningStore(
             language: .english,

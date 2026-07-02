@@ -40,17 +40,21 @@ final class CleaningStore: ObservableObject {
     }
 
     func refreshDetectedAITools() {
-        detectedAITools = aiToolDetector.detectAvailableTools()
+        applyDetectedTools(aiToolDetector.detectAvailableTools())
+    }
 
-        if let selectedAIToolID, detectedAITools.contains(where: { $0.id == selectedAIToolID }) {
+    private func applyDetectedTools(_ tools: [DetectedAITool]) {
+        detectedAITools = tools
+
+        if let selectedAIToolID, tools.contains(where: { $0.id == selectedAIToolID }) {
             return
         }
 
         let storedID = UserDefaults.standard.string(forKey: Self.aiToolPreferenceKey)
-        if let storedID, detectedAITools.contains(where: { $0.id == storedID }) {
+        if let storedID, tools.contains(where: { $0.id == storedID }) {
             selectedAIToolID = storedID
-        } else if detectedAITools.count == 1 {
-            selectedAIToolID = detectedAITools[0].id
+        } else if tools.count == 1 {
+            selectedAIToolID = tools[0].id
         } else {
             selectedAIToolID = nil
         }
@@ -59,6 +63,18 @@ final class CleaningStore: ObservableObject {
     func selectAITool(_ id: String) {
         selectedAIToolID = id
         UserDefaults.standard.set(id, forKey: Self.aiToolPreferenceKey)
+    }
+
+    /// Called when the AI Review screen appears: clears any error bled over from another
+    /// screen and refreshes the tool list off the main thread (the PATH scan is filesystem
+    /// IO we don't want to run synchronously on every visit).
+    func prepareAIReviewScreen() async {
+        errorMessage = nil
+        let detector = aiToolDetector
+        let tools = await Task.detached(priority: .userInitiated) {
+            detector.detectAvailableTools()
+        }.value
+        applyDetectedTools(tools)
     }
 
     var selectedCandidates: [CleaningCandidate] {
