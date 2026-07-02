@@ -44,20 +44,94 @@ public protocol ExecutableLocating: Sendable {
     func locate(_ binaryName: String) -> String?
 }
 
+/// The directories CleanMac searches for AI CLIs, and the `PATH` it hands the spawned
+/// process. A macOS app launched from Finder/Dock inherits only launchd's minimal PATH
+/// (`/usr/bin:/bin:/usr/sbin:/sbin`), which omits Homebrew, `~/.local/bin`, and the npm
+/// global dir where codex/claude/gemini — and the `node` their shebangs need — actually
+/// live. Unioning the inherited PATH with the well-known install locations makes both
+/// detection and launch work regardless of how the app was started.
+enum ExecutableSearchPath {
+    /// Standard macOS CLI install locations, in priority order. Absolute paths only.
+    static func wellKnownDirectories(homeDirectory: String) -> [String] {
+        [
+            "/opt/homebrew/bin",        // Apple Silicon Homebrew (codex, gemini, node)
+            "/opt/homebrew/sbin",
+            "/usr/local/bin",           // Intel Homebrew / manual installs
+            "/usr/local/sbin",
+            "\(homeDirectory)/.local/bin",      // pipx, uv, claude
+            "\(homeDirectory)/.npm-global/bin", // custom npm prefix
+            "\(homeDirectory)/bin",
+            "\(homeDirectory)/.asdf/shims",     // asdf version manager
+            "\(homeDirectory)/.volta/bin",      // volta
+            "/usr/bin",
+            "/bin",
+            "/usr/sbin",
+            "/sbin"
+        ]
+    }
+
+    /// The inherited `$PATH` followed by the well-known dirs, de-duplicated and with any
+    /// empty or relative entry dropped (a relative entry would resolve against the process
+    /// working directory — `/` for a GUI app — which is never what we want).
+    static func directories(environmentPATH: String, homeDirectory: String) -> [String] {
+        let inherited = environmentPATH.split(separator: ":").map(String.init)
+        var seen = Set<String>()
+        return (inherited + wellKnownDirectories(homeDirectory: homeDirectory)).filter { directory in
+            directory.hasPrefix("/") && seen.insert(directory).inserted
+        }
+    }
+
+    static func directories() -> [String] {
+        directories(
+            environmentPATH: ProcessInfo.processInfo.environment["PATH"] ?? "",
+            homeDirectory: FileManager.default.homeDirectoryForCurrentUser.path
+        )
+    }
+
+    /// The augmented `PATH` string handed to a spawned CLI so its own `env node` shebang
+    /// and any child processes resolve against the same locations used for detection.
+    static func combinedPATH() -> String {
+        directories().joined(separator: ":")
+    }
+}
+
 /// `Process.executableURL` does not search `$PATH` — a bare binary name fails to launch.
-/// This resolves a name to an absolute path the same way a shell would.
+/// This resolves a name to an absolute path the same way a shell would, searching the
+/// augmented `ExecutableSearchPath` so tools are found even under a minimal GUI PATH.
 public struct PATHExecutableLocator: ExecutableLocating {
-    public init() {}
+    private let searchDirectories: [String]
+    private let isLaunchable: @Sendable (String) -> Bool
+
+    public init() {
+        self.init(searchDirectories: ExecutableSearchPath.directories())
+    }
+
+    init(searchDirectories: [String]) {
+        self.init(searchDirectories: searchDirectories, isLaunchable: PATHExecutableLocator.isLaunchableFile)
+    }
+
+    init(searchDirectories: [String], isLaunchable: @escaping @Sendable (String) -> Bool) {
+        self.searchDirectories = searchDirectories
+        self.isLaunchable = isLaunchable
+    }
 
     public func locate(_ binaryName: String) -> String? {
-        guard let pathVariable = ProcessInfo.processInfo.environment["PATH"] else { return nil }
-        for directory in pathVariable.split(separator: ":") {
-            let candidatePath = URL(filePath: String(directory)).appending(path: binaryName).path
-            if FileManager.default.isExecutableFile(atPath: candidatePath) {
+        for directory in searchDirectories {
+            let candidatePath = URL(filePath: directory).appending(path: binaryName).path
+            if isLaunchable(candidatePath) {
                 return candidatePath
             }
         }
         return nil
+    }
+
+    /// `FileManager.isExecutableFile` also returns `true` for directories, so a directory
+    /// named like a CLI would be reported as a launchable tool (and then fail to launch).
+    /// Require a regular, non-directory, executable file.
+    private static let isLaunchableFile: @Sendable (String) -> Bool = { path in
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
+        return exists && !isDirectory.boolValue && FileManager.default.isExecutableFile(atPath: path)
     }
 }
 

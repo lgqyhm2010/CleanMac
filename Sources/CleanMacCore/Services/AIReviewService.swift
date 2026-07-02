@@ -60,14 +60,21 @@ public final class AIReviewService {
 
     public func review(candidates: [CleaningCandidate], userQuestion: String) async throws -> AIReview {
         let prompt = makePrompt(candidates: candidates, userQuestion: userQuestion)
+
+        // Hand the child the augmented PATH so a Finder-launched app (which inherits only
+        // launchd's minimal PATH) can still resolve the tool's `env node` shebang and any
+        // subprocesses it spawns. See ExecutableSearchPath.
+        var environment = ProcessInfo.processInfo.environment
+        environment["PATH"] = ExecutableSearchPath.combinedPATH()
+
         let command: AICommand
         let standardInput: String
         switch tool.profile.promptDelivery {
         case .standardInput:
-            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments)
+            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments, environment: environment)
             standardInput = prompt
         case .argument:
-            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + [prompt])
+            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + [prompt], environment: environment)
             standardInput = ""
         }
         let result = try await runner.run(command: command, standardInput: standardInput)
@@ -107,6 +114,11 @@ public struct ProcessCommandRunner: CommandRunning {
         let process = Process()
         process.executableURL = URL(filePath: command.executable)
         process.arguments = command.arguments
+        // nil environment inherits the parent's; a value replaces it wholesale so the
+        // caller can hand the child an augmented PATH.
+        if let environment = command.environment {
+            process.environment = environment
+        }
 
         let inputPipe = Pipe()
         let outputPipe = Pipe()

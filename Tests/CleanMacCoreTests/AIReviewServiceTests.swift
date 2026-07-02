@@ -53,7 +53,10 @@ final class AIReviewServiceTests: XCTestCase {
         let review = try await service.review(candidates: [candidate], userQuestion: "safe?")
 
         XCTAssertEqual(review.output, "safe to remove")
-        XCTAssertEqual(runner.commands, [AICommand(executable: "/usr/bin/ai", arguments: ["exec"])])
+        XCTAssertEqual(runner.commands.count, 1)
+        XCTAssertEqual(runner.commands[0].executable, "/usr/bin/ai")
+        XCTAssertEqual(runner.commands[0].arguments, ["exec"])
+        XCTAssertNotNil(runner.commands[0].environment, "review() must set the child environment")
         XCTAssertEqual(runner.standardInputs.count, 1)
         XCTAssertTrue(runner.standardInputs[0].contains("/tmp/cache.bin"))
     }
@@ -82,6 +85,36 @@ final class AIReviewServiceTests: XCTestCase {
         XCTAssertEqual(runner.commands[0].arguments.first, "-p")
         XCTAssertTrue(runner.commands[0].arguments.last?.contains("/tmp/cache.bin") ?? false)
         XCTAssertEqual(runner.standardInputs, [""])
+    }
+
+    func testReviewGivesTheChildAnAugmentedPATHSoHomebrewToolsResolve() async throws {
+        // A Finder/Dock-launched app inherits launchd's minimal PATH, which omits the
+        // Homebrew dir that codex/gemini — and the `node` their shebangs exec — live in.
+        // review() must hand the spawned process a PATH that includes those locations.
+        let runner = RecordingCommandRunner()
+        let tool = DetectedAITool(
+            profile: AIToolProfile(id: "codex", displayName: "Codex", binaryName: "codex", arguments: ["exec"], promptDelivery: .standardInput),
+            executablePath: "/opt/homebrew/bin/codex"
+        )
+        let service = AIReviewService(tool: tool, runner: runner)
+        let candidate = CleaningCandidate(
+            url: URL(filePath: "/tmp/cache.bin"),
+            sizeBytes: 64,
+            modifiedAt: nil,
+            category: .cache,
+            risk: .usuallySafe,
+            reasons: ["Cache file"],
+            isDirectory: false
+        )
+
+        _ = try await service.review(candidates: [candidate], userQuestion: "safe?")
+
+        let environment = try XCTUnwrap(runner.commands.first?.environment)
+        let searchDirs = try XCTUnwrap(environment["PATH"]).split(separator: ":").map(String.init)
+        XCTAssertTrue(
+            searchDirs.contains("/opt/homebrew/bin"),
+            "child PATH must include Homebrew so `env node` resolves; got: \(searchDirs)"
+        )
     }
 
     func testReviewThrowsErrorDescribingWhyTheCommandFailed() async {

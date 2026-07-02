@@ -434,10 +434,14 @@ public struct CleanupSkippedItem: Equatable, Sendable {
 public struct AICommand: Equatable, Sendable {
     public var executable: String
     public var arguments: [String]
+    /// Environment for the spawned process. `nil` inherits the parent's environment;
+    /// a value replaces it wholesale (used to hand the child an augmented `PATH`).
+    public var environment: [String: String]?
 
-    public init(executable: String, arguments: [String] = []) {
+    public init(executable: String, arguments: [String] = [], environment: [String: String]? = nil) {
         self.executable = executable
         self.arguments = arguments
+        self.environment = environment
     }
 }
 
