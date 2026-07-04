@@ -120,7 +120,8 @@ final class AIReviewServiceTests: XCTestCase {
     func testReviewThrowsErrorDescribingWhyTheCommandFailed() async {
         let runner = FailingCommandRunner(
             exitCode: 1,
-            standardError: "Error loading config.toml: unknown variant `default`, expected `fast` or `flex` in `service_tier`"
+            standardError: "Error loading config.toml: unknown variant `default`, expected `fast` or `flex` in `service_tier`",
+            standardOutput: ""
         )
         let tool = DetectedAITool(
             profile: AIToolProfile(id: "codex", displayName: "Codex", binaryName: "codex", arguments: ["exec"], promptDelivery: .standardInput),
@@ -148,6 +149,82 @@ final class AIReviewServiceTests: XCTestCase {
             )
         }
     }
+
+    func testCommandFailedErrorKeepsTheTailOfLongOutputBounded() {
+        // codex exec streams its whole transcript to stdout before a non-zero exit; the
+        // error label in AIReviewView renders errorDescription verbatim, so an unbounded
+        // detail would crush the layout. Keep the tail — CLIs print the fatal line last.
+        let longOutput = String(repeating: "x", count: 10_000) + "\nFATAL: the actual reason"
+        let error = AIReviewError.commandFailed(exitCode: 1, standardError: "", standardOutput: longOutput)
+
+        let description = error.localizedDescription
+
+        XCTAssertLessThan(description.count, 1_000, "error surfaced to the UI must stay bounded")
+        XCTAssertTrue(description.contains("FATAL: the actual reason"), "the fatal tail must survive truncation, got: \(description.suffix(80))")
+    }
+
+    func testChildEnvironmentStripsNestedClaudeSessionMarkersButKeepsUserConfig() {
+        // If CleanMac itself was launched from a Claude Code session (common during
+        // development), the child `claude` would inherit the session markers and
+        // misdetect a nested session. User-facing config such as ANTHROPIC_BASE_URL
+        // must survive — proxy users rely on it.
+        let base = [
+            "CLAUDECODE": "1",
+            "CLAUDE_CODE_ENTRYPOINT": "cli",
+            "CLAUDE_CODE_EXECPATH": "/somewhere/claude",
+            "CLAUDE_CODE_SESSION_ID": "abc",
+            "CLAUDE_CODE_SSE_PORT": "1234",
+            "ANTHROPIC_BASE_URL": "https://proxy.example.com",
+            "HOME": "/Users/me"
+        ]
+
+        let child = AIReviewService.childEnvironment(from: base)
+
+        XCTAssertNil(child["CLAUDECODE"])
+        XCTAssertNil(child["CLAUDE_CODE_ENTRYPOINT"])
+        XCTAssertNil(child["CLAUDE_CODE_EXECPATH"])
+        XCTAssertNil(child["CLAUDE_CODE_SESSION_ID"])
+        XCTAssertNil(child["CLAUDE_CODE_SSE_PORT"])
+        XCTAssertEqual(child["ANTHROPIC_BASE_URL"], "https://proxy.example.com")
+        XCTAssertEqual(child["HOME"], "/Users/me")
+        XCTAssertNotNil(child["PATH"], "childEnvironment must install the augmented PATH")
+    }
+
+    func testReviewErrorIncludesStandardOutputWhenStderrIsEmpty() async {
+        // claude prints fatal errors like "Not logged in · Please run /login" to stdout
+        // and exits 1 with an empty stderr. Surfacing only stderr would collapse the
+        // actionable message into "no output".
+        let runner = FailingCommandRunner(
+            exitCode: 1,
+            standardError: "",
+            standardOutput: "Not logged in · Please run /login"
+        )
+        let tool = DetectedAITool(
+            profile: AIToolProfile(id: "claude", displayName: "Claude Code", binaryName: "claude", arguments: ["-p"], promptDelivery: .standardInput),
+            executablePath: "/usr/bin/env"
+        )
+        let service = AIReviewService(tool: tool, runner: runner)
+        let candidate = CleaningCandidate(
+            url: URL(filePath: "/tmp/cache.bin"),
+            sizeBytes: 64,
+            modifiedAt: nil,
+            category: .cache,
+            risk: .usuallySafe,
+            reasons: ["Cache file"],
+            isDirectory: false
+        )
+
+        do {
+            _ = try await service.review(candidates: [candidate], userQuestion: "safe?")
+            XCTFail("expected review to throw")
+        } catch {
+            let description = error.localizedDescription
+            XCTAssertTrue(
+                description.contains("Not logged in"),
+                "error shown to the user should fall back to the AI command's stdout, got: \(description)"
+            )
+        }
+    }
 }
 
 private final class RecordingCommandRunner: CommandRunning {
@@ -164,13 +241,15 @@ private final class RecordingCommandRunner: CommandRunning {
 private final class FailingCommandRunner: CommandRunning {
     private let exitCode: Int32
     private let standardError: String
+    private let standardOutput: String
 
-    init(exitCode: Int32, standardError: String) {
+    init(exitCode: Int32, standardError: String, standardOutput: String) {
         self.exitCode = exitCode
         self.standardError = standardError
+        self.standardOutput = standardOutput
     }
 
     func run(command: AICommand, standardInput: String) async throws -> CommandResult {
-        CommandResult(exitCode: exitCode, standardOutput: "", standardError: standardError)
+        CommandResult(exitCode: exitCode, standardOutput: standardOutput, standardError: standardError)
     }
 }

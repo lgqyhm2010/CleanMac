@@ -35,9 +35,13 @@ struct AIReviewView: View {
                 // also surface it as a banner — otherwise the same message appears twice
                 // (e.g. when Ask AI is triggered from the menu shortcut with no tool found).
                 if let error = store.errorMessage, error != .noAIToolDetected {
+                    // Bounded like ScanView's error label: a failing CLI can emit a long
+                    // merged stderr/stdout detail, which must not crush the layout below.
                     Text(L10n.error(error, language: language))
                         .font(.caption)
                         .foregroundStyle(CleanMacTheme.danger)
+                        .lineLimit(4)
+                        .textSelection(.enabled)
                 }
 
                 CleanMacPanel(tint: CleanMacTheme.sectionTint(.aiReview)) {

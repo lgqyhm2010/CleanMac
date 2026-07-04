@@ -5,15 +5,27 @@ public protocol CommandRunning {
 }
 
 public enum AIReviewError: Error, Equatable, LocalizedError {
-    case commandFailed(exitCode: Int32, standardError: String)
+    case commandFailed(exitCode: Int32, standardError: String, standardOutput: String)
 
     public var errorDescription: String? {
         switch self {
-        case let .commandFailed(exitCode, standardError):
-            let trimmed = standardError.trimmingCharacters(in: .whitespacesAndNewlines)
-            let detail = trimmed.isEmpty ? "no output" : trimmed
-            return "AI command exited with code \(exitCode): \(detail)"
+        case let .commandFailed(exitCode, standardError, standardOutput):
+            // claude prints fatal errors ("Not logged in · Please run /login") to
+            // stdout with an empty stderr, so the user-facing detail must draw on both.
+            // Each stream is capped to its tail: codex can stream a whole transcript to
+            // stdout before failing, and CLIs print the fatal line last.
+            let detail = [standardError, standardOutput]
+                .map { Self.tail($0, limit: 400) }
+                .filter { !$0.isEmpty }
+                .joined(separator: "\n")
+            return "AI command exited with code \(exitCode): \(detail.isEmpty ? "no output" : detail)"
         }
+    }
+
+    private static func tail(_ text: String, limit: Int) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > limit else { return trimmed }
+        return "…" + trimmed.suffix(limit)
     }
 }
 
@@ -58,14 +70,32 @@ public final class AIReviewService {
         """
     }
 
+    /// Claude Code marks every process in its own subprocess tree with these variables.
+    /// If CleanMac was launched from such a session (e.g. during development), a spawned
+    /// `claude` would inherit them and misdetect a nested session. User-facing config
+    /// (ANTHROPIC_BASE_URL, CLAUDE_CONFIG_DIR, …) is deliberately kept.
+    private static let nestedClaudeSessionMarkers: Set<String> = [
+        "CLAUDECODE",
+        "CLAUDE_CODE_ENTRYPOINT",
+        "CLAUDE_CODE_EXECPATH",
+        "CLAUDE_CODE_SESSION_ID",
+        "CLAUDE_CODE_SSE_PORT"
+    ]
+
+    /// The environment handed to the spawned CLI: the parent's, minus nested-session
+    /// markers, with the augmented PATH so a Finder-launched app (which inherits only
+    /// launchd's minimal PATH) can still resolve the tool's `env node` shebang and any
+    /// subprocesses it spawns. See ExecutableSearchPath.
+    static func childEnvironment(from base: [String: String]) -> [String: String] {
+        var environment = base.filter { !nestedClaudeSessionMarkers.contains($0.key) }
+        environment["PATH"] = ExecutableSearchPath.combinedPATH()
+        return environment
+    }
+
     public func review(candidates: [CleaningCandidate], userQuestion: String) async throws -> AIReview {
         let prompt = makePrompt(candidates: candidates, userQuestion: userQuestion)
 
-        // Hand the child the augmented PATH so a Finder-launched app (which inherits only
-        // launchd's minimal PATH) can still resolve the tool's `env node` shebang and any
-        // subprocesses it spawns. See ExecutableSearchPath.
-        var environment = ProcessInfo.processInfo.environment
-        environment["PATH"] = ExecutableSearchPath.combinedPATH()
+        let environment = Self.childEnvironment(from: ProcessInfo.processInfo.environment)
 
         let command: AICommand
         let standardInput: String
@@ -81,7 +111,8 @@ public final class AIReviewService {
         guard result.exitCode == 0 else {
             throw AIReviewError.commandFailed(
                 exitCode: result.exitCode,
-                standardError: result.standardError
+                standardError: result.standardError,
+                standardOutput: result.standardOutput
             )
         }
         return AIReview(output: result.standardOutput, reviewedAt: Date())
