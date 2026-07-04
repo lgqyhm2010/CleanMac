@@ -1,5 +1,21 @@
 import Foundation
 
+public struct AIModelOption: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let displayName: String
+    /// nil = the CLI's own default model; no model flag is appended.
+    public let flagValue: String?
+
+    public init(id: String, displayName: String, flagValue: String?) {
+        self.id = id
+        self.displayName = displayName
+        self.flagValue = flagValue
+    }
+
+    /// The view renders this entry with the localized "Default" label, keyed off `flagValue == nil`.
+    public static let `default` = AIModelOption(id: "default", displayName: "Default", flagValue: nil)
+}
+
 public struct AIToolProfile: Identifiable, Equatable, Sendable {
     public enum PromptDelivery: Equatable, Sendable {
         case standardInput
@@ -11,21 +27,64 @@ public struct AIToolProfile: Identifiable, Equatable, Sendable {
     public let binaryName: String
     public let arguments: [String]
     public let promptDelivery: PromptDelivery
+    public let modelFlag: String
+    public let modelOptions: [AIModelOption]
 
-    public init(id: String, displayName: String, binaryName: String, arguments: [String], promptDelivery: PromptDelivery) {
+    public init(
+        id: String,
+        displayName: String,
+        binaryName: String,
+        arguments: [String],
+        promptDelivery: PromptDelivery,
+        modelFlag: String = "--model",
+        modelOptions: [AIModelOption] = [.default]
+    ) {
         self.id = id
         self.displayName = displayName
         self.binaryName = binaryName
         self.arguments = arguments
         self.promptDelivery = promptDelivery
+        self.modelFlag = modelFlag
+        self.modelOptions = modelOptions
     }
 
     /// codex and claude read the prompt from stdin; gemini's `-p` requires the prompt as
     /// the flag's own argument value (confirmed via each CLI's `--help`).
+    /// Model lists are curated presets — none of the CLIs can enumerate its models.
     public static let knownProfiles: [AIToolProfile] = [
-        AIToolProfile(id: "codex", displayName: "Codex", binaryName: "codex", arguments: ["exec"], promptDelivery: .standardInput),
-        AIToolProfile(id: "claude", displayName: "Claude Code", binaryName: "claude", arguments: ["-p"], promptDelivery: .standardInput),
-        AIToolProfile(id: "gemini", displayName: "Gemini CLI", binaryName: "gemini", arguments: ["-p"], promptDelivery: .argument)
+        AIToolProfile(
+            id: "codex", displayName: "Codex", binaryName: "codex",
+            arguments: ["exec"], promptDelivery: .standardInput,
+            modelFlag: "-m",
+            modelOptions: [
+                .default,
+                AIModelOption(id: "gpt-5.1-codex", displayName: "gpt-5.1-codex", flagValue: "gpt-5.1-codex"),
+                AIModelOption(id: "gpt-5.1-codex-mini", displayName: "gpt-5.1-codex-mini", flagValue: "gpt-5.1-codex-mini"),
+                AIModelOption(id: "gpt-5.1", displayName: "gpt-5.1", flagValue: "gpt-5.1")
+            ]
+        ),
+        AIToolProfile(
+            id: "claude", displayName: "Claude Code", binaryName: "claude",
+            arguments: ["-p"], promptDelivery: .standardInput,
+            modelFlag: "--model",
+            modelOptions: [
+                .default,
+                AIModelOption(id: "fable", displayName: "Fable", flagValue: "fable"),
+                AIModelOption(id: "opus", displayName: "Opus", flagValue: "opus"),
+                AIModelOption(id: "sonnet", displayName: "Sonnet", flagValue: "sonnet"),
+                AIModelOption(id: "haiku", displayName: "Haiku", flagValue: "haiku")
+            ]
+        ),
+        AIToolProfile(
+            id: "gemini", displayName: "Gemini CLI", binaryName: "gemini",
+            arguments: ["-p"], promptDelivery: .argument,
+            modelFlag: "-m",
+            modelOptions: [
+                .default,
+                AIModelOption(id: "gemini-2.5-pro", displayName: "gemini-2.5-pro", flagValue: "gemini-2.5-pro"),
+                AIModelOption(id: "gemini-2.5-flash", displayName: "gemini-2.5-flash", flagValue: "gemini-2.5-flash")
+            ]
+        )
     ]
 }
 

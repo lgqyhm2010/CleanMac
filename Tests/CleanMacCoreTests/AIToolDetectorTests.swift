@@ -36,6 +36,25 @@ final class AIToolDetectorTests: XCTestCase {
         XCTAssertEqual(profiles["gemini"]?.promptDelivery, .argument)
     }
 
+    func testKnownProfilesExposeDefaultFirstModelOptions() {
+        for profile in AIToolProfile.knownProfiles {
+            XCTAssertEqual(profile.modelOptions.first, .default, "\(profile.id) must offer Default first")
+            XCTAssertGreaterThan(profile.modelOptions.count, 1, "\(profile.id) must offer real models")
+        }
+    }
+
+    func testKnownProfilesUseEachCLIsModelFlag() {
+        let flags = Dictionary(uniqueKeysWithValues: AIToolProfile.knownProfiles.map { ($0.id, $0.modelFlag) })
+        XCTAssertEqual(flags["claude"], "--model")
+        XCTAssertEqual(flags["codex"], "-m")
+        XCTAssertEqual(flags["gemini"], "-m")
+    }
+
+    func testClaudeModelOptionsUseAliases() {
+        let claude = AIToolProfile.knownProfiles.first { $0.id == "claude" }
+        XCTAssertEqual(claude?.modelOptions.compactMap(\.flagValue), ["fable", "opus", "sonnet", "haiku"])
+    }
+
     // Exercises the REAL PATHExecutableLocator logic (not a fake) — the load-bearing
     // resolution that determines whether any tool is ever found in the shipped app.
     func testLocatesRealExecutableFileAndRejectsDirectoriesAndMissingNames() throws {
