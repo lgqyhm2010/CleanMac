@@ -71,6 +71,29 @@ struct AIReviewView: View {
                                     .accessibilityAddTraits(store.selectedAIToolID == tool.id ? [.isSelected] : [])
                                 }
                             }
+
+                            if let selectedTool = store.detectedAITools.first(where: { $0.id == store.selectedAIToolID }) {
+                                CleanMacSectionHeader(
+                                    title: L10n.text(.model, language: language),
+                                    symbolName: "cpu",
+                                    tint: CleanMacTheme.sectionTint(.aiReview)
+                                )
+
+                                HStack(spacing: 8) {
+                                    ForEach(selectedTool.profile.modelOptions) { option in
+                                        Button {
+                                            store.selectModel(option.id, for: selectedTool.id)
+                                        } label: {
+                                            Text(option.flagValue == nil ? L10n.text(.defaultModel, language: language) : option.displayName)
+                                        }
+                                        .buttonStyle(CleanMacRaisedButtonStyle(
+                                            tint: CleanMacTheme.sectionTint(.aiReview),
+                                            prominent: store.selectedModelOption(for: selectedTool.id)?.id == option.id
+                                        ))
+                                        .accessibilityAddTraits(store.selectedModelOption(for: selectedTool.id)?.id == option.id ? [.isSelected] : [])
+                                    }
+                                }
+                            }
                         }
 
                         CleanMacSectionHeader(

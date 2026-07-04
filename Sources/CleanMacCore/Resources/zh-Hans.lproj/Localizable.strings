@@ -23,6 +23,8 @@
 "japanese" = "日语";
 "largeFile" = "大文件";
 "minimumSize" = "最小大小";
+"model" = "模型";
+"defaultModel" = "默认";
 "moveToTrash" = "移到废纸篓";
 "moveSelectedItemsToTrash" = "将选中项目移到废纸篓？";
 "moving" = "正在移动";

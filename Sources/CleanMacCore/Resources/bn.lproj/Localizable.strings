@@ -23,6 +23,8 @@
 "japanese" = "জাপানি";
 "largeFile" = "বড় ফাইল";
 "minimumSize" = "ন্যূনতম আকার";
+"model" = "মডেল";
+"defaultModel" = "ডিফল্ট";
 "moveToTrash" = "ট্র্যাশে সরান";
 "moveSelectedItemsToTrash" = "নির্বাচিত আইটেমগুলো ট্র্যাশে সরাবেন?";
 "moving" = "সরানো হচ্ছে";

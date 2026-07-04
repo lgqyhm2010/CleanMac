@@ -30,6 +30,8 @@ public enum L10n {
         case largeFile
         case manage
         case minimumSize
+        case model
+        case defaultModel
         case moveToTrash
         case moveSelectedItemsToTrash
         case moving

@@ -23,6 +23,8 @@
 "japanese" = "जापानी";
 "largeFile" = "बड़ी फ़ाइल";
 "minimumSize" = "न्यूनतम आकार";
+"model" = "मॉडल";
+"defaultModel" = "डिफ़ॉल्ट";
 "moveToTrash" = "ट्रैश में ले जाएँ";
 "moveSelectedItemsToTrash" = "चयनित आइटम ट्रैश में ले जाएँ?";
 "moving" = "ले जाया जा रहा है";

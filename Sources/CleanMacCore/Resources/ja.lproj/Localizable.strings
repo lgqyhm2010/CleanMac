@@ -23,6 +23,8 @@
 "japanese" = "日本語";
 "largeFile" = "大きなファイル";
 "minimumSize" = "最小サイズ";
+"model" = "モデル";
+"defaultModel" = "デフォルト";
 "moveToTrash" = "ゴミ箱に移動";
 "moveSelectedItemsToTrash" = "選択した項目をゴミ箱に移動しますか？";
 "moving" = "移動中";

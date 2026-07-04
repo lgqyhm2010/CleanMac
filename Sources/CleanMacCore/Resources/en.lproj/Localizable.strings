@@ -23,6 +23,8 @@
 "japanese" = "Japanese";
 "largeFile" = "Large File";
 "minimumSize" = "Minimum Size";
+"model" = "Model";
+"defaultModel" = "Default";
 "moveToTrash" = "Move to Trash";
 "moveSelectedItemsToTrash" = "Move selected items to Trash?";
 "moving" = "Moving";

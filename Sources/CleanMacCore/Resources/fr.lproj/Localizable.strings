@@ -23,6 +23,8 @@
 "japanese" = "Japonais";
 "largeFile" = "Gros fichier";
 "minimumSize" = "Taille minimale";
+"model" = "Modèle";
+"defaultModel" = "Par défaut";
 "moveToTrash" = "Déplacer vers la corbeille";
 "moveSelectedItemsToTrash" = "Déplacer les éléments sélectionnés vers la corbeille ?";
 "moving" = "Déplacement";
