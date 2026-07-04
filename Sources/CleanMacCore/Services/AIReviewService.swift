@@ -92,19 +92,23 @@ public final class AIReviewService {
         return environment
     }
 
-    public func review(candidates: [CleaningCandidate], userQuestion: String) async throws -> AIReview {
+    public func review(candidates: [CleaningCandidate], userQuestion: String, model: AIModelOption? = nil) async throws -> AIReview {
         let prompt = makePrompt(candidates: candidates, userQuestion: userQuestion)
 
         let environment = Self.childEnvironment(from: ProcessInfo.processInfo.environment)
+
+        // The model pair's position depends on prompt delivery: gemini's prompt must
+        // directly follow its "-p", so the pair goes before the base arguments there.
+        let modelArguments = model?.flagValue.map { [tool.profile.modelFlag, $0] } ?? []
 
         let command: AICommand
         let standardInput: String
         switch tool.profile.promptDelivery {
         case .standardInput:
-            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments, environment: environment)
+            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + modelArguments, environment: environment)
             standardInput = prompt
         case .argument:
-            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + [prompt], environment: environment)
+            command = AICommand(executable: tool.executablePath, arguments: modelArguments + tool.profile.arguments + [prompt], environment: environment)
             standardInput = ""
         }
         let result = try await runner.run(command: command, standardInput: standardInput)

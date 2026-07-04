@@ -150,6 +150,46 @@ final class AIReviewServiceTests: XCTestCase {
         }
     }
 
+    func testReviewAppendsModelFlagAfterBaseArgumentsForStdinTools() async throws {
+        let runner = RecordingCommandRunner()
+        let profile = AIToolProfile.knownProfiles.first { $0.id == "codex" }!
+        let tool = DetectedAITool(profile: profile, executablePath: "/usr/bin/ai")
+        let service = AIReviewService(tool: tool, runner: runner)
+        let model = AIModelOption(id: "gpt-5.1", displayName: "gpt-5.1", flagValue: "gpt-5.1")
+
+        _ = try await service.review(candidates: [sampleCandidate()], userQuestion: "safe?", model: model)
+
+        XCTAssertEqual(runner.commands[0].arguments, ["exec", "-m", "gpt-5.1"])
+    }
+
+    func testReviewInsertsModelFlagBeforeBaseArgumentsForArgumentTools() async throws {
+        // gemini's prompt must directly follow -p, so the model pair goes first: -m X -p <prompt>
+        let runner = RecordingCommandRunner()
+        let profile = AIToolProfile.knownProfiles.first { $0.id == "gemini" }!
+        let tool = DetectedAITool(profile: profile, executablePath: "/usr/bin/ai")
+        let service = AIReviewService(tool: tool, runner: runner)
+        let model = AIModelOption(id: "gemini-2.5-pro", displayName: "gemini-2.5-pro", flagValue: "gemini-2.5-pro")
+
+        _ = try await service.review(candidates: [sampleCandidate()], userQuestion: "safe?", model: model)
+
+        let arguments = runner.commands[0].arguments
+        XCTAssertEqual(Array(arguments.prefix(3)), ["-m", "gemini-2.5-pro", "-p"])
+        XCTAssertTrue(arguments.last?.contains("safe?") ?? false)
+    }
+
+    func testReviewOmitsModelFlagForDefaultAndNilModel() async throws {
+        let runner = RecordingCommandRunner()
+        let profile = AIToolProfile.knownProfiles.first { $0.id == "claude" }!
+        let tool = DetectedAITool(profile: profile, executablePath: "/usr/bin/ai")
+        let service = AIReviewService(tool: tool, runner: runner)
+
+        _ = try await service.review(candidates: [sampleCandidate()], userQuestion: "safe?", model: .default)
+        _ = try await service.review(candidates: [sampleCandidate()], userQuestion: "safe?")
+
+        XCTAssertEqual(runner.commands[0].arguments, ["-p"])
+        XCTAssertEqual(runner.commands[1].arguments, ["-p"])
+    }
+
     func testCommandFailedErrorKeepsTheTailOfLongOutputBounded() {
         // codex exec streams its whole transcript to stdout before a non-zero exit; the
         // error label in AIReviewView renders errorDescription verbatim, so an unbounded
@@ -225,6 +265,13 @@ final class AIReviewServiceTests: XCTestCase {
             )
         }
     }
+}
+
+private func sampleCandidate() -> CleaningCandidate {
+    CleaningCandidate(
+        url: URL(filePath: "/tmp/cache.bin"), sizeBytes: 64, modifiedAt: nil,
+        category: .cache, risk: .usuallySafe, reasons: ["Cache file"], isDirectory: false
+    )
 }
 
 private final class RecordingCommandRunner: CommandRunning {
