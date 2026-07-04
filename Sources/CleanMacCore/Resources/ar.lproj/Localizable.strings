@@ -25,6 +25,10 @@
 "minimumSize" = "الحد الأدنى للحجم";
 "model" = "النموذج";
 "defaultModel" = "افتراضي";
+"aiSummary" = "الملخص";
+"safeToDelete" = "آمن للحذف";
+"riskyItems" = "محفوف بالمخاطر";
+"needsUserReview" = "يتطلب مراجعتك";
 "moveToTrash" = "نقل إلى سلة المهملات";
 "moveSelectedItemsToTrash" = "نقل العناصر المحددة إلى سلة المهملات؟";
 "moving" = "جار النقل";

@@ -25,6 +25,10 @@
 "minimumSize" = "最小サイズ";
 "model" = "モデル";
 "defaultModel" = "デフォルト";
+"aiSummary" = "概要";
+"safeToDelete" = "削除しても安全";
+"riskyItems" = "リスクあり";
+"needsUserReview" = "要確認";
 "moveToTrash" = "ゴミ箱に移動";
 "moveSelectedItemsToTrash" = "選択した項目をゴミ箱に移動しますか？";
 "moving" = "移動中";

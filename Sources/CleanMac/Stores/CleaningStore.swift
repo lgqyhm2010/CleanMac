@@ -16,6 +16,7 @@ final class CleaningStore: ObservableObject {
     @Published var cleanupResult: CleanupResult?
     @Published var aiQuestion: String
     @Published var aiOutput = ""
+    @Published var aiReviewSummary: AIReviewSummary?
     @Published var status: CleaningStatus = .ready
     @Published var errorMessage: CleaningErrorMessage?
     @Published var isScanning = false
@@ -71,6 +72,13 @@ final class CleaningStore: ObservableObject {
     func selectModel(_ modelID: String, for toolID: String) {
         selectedModelIDsByTool[toolID] = modelID
         UserDefaults.standard.set(selectedModelIDsByTool, forKey: Self.aiModelPreferenceKey)
+    }
+
+    /// Keeps the raw text (fallback view, copying) and derives the structured
+    /// summary from it; nil summary means the UI shows the raw text.
+    func applyAIReviewOutput(_ output: String) {
+        aiOutput = output
+        aiReviewSummary = AIReviewOutputParser.parse(output)
     }
 
     /// Resolves the persisted choice against the tool's presets; unknown or missing
@@ -354,6 +362,7 @@ final class CleaningStore: ObservableObject {
         isReviewingWithAI = true
         errorMessage = nil
         aiOutput = ""
+        aiReviewSummary = nil
         status = .askingAI
 
         let question = aiQuestion
@@ -363,7 +372,7 @@ final class CleaningStore: ObservableObject {
             do {
                 let review = try await AIReviewService(tool: tool)
                     .review(candidates: targets, userQuestion: question, model: model)
-                aiOutput = review.output
+                applyAIReviewOutput(review.output)
                 status = .aiReviewFinished
             } catch {
                 errorMessage = .system(error.localizedDescription)

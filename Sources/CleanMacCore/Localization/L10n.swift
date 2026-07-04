@@ -32,6 +32,10 @@ public enum L10n {
         case minimumSize
         case model
         case defaultModel
+        case aiSummary
+        case safeToDelete
+        case riskyItems
+        case needsUserReview
         case moveToTrash
         case moveSelectedItemsToTrash
         case moving

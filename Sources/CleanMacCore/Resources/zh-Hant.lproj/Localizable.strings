@@ -25,6 +25,10 @@
 "minimumSize" = "最小大小";
 "model" = "模型";
 "defaultModel" = "預設";
+"aiSummary" = "總結";
+"safeToDelete" = "可安全刪除";
+"riskyItems" = "有風險";
+"needsUserReview" = "需人工確認";
 "moveToTrash" = "移到垃圾桶";
 "moveSelectedItemsToTrash" = "將選取項目移到垃圾桶？";
 "moving" = "正在移動";

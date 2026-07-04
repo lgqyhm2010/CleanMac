@@ -25,6 +25,10 @@
 "minimumSize" = "Tamaño mínimo";
 "model" = "Modelo";
 "defaultModel" = "Predeterminado";
+"aiSummary" = "Resumen";
+"safeToDelete" = "Seguro para eliminar";
+"riskyItems" = "Arriesgado";
+"needsUserReview" = "Requiere tu revisión";
 "moveToTrash" = "Mover a la papelera";
 "moveSelectedItemsToTrash" = "¿Mover los elementos seleccionados a la papelera?";
 "moving" = "Moviendo";

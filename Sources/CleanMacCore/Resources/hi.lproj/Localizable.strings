@@ -25,6 +25,10 @@
 "minimumSize" = "न्यूनतम आकार";
 "model" = "मॉडल";
 "defaultModel" = "डिफ़ॉल्ट";
+"aiSummary" = "सारांश";
+"safeToDelete" = "हटाने के लिए सुरक्षित";
+"riskyItems" = "जोखिम भरा";
+"needsUserReview" = "आपकी समीक्षा आवश्यक";
 "moveToTrash" = "ट्रैश में ले जाएँ";
 "moveSelectedItemsToTrash" = "चयनित आइटम ट्रैश में ले जाएँ?";
 "moving" = "ले जाया जा रहा है";

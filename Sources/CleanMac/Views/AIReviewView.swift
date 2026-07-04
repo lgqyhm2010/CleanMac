@@ -137,6 +137,8 @@ struct AIReviewView: View {
                 asset: .aiReview,
                 tint: CleanMacTheme.sectionTint(.aiReview)
             )
+        } else if let summary = store.aiReviewSummary {
+            structuredReview(summary)
         } else if store.aiOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             CleanMacEmptyState(
                 title: L10n.text(.noReview, language: language),
@@ -145,11 +147,66 @@ struct AIReviewView: View {
                 tint: CleanMacTheme.sectionTint(.aiReview)
             )
         } else {
+            // Fallback: the CLI's answer did not parse as the requested JSON.
             TextEditor(text: $store.aiOutput)
                 .font(.system(.body, design: .monospaced))
                 .scrollContentBackground(.hidden)
                 .background(CleanMacTheme.warmPane, in: CleanMacTheme.panelShape)
                 .transition(.opacity)
+        }
+    }
+
+    private func structuredReview(_ summary: AIReviewSummary) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                if let overview = summary.summary {
+                    VStack(alignment: .leading, spacing: 6) {
+                        groupTitle(.aiSummary, tint: CleanMacTheme.sectionTint(.aiReview), symbolName: "text.alignleft", count: nil)
+                        Text(overview)
+                            .font(.callout)
+                    }
+                }
+                reviewGroup(.safeToDelete, tint: CleanMacTheme.mint, symbolName: "checkmark.circle.fill", items: summary.safeToDelete)
+                reviewGroup(.riskyItems, tint: CleanMacTheme.danger, symbolName: "exclamationmark.triangle.fill", items: summary.risky)
+                reviewGroup(.needsUserReview, tint: CleanMacTheme.amber, symbolName: "questionmark.circle.fill", items: summary.needsUserReview)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .textSelection(.enabled)
+        }
+        .background(CleanMacTheme.warmPane, in: CleanMacTheme.panelShape)
+        .transition(.opacity)
+    }
+
+    @ViewBuilder
+    private func reviewGroup(_ titleKey: L10n.Key, tint: Color, symbolName: String, items: [AIReviewItem]) -> some View {
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                groupTitle(titleKey, tint: tint, symbolName: symbolName, count: items.count)
+                ForEach(items) { item in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.path)
+                            .font(.system(.caption, design: .monospaced))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        if let reason = item.reason {
+                            Text(reason)
+                                .font(.caption)
+                                .foregroundStyle(CleanMacTheme.secondaryText)
+                        }
+                    }
+                    .padding(.leading, 22)
+                }
+            }
+        }
+    }
+
+    private func groupTitle(_ titleKey: L10n.Key, tint: Color, symbolName: String, count: Int?) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: symbolName)
+                .foregroundStyle(tint)
+            Text(count.map { "\(L10n.text(titleKey, language: language)) (\($0))" } ?? L10n.text(titleKey, language: language))
+                .font(.subheadline.weight(.semibold))
         }
     }
 }

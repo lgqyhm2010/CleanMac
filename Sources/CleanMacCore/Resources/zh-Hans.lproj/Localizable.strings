@@ -25,6 +25,10 @@
 "minimumSize" = "最小大小";
 "model" = "模型";
 "defaultModel" = "默认";
+"aiSummary" = "总结";
+"safeToDelete" = "可安全删除";
+"riskyItems" = "有风险";
+"needsUserReview" = "需人工确认";
 "moveToTrash" = "移到废纸篓";
 "moveSelectedItemsToTrash" = "将选中项目移到废纸篓？";
 "moving" = "正在移动";

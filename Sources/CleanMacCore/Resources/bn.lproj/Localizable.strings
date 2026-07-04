@@ -25,6 +25,10 @@
 "minimumSize" = "ন্যূনতম আকার";
 "model" = "মডেল";
 "defaultModel" = "ডিফল্ট";
+"aiSummary" = "সারাংশ";
+"safeToDelete" = "নিরাপদে মুছে ফেলা যায়";
+"riskyItems" = "ঝুঁকিপূর্ণ";
+"needsUserReview" = "আপনার পর্যালোচনা প্রয়োজন";
 "moveToTrash" = "ট্র্যাশে সরান";
 "moveSelectedItemsToTrash" = "নির্বাচিত আইটেমগুলো ট্র্যাশে সরাবেন?";
 "moving" = "সরানো হচ্ছে";

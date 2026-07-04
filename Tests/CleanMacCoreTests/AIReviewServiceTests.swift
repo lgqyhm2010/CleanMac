@@ -33,6 +33,24 @@ final class AIReviewServiceTests: XCTestCase {
         XCTAssertTrue(prompt.contains("JSON"))
     }
 
+    func testPromptPinsTheExactResponseSchema() {
+        // AIReviewOutputParser depends on this schema; the prompt must pin element
+        // shape and forbid markdown fences so parsing succeeds without heuristics.
+        let service = AIReviewService(
+            tool: DetectedAITool(
+                profile: AIToolProfile.knownProfiles.first { $0.id == "claude" }!,
+                executablePath: "/usr/bin/ai"
+            ),
+            runner: RecordingCommandRunner()
+        )
+
+        let prompt = service.makePrompt(candidates: [sampleCandidate()], userQuestion: "safe?")
+
+        XCTAssertTrue(prompt.contains("no markdown fences"), "prompt must forbid code fences")
+        XCTAssertTrue(prompt.contains("\"safe_to_delete\": [{\"path\""), "prompt must pin the element object shape")
+        XCTAssertTrue(prompt.contains("\"needs_user_review\""))
+    }
+
     func testReviewSendsPromptViaStandardInputWhenToolUsesStandardInputDelivery() async throws {
         let runner = RecordingCommandRunner()
         let tool = DetectedAITool(

@@ -52,6 +52,25 @@ final class CleaningStoreAIToolSelectionTests: XCTestCase {
         XCTAssertEqual(second.selectedAIToolID, "claude")
     }
 
+    func testApplyAIReviewOutputParsesStructuredJSON() {
+        let store = makeStore(found: ["codex": "/a/codex"])
+
+        store.applyAIReviewOutput("{\"summary\": \"ok\", \"safe_to_delete\": [{\"path\": \"/tmp/a\", \"reason\": \"cache\"}], \"risky\": [], \"needs_user_review\": []}")
+
+        XCTAssertEqual(store.aiReviewSummary?.summary, "ok")
+        XCTAssertEqual(store.aiReviewSummary?.safeToDelete.map(\.path), ["/tmp/a"])
+        XCTAssertFalse(store.aiOutput.isEmpty, "raw output must stay available for copying/fallback")
+    }
+
+    func testApplyAIReviewOutputFallsBackToRawForProse() {
+        let store = makeStore(found: ["codex": "/a/codex"])
+
+        store.applyAIReviewOutput("no structure here")
+
+        XCTAssertNil(store.aiReviewSummary, "unparseable output must fall back to the raw view")
+        XCTAssertEqual(store.aiOutput, "no structure here")
+    }
+
     func testAskAISetsNoAIToolDetectedErrorWhenNothingIsAvailable() {
         let store = makeStore(found: [:])
         store.candidates = [sampleCandidate()]

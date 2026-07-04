@@ -25,6 +25,10 @@
 "minimumSize" = "Минимальный размер";
 "model" = "Модель";
 "defaultModel" = "По умолчанию";
+"aiSummary" = "Итог";
+"safeToDelete" = "Можно удалить";
+"riskyItems" = "Рискованно";
+"needsUserReview" = "Требует проверки";
 "moveToTrash" = "Переместить в Корзину";
 "moveSelectedItemsToTrash" = "Переместить выбранные элементы в Корзину?";
 "moving" = "Перемещение";

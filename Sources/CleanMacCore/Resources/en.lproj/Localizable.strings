@@ -25,6 +25,10 @@
 "minimumSize" = "Minimum Size";
 "model" = "Model";
 "defaultModel" = "Default";
+"aiSummary" = "Summary";
+"safeToDelete" = "Safe to delete";
+"riskyItems" = "Risky";
+"needsUserReview" = "Needs your review";
 "moveToTrash" = "Move to Trash";
 "moveSelectedItemsToTrash" = "Move selected items to Trash?";
 "moving" = "Moving";

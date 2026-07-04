@@ -25,6 +25,10 @@
 "minimumSize" = "Taille minimale";
 "model" = "Modèle";
 "defaultModel" = "Par défaut";
+"aiSummary" = "Résumé";
+"safeToDelete" = "Suppression sûre";
+"riskyItems" = "Risqué";
+"needsUserReview" = "À vérifier";
 "moveToTrash" = "Déplacer vers la corbeille";
 "moveSelectedItemsToTrash" = "Déplacer les éléments sélectionnés vers la corbeille ?";
 "moving" = "Déplacement";

@@ -59,7 +59,12 @@ public final class AIReviewService {
         return """
         You are helping review macOS disk-cleanup candidates before deletion.
         The user will move selected files to Trash, not permanently delete them.
-        Answer in concise JSON with keys: summary, safe_to_delete, risky, needs_user_review.
+        Respond with JSON only — no markdown fences, no prose outside the JSON.
+        Schema:
+        {"summary": "<one-paragraph overall assessment>",
+         "safe_to_delete": [{"path": "<absolute path>", "reason": "<short reason>"}],
+         "risky": [{"path": "...", "reason": "..."}],
+         "needs_user_review": [{"path": "...", "reason": "..."}]}
         Prefer caution for personal documents, source code, app data, and unknown paths.
 
         User question:
