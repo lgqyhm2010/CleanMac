@@ -29,13 +29,14 @@ public struct AIModelOption: Identifiable, Equatable, Sendable {
 - `modelFlag: String` — `"--model"` for claude, `"-m"` for codex/gemini.
 - `modelOptions: [AIModelOption]` — first entry is always Default (`flagValue: nil`).
 
-Presets:
+Presets (revised 2026-07-04 after verifying official docs — prefer auto-upgrading
+aliases over pinned IDs so lists stay current without app updates):
 
 | Tool | Options (flag value) |
 |---|---|
-| Claude Code | Default / Fable (`fable`) / Opus (`opus`) / Sonnet (`sonnet`) / Haiku (`haiku`) |
-| Codex | Default / `gpt-5.1-codex` / `gpt-5.1-codex-mini` / `gpt-5.1` |
-| Gemini CLI | Default / `gemini-2.5-pro` / `gemini-2.5-flash` |
+| Claude Code | Default / Fable (`fable`) / Opus (`opus`) / Sonnet (`sonnet`) / Haiku (`haiku`) — official aliases, auto-upgrade |
+| Codex | Default / `gpt-5.5` / `gpt-5.4` / `gpt-5.4-mini` — no alias mechanism, pinned IDs (developers.openai.com/codex/models) |
+| Gemini CLI | Default / Pro (`pro`) / Flash (`flash`) — official aliases, auto-upgrade (geminicli.com/docs/cli/model) |
 
 ## Command construction (AIReviewService)
 

@@ -22,12 +22,12 @@ final class CleaningStoreAIToolSelectionTests: XCTestCase {
     func testSelectedModelPersistsPerToolAcrossRelaunch() {
         let first = makeStore(found: ["claude": "/a/claude", "codex": "/a/codex"])
         first.selectModel("opus", for: "claude")
-        first.selectModel("gpt-5.1", for: "codex")
+        first.selectModel("gpt-5.4", for: "codex")
 
         let second = makeStore(found: ["claude": "/a/claude", "codex": "/a/codex"])
 
         XCTAssertEqual(second.selectedModelOption(for: "claude")?.id, "opus")
-        XCTAssertEqual(second.selectedModelOption(for: "codex")?.id, "gpt-5.1")
+        XCTAssertEqual(second.selectedModelOption(for: "codex")?.id, "gpt-5.4")
     }
 
     func testRefreshDetectedAIToolsAutoSelectsTheOnlyDetectedTool() {

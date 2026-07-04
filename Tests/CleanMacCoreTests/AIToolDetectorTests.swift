@@ -51,8 +51,23 @@ final class AIToolDetectorTests: XCTestCase {
     }
 
     func testClaudeModelOptionsUseAliases() {
+        // Official aliases auto-upgrade to the newest generation (code.claude.com/docs/en/model-config).
         let claude = AIToolProfile.knownProfiles.first { $0.id == "claude" }
         XCTAssertEqual(claude?.modelOptions.compactMap(\.flagValue), ["fable", "opus", "sonnet", "haiku"])
+    }
+
+    func testCodexModelOptionsUseCurrentIDs() {
+        // codex has no alias mechanism; IDs verified against developers.openai.com/codex/models
+        // (July 2026: gpt-5.5 default flagship, gpt-5.4 fallback, gpt-5.4-mini light).
+        let codex = AIToolProfile.knownProfiles.first { $0.id == "codex" }
+        XCTAssertEqual(codex?.modelOptions.compactMap(\.flagValue), ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"])
+    }
+
+    func testGeminiModelOptionsUseStableAliases() {
+        // geminicli.com/docs/cli/model: `pro`/`flash` aliases route to the current
+        // generation, unlike pinned `-preview` ids that break when models GA.
+        let gemini = AIToolProfile.knownProfiles.first { $0.id == "gemini" }
+        XCTAssertEqual(gemini?.modelOptions.compactMap(\.flagValue), ["pro", "flash"])
     }
 
     // Exercises the REAL PATHExecutableLocator logic (not a fake) — the load-bearing

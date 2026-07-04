@@ -56,11 +56,14 @@ public struct AIToolProfile: Identifiable, Equatable, Sendable {
             id: "codex", displayName: "Codex", binaryName: "codex",
             arguments: ["exec"], promptDelivery: .standardInput,
             modelFlag: "-m",
+            // codex has no alias mechanism, so these are pinned IDs
+            // (developers.openai.com/codex/models, July 2026) and need refreshing
+            // when OpenAI rotates its lineup.
             modelOptions: [
                 .default,
-                AIModelOption(id: "gpt-5.1-codex", displayName: "gpt-5.1-codex", flagValue: "gpt-5.1-codex"),
-                AIModelOption(id: "gpt-5.1-codex-mini", displayName: "gpt-5.1-codex-mini", flagValue: "gpt-5.1-codex-mini"),
-                AIModelOption(id: "gpt-5.1", displayName: "gpt-5.1", flagValue: "gpt-5.1")
+                AIModelOption(id: "gpt-5.5", displayName: "gpt-5.5", flagValue: "gpt-5.5"),
+                AIModelOption(id: "gpt-5.4", displayName: "gpt-5.4", flagValue: "gpt-5.4"),
+                AIModelOption(id: "gpt-5.4-mini", displayName: "gpt-5.4-mini", flagValue: "gpt-5.4-mini")
             ]
         ),
         AIToolProfile(
@@ -79,10 +82,12 @@ public struct AIToolProfile: Identifiable, Equatable, Sendable {
             id: "gemini", displayName: "Gemini CLI", binaryName: "gemini",
             arguments: ["-p"], promptDelivery: .argument,
             modelFlag: "-m",
+            // `pro`/`flash` are official aliases that route to the current generation
+            // (geminicli.com/docs/cli/model); pinned `-preview` ids break when models GA.
             modelOptions: [
                 .default,
-                AIModelOption(id: "gemini-2.5-pro", displayName: "gemini-2.5-pro", flagValue: "gemini-2.5-pro"),
-                AIModelOption(id: "gemini-2.5-flash", displayName: "gemini-2.5-flash", flagValue: "gemini-2.5-flash")
+                AIModelOption(id: "pro", displayName: "Pro", flagValue: "pro"),
+                AIModelOption(id: "flash", displayName: "Flash", flagValue: "flash")
             ]
         )
     ]
