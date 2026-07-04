@@ -28,13 +28,16 @@ final class CleaningStore: ObservableObject {
     @Published var volumeSnapshot: StorageVolumeSnapshot?
     @Published var detectedAITools: [DetectedAITool] = []
     @Published var selectedAIToolID: String?
+    @Published var selectedModelIDsByTool: [String: String]
 
     private let aiToolDetector: AIToolDetector
     private static let aiToolPreferenceKey = "aiSelectedToolID"
+    private static let aiModelPreferenceKey = "aiModelPreferenceByTool"
 
     init(language: ResolvedLanguage = AppLanguage.system.resolved(), aiToolDetector: AIToolDetector = AIToolDetector()) {
         self.aiToolDetector = aiToolDetector
         aiQuestion = L10n.defaultAIQuestion(language: language)
+        selectedModelIDsByTool = UserDefaults.standard.dictionary(forKey: Self.aiModelPreferenceKey) as? [String: String] ?? [:]
         refreshVolumeSnapshot()
         refreshDetectedAITools()
     }
@@ -63,6 +66,19 @@ final class CleaningStore: ObservableObject {
     func selectAITool(_ id: String) {
         selectedAIToolID = id
         UserDefaults.standard.set(id, forKey: Self.aiToolPreferenceKey)
+    }
+
+    func selectModel(_ modelID: String, for toolID: String) {
+        selectedModelIDsByTool[toolID] = modelID
+        UserDefaults.standard.set(selectedModelIDsByTool, forKey: Self.aiModelPreferenceKey)
+    }
+
+    /// Resolves the persisted choice against the tool's presets; unknown or missing
+    /// ids degrade to the first (Default) option so removed presets never break askAI.
+    func selectedModelOption(for toolID: String) -> AIModelOption? {
+        guard let profile = detectedAITools.first(where: { $0.id == toolID })?.profile else { return nil }
+        let storedID = selectedModelIDsByTool[toolID]
+        return profile.modelOptions.first { $0.id == storedID } ?? profile.modelOptions.first
     }
 
     /// Called when the AI Review screen appears: clears any error bled over from another
@@ -341,11 +357,12 @@ final class CleaningStore: ObservableObject {
         status = .askingAI
 
         let question = aiQuestion
+        let model = selectedModelOption(for: tool.id)
 
         Task {
             do {
                 let review = try await AIReviewService(tool: tool)
-                    .review(candidates: targets, userQuestion: question)
+                    .review(candidates: targets, userQuestion: question, model: model)
                 aiOutput = review.output
                 status = .aiReviewFinished
             } catch {

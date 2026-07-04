@@ -6,7 +6,28 @@ import XCTest
 final class CleaningStoreAIToolSelectionTests: XCTestCase {
     override func tearDown() {
         UserDefaults.standard.removeObject(forKey: "aiSelectedToolID")
+        UserDefaults.standard.removeObject(forKey: "aiModelPreferenceByTool")
         super.tearDown()
+    }
+
+    func testSelectedModelDefaultsToTheFirstOptionAndFallsBackOnUnknownID() {
+        let store = makeStore(found: ["claude": "/a/claude"])
+
+        XCTAssertEqual(store.selectedModelOption(for: "claude"), .default)
+
+        store.selectModel("no-such-model", for: "claude")
+        XCTAssertEqual(store.selectedModelOption(for: "claude"), .default, "unknown ids fall back to Default")
+    }
+
+    func testSelectedModelPersistsPerToolAcrossRelaunch() {
+        let first = makeStore(found: ["claude": "/a/claude", "codex": "/a/codex"])
+        first.selectModel("opus", for: "claude")
+        first.selectModel("gpt-5.1", for: "codex")
+
+        let second = makeStore(found: ["claude": "/a/claude", "codex": "/a/codex"])
+
+        XCTAssertEqual(second.selectedModelOption(for: "claude")?.id, "opus")
+        XCTAssertEqual(second.selectedModelOption(for: "codex")?.id, "gpt-5.1")
     }
 
     func testRefreshDetectedAIToolsAutoSelectsTheOnlyDetectedTool() {
