@@ -1,50 +1,40 @@
 {
   "mode": "goal",
-  "objective": "Optimize CleanMac scrolling performance and remove the main sources of visible jank.",
-  "exit_condition": "The goal is complete when scrolling-related SwiftUI hotspots have been inspected, the highest-impact jank source is fixed without weakening product behavior, focused source/test coverage or existing tests validate the change, the app builds/tests successfully, ./script/build_and_run.sh --verify confirms the app launches, .loopgoal/state.json records the final state, and the intended changes are committed.",
+  "objective": "Repair CleanMac reimagined dashboard PNG assets so the app uses real generated images aligned with docs/design/assets/reimagined-cleanmac-dashboard.png instead of SF Symbol fallbacks.",
+  "exit_condition": "The goal is complete when a branch from the latest origin/main contains regenerated project PNG assets for the mismatched mascot/feature artwork, SwiftUI loads those real bundle PNGs with source guards preventing SF Symbol fallback regressions, a fresh app screenshot has been generated for comparison against docs/design/assets/reimagined-cleanmac-dashboard.png, swift test, git diff --check, and ./script/build_and_run.sh --verify all pass, .loopgoal/state.json records the final state, and the intended changes are committed.",
   "status": "in_progress",
   "iteration": 0,
   "phases": [
-    {"name": "Initialize checkpoint and establish current repo state", "status": "done"},
-    {"name": "Read-only performance investigation", "status": "done"},
-    {"name": "Implement focused scrolling performance fixes", "status": "done"},
-    {"name": "Verify, update checkpoint, and commit", "status": "done"}
+    {"name": "Initialize checkpoint and branch from latest origin/main", "status": "in_progress"},
+    {"name": "Read-only asset and UI investigation", "status": "todo"},
+    {"name": "Write failing source guards for real PNG usage", "status": "todo"},
+    {"name": "Regenerate PNG assets and wire SwiftUI resource loading", "status": "todo"},
+    {"name": "Screenshot comparison and verification", "status": "todo"},
+    {"name": "Finalize checkpoint and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "GOAL complete. Performance fixes landed: CleanMacPage now uses LazyVStack, static CleanMacPulseIcon and CleanMacFeatureImage instances no longer host TimelineView(.animation), CleanMacFeatureImage loads bundle PNGs through a main-actor cache, page background sparkles are static instead of repeatForever, and duplicate hashing after app scans/cleanup runs in a detached helper instead of the main actor. Verification: the new scrolling guard failed before implementation and passed after; the new duplicate-hashing guard failed before implementation and passed after; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 104 XCTest tests and 12 Swift Testing tests; git diff --check passed; ./script/build_and_run.sh --verify exited 0; ps aux showed dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 1170.",
-    "next_action": "Stop scheduling after committing the verified implementation.",
+    "focus": "Fresh branch codex/cleanmac-png-assets-alignment was created from origin/main at 8ecf3834371e298589fc0f4ade6b6dbc86f815c8. Next step is read-only investigation of current PNG assets, design reference, screenshot flow, and SwiftUI image references.",
+    "next_action": "Run read-only investigation, then add failing source guards before production edits.",
     "blockers": ""
   },
   "decisions": [
     {
       "decision": "Treat this as GOAL mode.",
-      "reason": "The user requested a result-driven performance optimization, not a recurring time-based loop."
+      "reason": "The user requested a result-driven repair with explicit verification and commit gates, not a recurring time-based loop."
     },
     {
-      "decision": "Keep the exit condition tied to build/test plus launch verification rather than subjective smoothness alone.",
-      "reason": "The report is broad and local performance instrumentation may be limited, so the checkpoint needs a concrete completion gate while still targeting the visible scrolling jank."
+      "decision": "Start from latest origin/main instead of continuing the previous feature branch history directly.",
+      "reason": "The user explicitly requested using the latest remote main as the branch base; origin/main was fetched and advanced to 8ecf383."
     },
     {
-      "decision": "Prioritize the reusable illustration and page-layout path before deeper data-model refactors.",
-      "reason": "Both independent read-only investigations and main-agent review found CleanMacFeatureImage and CleanMacPulseIcon are used throughout scrolling surfaces while always hosting TimelineView(.animation), and CleanMacFeatureImage reloads bundle PNGs from body-time code."
+      "decision": "Keep subagents read-only for investigation only.",
+      "reason": "The user-provided AGENTS.md instructions forbid subagents from editing files, committing, reverting, installing dependencies, or running destructive commands."
     },
     {
-      "decision": "Keep subagents read-only for this goal.",
-      "reason": "The user-provided AGENTS.md instructions forbid subagents from editing files, so the main agent owns checkpoint writes, implementation, validation, and commits."
-    },
-    {
-      "decision": "Make inactive illustrations static rather than removing the active animation behavior entirely.",
-      "reason": "The jank source was always-on timeline work while scrolling; keeping TimelineView only for active scanning/review states preserves the design language with a much smaller redraw footprint."
-    },
-    {
-      "decision": "Make background sparkles static.",
-      "reason": "They are decorative and always present behind scroll views, so removing their repeatForever animation reduces continuous work without changing app behavior."
-    },
-    {
-      "decision": "Move duplicate hashing into a nonisolated detached helper instead of a broader store refactor.",
-      "reason": "This removes known main-actor file hashing after app scans and cleanup while keeping the existing ObservableObject surface stable."
+      "decision": "Use source guards for bundle PNG usage rather than relying only on screenshots.",
+      "reason": "The regression risk is SwiftUI silently falling back to SF Symbols or missing generated PNGs; tests should catch that at source/resource level."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
-  "updated_at": "2026-07-05T11:52:05Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && git diff --check && ./script/build_and_run.sh --verify",
+  "updated_at": "2026-07-05T12:54:55Z"
 }
