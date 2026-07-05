@@ -5,14 +5,14 @@
   "status": "in_progress",
   "iteration": 0,
   "phases": [
-    {"name": "Initialize checkpoint and establish current repo state", "status": "in_progress"},
-    {"name": "Read-only performance investigation", "status": "todo"},
-    {"name": "Implement focused scrolling performance fixes", "status": "todo"},
+    {"name": "Initialize checkpoint and establish current repo state", "status": "done"},
+    {"name": "Read-only performance investigation", "status": "done"},
+    {"name": "Implement focused scrolling performance fixes", "status": "in_progress"},
     {"name": "Verify, update checkpoint, and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "Initialized a new GOAL checkpoint for the user's scrolling jank report.",
-    "next_action": "Run verify_cmd baseline and dispatch read-only investigation subagents.",
+    "focus": "Baseline verify_cmd passed after sandbox escalation. Read-only investigation identified reusable illustration timelines, repeated bundle image loading, eager scroll-page layout, animated page background, and repeated candidate aggregation as the main scrolling jank risks.",
+    "next_action": "Add focused source guards, then optimize static illustration rendering and scroll-page layout.",
     "blockers": ""
   },
   "decisions": [
@@ -23,8 +23,16 @@
     {
       "decision": "Keep the exit condition tied to build/test plus launch verification rather than subjective smoothness alone.",
       "reason": "The report is broad and local performance instrumentation may be limited, so the checkpoint needs a concrete completion gate while still targeting the visible scrolling jank."
+    },
+    {
+      "decision": "Prioritize the reusable illustration and page-layout path before deeper data-model refactors.",
+      "reason": "Both independent read-only investigations and main-agent review found CleanMacFeatureImage and CleanMacPulseIcon are used throughout scrolling surfaces while always hosting TimelineView(.animation), and CleanMacFeatureImage reloads bundle PNGs from body-time code."
+    },
+    {
+      "decision": "Keep subagents read-only for this goal.",
+      "reason": "The user-provided AGENTS.md instructions forbid subagents from editing files, so the main agent owns checkpoint writes, implementation, validation, and commits."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
-  "updated_at": "2026-07-05T11:39:15Z"
+  "updated_at": "2026-07-05T11:45:23Z"
 }
