@@ -49,9 +49,12 @@ else
   echo "warning: app icon source not found at $APP_ICON_SOURCE" >&2
 fi
 
+# Place SwiftPM resource bundles under Contents/Resources so the app bundle is
+# well-formed and code-signable. Bundle.module still resolves them there
+# (Contents/Resources is Bundle.main.resourceURL).
 for RESOURCE_BUNDLE in "$BUILD_DIR"/CleanMac_*.bundle; do
   [ -d "$RESOURCE_BUNDLE" ] || continue
-  cp -R "$RESOURCE_BUNDLE" "$APP_BUNDLE/"
+  cp -R "$RESOURCE_BUNDLE" "$APP_RESOURCES/"
 done
 
 cat >"$INFO_PLIST" <<PLIST
@@ -114,8 +117,12 @@ case "$MODE" in
     sleep 1
     pgrep -x "$APP_NAME" >/dev/null
     ;;
+  --bundle|bundle)
+    # Build the .app bundle only; do not launch it. Used by build_dmg.sh.
+    echo "$APP_BUNDLE"
+    ;;
   *)
-    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify]" >&2
+    echo "usage: $0 [run|bundle|--debug|--logs|--telemetry|--verify]" >&2
     exit 2
     ;;
 esac
