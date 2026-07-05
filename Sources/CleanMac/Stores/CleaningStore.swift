@@ -239,9 +239,10 @@ final class CleaningStore: ObservableObject {
                     try AppUninstaller().scan(appRoots: appRoots, userLibrary: userLibrary)
                 }
                 .value
+                let candidates = plans.flatMap(\.allCandidates)
+                let duplicateGroups = await Self.duplicateGroupsOffMainActor(for: candidates)
                 uninstallPlans = plans
-                candidates = plans.flatMap(\.allCandidates)
-                let duplicateGroups = (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []
+                self.candidates = candidates
                 lastReport = ScanReport(
                     candidates: candidates,
                     duplicateGroups: duplicateGroups,
@@ -329,7 +330,7 @@ final class CleaningStore: ObservableObject {
                     )
                 }
                 .filter { !cleanedIDs.contains($0.appCandidate.id) }
-                refreshReportAfterCandidateChanges()
+                await refreshReportAfterCandidateChanges()
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
                 status = .movedToTrash(result.cleanedCount)
@@ -382,9 +383,10 @@ final class CleaningStore: ObservableObject {
         }
     }
 
-    private func refreshReportAfterCandidateChanges() {
+    private func refreshReportAfterCandidateChanges() async {
         guard let lastReport else { return }
-        let duplicateGroups = (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []
+        let candidates = candidates
+        let duplicateGroups = await Self.duplicateGroupsOffMainActor(for: candidates)
         self.lastReport = ScanReport(
             candidates: candidates,
             duplicateGroups: duplicateGroups,
@@ -399,6 +401,12 @@ final class CleaningStore: ObservableObject {
             for: roots,
             fallback: FileManager.default.homeDirectoryForCurrentUser
         )
+    }
+
+    nonisolated private static func duplicateGroupsOffMainActor(for candidates: [CleaningCandidate]) async -> [DuplicateFileGroup] {
+        await Task.detached(priority: .userInitiated) {
+            (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []
+        }.value
     }
 }
 

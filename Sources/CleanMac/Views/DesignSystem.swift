@@ -190,7 +190,7 @@ struct CleanMacPage<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: CleanMacTheme.sectionSpacing) {
+            LazyVStack(alignment: .leading, spacing: CleanMacTheme.sectionSpacing) {
                 content
             }
             .padding(20)
@@ -212,9 +212,9 @@ struct CleanMacPageBackground: View {
                 CleanMacTheme.warmPane
                 CleanMacPaperTexture(accent: accent)
 
-                CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.86, y: proxy.size.height * 0.18), delay: 0.1)
-                CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.68, y: proxy.size.height * 0.72), delay: 0.8)
-                CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.16, y: proxy.size.height * 0.30), delay: 1.3)
+                CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.86, y: proxy.size.height * 0.18))
+                CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.68, y: proxy.size.height * 0.72))
+                CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.16, y: proxy.size.height * 0.30))
             }
             .ignoresSafeArea()
         }
@@ -328,25 +328,13 @@ private struct TrafficLightDot: View {
 
 private struct CleanMacSparkle: View {
     var position: CGPoint
-    var delay: Double
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var visible = false
 
     var body: some View {
         Image(systemName: "sparkle")
             .font(.system(size: 14, weight: .bold))
             .foregroundStyle(CleanMacTheme.ink.opacity(0.18))
-            .scaleEffect(visible ? 1.18 : 0.82)
-            .opacity(visible ? 0.30 : 0.12)
+            .opacity(0.22)
             .position(position)
-            .animation(CleanMacMotion.allowed(reduceMotion, .easeInOut(duration: 1.8).delay(delay).repeatForever(autoreverses: true)), value: visible)
-            .onAppear {
-                visible = !reduceMotion
-            }
-            .onChange(of: reduceMotion) { _, newValue in
-                visible = !newValue
-            }
     }
 }
 
@@ -728,23 +716,36 @@ struct CleanMacPulseIcon: View {
     @State private var activationDate: Date?
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let progress = animationProgress(at: timeline.date)
-
-            Image(systemName: symbolName)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(tint)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(tint.opacity(isActive ? 0.24 : 0.16), in: CleanMacTheme.panelShape)
-                .overlay {
-                    CleanMacTheme.panelShape
-                        .strokeBorder(CleanMacTheme.ink, lineWidth: 2)
+        Group {
+            if isAnimating {
+                TimelineView(.animation) { timeline in
+                    let progress = animationProgress(at: timeline.date)
+                    iconContent(progress: progress)
                 }
-                .scaleEffect(1.0 + (progress * 0.06))
+            } else {
+                iconContent(progress: 0)
+            }
         }
         .onAppear(perform: updateActivationDate)
         .onChange(of: isActive) { _, _ in updateActivationDate() }
         .onChange(of: reduceMotion) { _, _ in updateActivationDate() }
+    }
+
+    private var isAnimating: Bool {
+        isActive && !reduceMotion
+    }
+
+    private func iconContent(progress: CGFloat) -> some View {
+        Image(systemName: symbolName)
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(tint)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(tint.opacity(isActive ? 0.24 : 0.16), in: CleanMacTheme.panelShape)
+            .overlay {
+                CleanMacTheme.panelShape
+                    .strokeBorder(CleanMacTheme.ink, lineWidth: 2)
+            }
+            .scaleEffect(1.0 + (progress * 0.06))
     }
 
     private func updateActivationDate() {
@@ -770,31 +771,38 @@ struct CleanMacFeatureImage: View {
     @State private var activationDate: Date?
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let progress = animationProgress(at: timeline.date)
-
-            Group {
-                if let image = image {
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFit()
-                } else {
-                    CleanMacPulseIcon(symbolName: asset.fallbackSymbolName, tint: tint, isActive: isActive)
+        Group {
+            if isAnimating {
+                TimelineView(.animation) { timeline in
+                    let progress = animationProgress(at: timeline.date)
+                    featureContent(progress: progress)
                 }
+            } else {
+                featureContent(progress: 0)
             }
-            .offset(y: -5 * progress)
-            .scaleEffect(1.0 + (0.04 * progress))
         }
         .onAppear(perform: updateActivationDate)
         .onChange(of: isActive) { _, _ in updateActivationDate() }
         .onChange(of: reduceMotion) { _, _ in updateActivationDate() }
     }
 
-    private var image: NSImage? {
-        guard let url = Bundle.module.url(forResource: asset.rawValue, withExtension: "png") else {
-            return nil
+    private var isAnimating: Bool {
+        isActive && !reduceMotion
+    }
+
+    @ViewBuilder
+    private func featureContent(progress: CGFloat) -> some View {
+        Group {
+            if let image = CleanMacIllustrationImageCache.shared.image(for: asset) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                CleanMacPulseIcon(symbolName: asset.fallbackSymbolName, tint: tint, isActive: isActive)
+            }
         }
-        return NSImage(contentsOf: url)
+        .offset(y: -5 * progress)
+        .scaleEffect(1.0 + (0.04 * progress))
     }
 
     private func updateActivationDate() {
@@ -808,6 +816,31 @@ struct CleanMacFeatureImage: View {
 
         let elapsed = date.timeIntervalSince(activationDate)
         return oscillatingProgress(elapsed: elapsed, period: 3.0)
+    }
+}
+
+@MainActor
+private final class CleanMacIllustrationImageCache {
+    static let shared = CleanMacIllustrationImageCache()
+
+    private var images: [CleanMacIllustrationAsset: NSImage] = [:]
+    private var missingAssets: Set<CleanMacIllustrationAsset> = []
+
+    func image(for asset: CleanMacIllustrationAsset) -> NSImage? {
+        if let image = images[asset] {
+            return image
+        }
+
+        guard !missingAssets.contains(asset),
+              let url = Bundle.module.url(forResource: asset.rawValue, withExtension: "png"),
+              let image = NSImage(contentsOf: url)
+        else {
+            missingAssets.insert(asset)
+            return nil
+        }
+
+        images[asset] = image
+        return image
     }
 }
 

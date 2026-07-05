@@ -7,12 +7,12 @@
   "phases": [
     {"name": "Initialize checkpoint and establish current repo state", "status": "done"},
     {"name": "Read-only performance investigation", "status": "done"},
-    {"name": "Implement focused scrolling performance fixes", "status": "in_progress"},
-    {"name": "Verify, update checkpoint, and commit", "status": "todo"}
+    {"name": "Implement focused scrolling performance fixes", "status": "done"},
+    {"name": "Verify, update checkpoint, and commit", "status": "done"}
   ],
   "current": {
-    "focus": "Baseline verify_cmd passed after sandbox escalation. Read-only investigation identified reusable illustration timelines, repeated bundle image loading, eager scroll-page layout, animated page background, and repeated candidate aggregation as the main scrolling jank risks.",
-    "next_action": "Add focused source guards, then optimize static illustration rendering and scroll-page layout.",
+    "focus": "GOAL complete. Performance fixes landed: CleanMacPage now uses LazyVStack, static CleanMacPulseIcon and CleanMacFeatureImage instances no longer host TimelineView(.animation), CleanMacFeatureImage loads bundle PNGs through a main-actor cache, page background sparkles are static instead of repeatForever, and duplicate hashing after app scans/cleanup runs in a detached helper instead of the main actor. Verification: the new scrolling guard failed before implementation and passed after; the new duplicate-hashing guard failed before implementation and passed after; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 104 XCTest tests and 12 Swift Testing tests; git diff --check passed; ./script/build_and_run.sh --verify exited 0; ps aux showed dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 1170.",
+    "next_action": "Stop scheduling after committing the verified implementation.",
     "blockers": ""
   },
   "decisions": [
@@ -31,8 +31,20 @@
     {
       "decision": "Keep subagents read-only for this goal.",
       "reason": "The user-provided AGENTS.md instructions forbid subagents from editing files, so the main agent owns checkpoint writes, implementation, validation, and commits."
+    },
+    {
+      "decision": "Make inactive illustrations static rather than removing the active animation behavior entirely.",
+      "reason": "The jank source was always-on timeline work while scrolling; keeping TimelineView only for active scanning/review states preserves the design language with a much smaller redraw footprint."
+    },
+    {
+      "decision": "Make background sparkles static.",
+      "reason": "They are decorative and always present behind scroll views, so removing their repeatForever animation reduces continuous work without changing app behavior."
+    },
+    {
+      "decision": "Move duplicate hashing into a nonisolated detached helper instead of a broader store refactor.",
+      "reason": "This removes known main-actor file hashing after app scans and cleanup while keeping the existing ObservableObject surface stable."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
-  "updated_at": "2026-07-05T11:45:23Z"
+  "updated_at": "2026-07-05T11:52:05Z"
 }

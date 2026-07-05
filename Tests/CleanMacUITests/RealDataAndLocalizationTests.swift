@@ -88,6 +88,26 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertFalse(source.contains(".animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.float), value: floating)"))
     }
 
+    func testScrollingSurfacesAvoidAlwaysOnIllustrationWork() throws {
+        let source = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
+
+        XCTAssertTrue(source.contains("LazyVStack(alignment: .leading, spacing: CleanMacTheme.sectionSpacing)"))
+        XCTAssertTrue(source.contains("private final class CleanMacIllustrationImageCache"))
+        XCTAssertTrue(source.contains("CleanMacIllustrationImageCache.shared.image(for: asset)"))
+        XCTAssertTrue(source.contains("private var isAnimating: Bool"))
+        XCTAssertTrue(source.contains("featureContent(progress: 0)"))
+        XCTAssertTrue(source.contains("iconContent(progress: 0)"))
+        XCTAssertFalse(source.contains(".easeInOut(duration: 1.8).delay(delay).repeatForever"))
+    }
+
+    func testDuplicateHashingStaysOffTheMainActorAfterStoreMutations() throws {
+        let source = try sourceFile("Sources/CleanMac/Stores/CleaningStore.swift")
+
+        XCTAssertTrue(source.contains("nonisolated private static func duplicateGroupsOffMainActor"))
+        XCTAssertTrue(source.contains("await Self.duplicateGroupsOffMainActor(for: candidates)"))
+        XCTAssertFalse(source.contains("let duplicateGroups = (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []"))
+    }
+
     func testReimaginedDashboardUsesPaperChromeAndTrustStrip() throws {
         let contentSource = try sourceFile("Sources/CleanMac/Views/ContentView.swift")
         let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
