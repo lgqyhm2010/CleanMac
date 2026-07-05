@@ -24,6 +24,8 @@ public enum L10n {
         case followSystem
         case french
         case hiddenFiles
+        case healthy
+        case help
         case hindi
         case include
         case japanese
@@ -32,6 +34,8 @@ public enum L10n {
         case minimumSize
         case model
         case defaultModel
+        case dashboardQuickSafePrivate
+        case dashboardReadyToScan
         case aiSummary
         case safeToDelete
         case riskyItems
@@ -46,6 +50,7 @@ public enum L10n {
         case noReview
         case potential
         case permissions
+        case privateByDesign
         case protection
         case question
         case quitCleanMac
@@ -67,6 +72,10 @@ public enum L10n {
         case size
         case spanish
         case status
+        case trustLocalAI
+        case trustMoveToTrash
+        case trustNoCloudUpload
+        case trustNoTelemetry
         case openSettings
         case free
         case used

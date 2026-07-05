@@ -18,6 +18,8 @@
 "followSystem" = "Как в системе";
 "french" = "Французский";
 "hiddenFiles" = "Скрытые файлы";
+"healthy" = "Исправен";
+"help" = "Справка";
 "hindi" = "Хинди";
 "include" = "Включить";
 "japanese" = "Японский";
@@ -25,6 +27,8 @@
 "minimumSize" = "Минимальный размер";
 "model" = "Модель";
 "defaultModel" = "По умолчанию";
+"dashboardReadyToScan" = "Готово к сканированию Mac";
+"dashboardQuickSafePrivate" = "Быстро · Безопасно · Приватно";
 "aiSummary" = "Итог";
 "safeToDelete" = "Можно удалить";
 "riskyItems" = "Рискованно";
@@ -39,6 +43,7 @@
 "noReview" = "Нет проверки";
 "potential" = "Потенциал";
 "permissions" = "Разрешения";
+"privateByDesign" = "Приватность по умолчанию";
 "protection" = "Защита";
 "question" = "Вопрос";
 "quitCleanMac" = "Выйти из CleanMac";
@@ -60,6 +65,10 @@
 "size" = "Размер";
 "spanish" = "Испанский";
 "status" = "Статус";
+"trustLocalAI" = "Локальный ИИ";
+"trustMoveToTrash" = "Переместить в Корзину";
+"trustNoCloudUpload" = "Без облачной загрузки";
+"trustNoTelemetry" = "Без телеметрии";
 "openSettings" = "Открыть настройки";
 "arabic" = "Арабский";
 "bengali" = "Бенгальский";

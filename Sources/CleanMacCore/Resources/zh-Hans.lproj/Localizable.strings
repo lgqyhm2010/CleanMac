@@ -18,6 +18,8 @@
 "followSystem" = "跟随系统";
 "french" = "法语";
 "hiddenFiles" = "隐藏文件";
+"healthy" = "健康";
+"help" = "帮助";
 "hindi" = "印地语";
 "include" = "包含";
 "japanese" = "日语";
@@ -25,6 +27,8 @@
 "minimumSize" = "最小大小";
 "model" = "模型";
 "defaultModel" = "默认";
+"dashboardReadyToScan" = "准备扫描你的 Mac";
+"dashboardQuickSafePrivate" = "快速 · 安全 · 私密";
 "aiSummary" = "总结";
 "safeToDelete" = "可安全删除";
 "riskyItems" = "有风险";
@@ -39,6 +43,7 @@
 "noReview" = "没有审查结果";
 "potential" = "可清理";
 "permissions" = "权限";
+"privateByDesign" = "隐私优先设计";
 "protection" = "保护";
 "question" = "问题";
 "quitCleanMac" = "退出 CleanMac";
@@ -60,6 +65,10 @@
 "size" = "大小";
 "spanish" = "西班牙语";
 "status" = "状态";
+"trustLocalAI" = "本地 AI";
+"trustMoveToTrash" = "移到废纸篓";
+"trustNoCloudUpload" = "无云端上传";
+"trustNoTelemetry" = "无遥测";
 "openSettings" = "打开设置";
 "arabic" = "阿拉伯语";
 "bengali" = "孟加拉语";

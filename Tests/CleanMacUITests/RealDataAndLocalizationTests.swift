@@ -88,6 +88,67 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertFalse(source.contains(".animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.float), value: floating)"))
     }
 
+    func testScrollingSurfacesAvoidAlwaysOnIllustrationWork() throws {
+        let source = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
+
+        XCTAssertTrue(source.contains("LazyVStack(alignment: .leading, spacing: CleanMacTheme.sectionSpacing)"))
+        XCTAssertTrue(source.contains("private final class CleanMacIllustrationImageCache"))
+        XCTAssertTrue(source.contains("CleanMacIllustrationImageCache.shared.image(for: asset)"))
+        XCTAssertTrue(source.contains("private var isAnimating: Bool"))
+        XCTAssertTrue(source.contains("featureContent(progress: 0)"))
+        XCTAssertTrue(source.contains("iconContent(progress: 0)"))
+        XCTAssertFalse(source.contains(".easeInOut(duration: 1.8).delay(delay).repeatForever"))
+    }
+
+    func testDuplicateHashingStaysOffTheMainActorAfterStoreMutations() throws {
+        let source = try sourceFile("Sources/CleanMac/Stores/CleaningStore.swift")
+
+        XCTAssertTrue(source.contains("nonisolated private static func duplicateGroupsOffMainActor"))
+        XCTAssertTrue(source.contains("await Self.duplicateGroupsOffMainActor(for: candidates)"))
+        XCTAssertFalse(source.contains("let duplicateGroups = (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []"))
+    }
+
+    func testReimaginedDashboardUsesPaperChromeAndTrustStrip() throws {
+        let contentSource = try sourceFile("Sources/CleanMac/Views/ContentView.swift")
+        let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
+        let sidebarSource = try sourceFile("Sources/CleanMac/Views/SidebarView.swift")
+        let scanSource = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
+
+        XCTAssertTrue(contentSource.contains("private let languageOverride: ResolvedLanguage?"))
+        XCTAssertTrue(contentSource.contains("languageOverride ?? AppLanguage(storedRawValue: appLanguageRaw).resolved()"))
+        XCTAssertTrue(contentSource.contains("CleanMacAppTitleBar("))
+        XCTAssertTrue(contentSource.contains("openSettings: { selection = .settings }"))
+
+        XCTAssertTrue(designSystemSource.contains("static let sidebar = paper"))
+        XCTAssertTrue(designSystemSource.contains("static let sidebarText = secondaryText"))
+        XCTAssertTrue(designSystemSource.contains("Bundle.module.url(forResource: asset.rawValue, withExtension: \"png\")"))
+        XCTAssertTrue(designSystemSource.contains("private struct TrafficLightDot"))
+        XCTAssertTrue(designSystemSource.contains("CleanMacFeatureImage(asset: .mascot"))
+        XCTAssertTrue(designSystemSource.contains("Button(action: openSettings)"))
+        XCTAssertTrue(designSystemSource.contains("L10n.text(.help"))
+        XCTAssertFalse(designSystemSource.contains("subdirectory: \"Images\""))
+        XCTAssertFalse(designSystemSource.contains(".blur(radius: 70)"))
+        XCTAssertFalse(designSystemSource.contains(".blur(radius: 80)"))
+
+        XCTAssertTrue(sidebarSource.contains("CleanMacTheme.sidebarSelectedFill"))
+        XCTAssertTrue(sidebarSource.contains("CleanMacTheme.sidebarDivider"))
+        XCTAssertFalse(sidebarSource.contains("Color.white.opacity(0.12)"))
+        XCTAssertFalse(sidebarSource.contains("foregroundStyle(isSelected ? Color.white"))
+
+        XCTAssertTrue(scanSource.contains("private struct TrustBadgeStrip"))
+        XCTAssertTrue(scanSource.contains("private struct DashboardHeaderRow"))
+        XCTAssertTrue(scanSource.contains("DashboardHeaderRow(language: language)"))
+        XCTAssertTrue(scanSource.contains("private struct DiskOverviewDashboardCard"))
+        XCTAssertTrue(scanSource.contains("DashboardScanCTA("))
+        XCTAssertTrue(scanSource.contains("OverviewFeatureGrid("))
+        XCTAssertTrue(scanSource.contains("LazyVGrid(columns: Self.columns"))
+        XCTAssertFalse(scanSource.contains("DiskOverviewHeader(store: store"))
+        XCTAssertTrue(scanSource.contains("TrustBadgeStrip(language: language)"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustLocalAI"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustNoTelemetry"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustNoCloudUpload"))
+    }
+
     func testAppKitMenusUseLocalizedResources() throws {
         let source = try sourceFile("Sources/CleanMac/App/CleanMacApp.swift")
         let rawMenuLiterals = [

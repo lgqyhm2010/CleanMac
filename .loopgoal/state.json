@@ -1,56 +1,50 @@
 {
   "mode": "goal",
-  "objective": "Complete CleanMac real local functionality and localization coverage on a new branch.",
-  "exit_condition": "The goal is complete when current CleanMac features use real local data instead of fake, demo, placeholder, or hardcoded sample data; incomplete localization has been replaced with resource-backed strings across supported locales with placeholder parity; relevant tests prove the behavior; swift test passes; and checkpoint plus implementation changes are committed.",
-  "status": "done",
-  "iteration": 1,
+  "objective": "Optimize CleanMac scrolling performance and remove the main sources of visible jank.",
+  "exit_condition": "The goal is complete when scrolling-related SwiftUI hotspots have been inspected, the highest-impact jank source is fixed without weakening product behavior, focused source/test coverage or existing tests validate the change, the app builds/tests successfully, ./script/build_and_run.sh --verify confirms the app launches, .loopgoal/state.json records the final state, and the intended changes are committed.",
+  "status": "in_progress",
+  "iteration": 0,
   "phases": [
-    {"name": "Create feature branch and checkpoint", "status": "done"},
-    {"name": "Audit fake data and incomplete localization gaps", "status": "done"},
-    {"name": "Add failing tests for real-data and localization gaps", "status": "done"},
-    {"name": "Implement real-data behavior and localization fixes", "status": "done"},
-    {"name": "Verify with SwiftPM tests and build", "status": "done"},
-    {"name": "Commit verified checkpoint and implementation", "status": "done"}
+    {"name": "Initialize checkpoint and establish current repo state", "status": "done"},
+    {"name": "Read-only performance investigation", "status": "done"},
+    {"name": "Implement focused scrolling performance fixes", "status": "done"},
+    {"name": "Verify, update checkpoint, and commit", "status": "done"}
   ],
   "current": {
-    "focus": "Goal complete: fake overview/sidebar capacity literals were replaced with real volume or scan data; sidebar, overview, app menu, and menu bar strings use resource-backed localization across all supported locales; full SwiftPM tests pass.",
-    "next_action": "Stop scheduling; implementation and checkpoint are ready for commit.",
+    "focus": "GOAL complete. Performance fixes landed: CleanMacPage now uses LazyVStack, static CleanMacPulseIcon and CleanMacFeatureImage instances no longer host TimelineView(.animation), CleanMacFeatureImage loads bundle PNGs through a main-actor cache, page background sparkles are static instead of repeatForever, and duplicate hashing after app scans/cleanup runs in a detached helper instead of the main actor. Verification: the new scrolling guard failed before implementation and passed after; the new duplicate-hashing guard failed before implementation and passed after; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 104 XCTest tests and 12 Swift Testing tests; git diff --check passed; ./script/build_and_run.sh --verify exited 0; ps aux showed dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 1170.",
+    "next_action": "Stop scheduling after committing the verified implementation.",
     "blockers": ""
   },
   "decisions": [
     {
       "decision": "Treat this as GOAL mode.",
-      "reason": "The objective is result-driven: real features and complete localization are the explicit end state."
+      "reason": "The user requested a result-driven performance optimization, not a recurring time-based loop."
     },
     {
-      "decision": "Use a normal feature branch in the current checkout instead of creating an extra worktree.",
-      "reason": "The user explicitly asked to checkout a new branch, and the working tree was clean on main before branching."
+      "decision": "Keep the exit condition tied to build/test plus launch verification rather than subjective smoothness alone.",
+      "reason": "The report is broad and local performance instrumentation may be limited, so the checkpoint needs a concrete completion gate while still targeting the visible scrolling jank."
     },
     {
-      "decision": "Use SwiftPM for verification.",
-      "reason": "CleanMac is package-first, and prior verified workflows use SwiftPM tests and builds."
+      "decision": "Prioritize the reusable illustration and page-layout path before deeper data-model refactors.",
+      "reason": "Both independent read-only investigations and main-agent review found CleanMacFeatureImage and CleanMacPulseIcon are used throughout scrolling surfaces while always hosting TimelineView(.animation), and CleanMacFeatureImage reloads bundle PNGs from body-time code."
     },
     {
-      "decision": "Use tests-first for behavior changes.",
-      "reason": "Real-data behavior and localization fixes should be proven by failing tests before production changes."
+      "decision": "Keep subagents read-only for this goal.",
+      "reason": "The user-provided AGENTS.md instructions forbid subagents from editing files, so the main agent owns checkpoint writes, implementation, validation, and commits."
     },
     {
-      "decision": "Replace static overview and sidebar capacity numbers with StorageVolumeReporter and scan-derived totals.",
-      "reason": "The previous UI showed fixed GB values before a scan, which looked like real functionality but was not sourced from the local machine."
+      "decision": "Make inactive illustrations static rather than removing the active animation behavior entirely.",
+      "reason": "The jank source was always-on timeline work while scrolling; keeping TimelineView only for active scanning/review states preserves the design language with a much smaller redraw footprint."
     },
     {
-      "decision": "Move sidebar, overview, edit menu, and menu bar status copy into Localizable.strings.",
-      "reason": "Swift-side language branches only covered part of Chinese and left other supported languages falling back to English."
+      "decision": "Make background sparkles static.",
+      "reason": "They are decorative and always present behind scroll views, so removing their repeatForever animation reduces continuous work without changing app behavior."
     },
     {
-      "decision": "Use source-level regression tests for fake literals and menu hardcoding in addition to behavior tests.",
-      "reason": "The fake-data problem was visible in SwiftUI constants, so source guards make regressions cheap to catch."
-    },
-    {
-      "decision": "Treat SystemPermissionGuide default English text as model fallback rather than displayed localization.",
-      "reason": "PermissionGuideView already renders title, explanation, and instructions through L10n, while tests still validate the raw guide contents for the core model."
+      "decision": "Move duplicate hashing into a nonisolated detached helper instead of a broader store refactor.",
+      "reason": "This removes known main-actor file hashing after app scans and cleanup while keeping the existing ObservableObject surface stable."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift test",
-  "updated_at": "2026-06-30T01:32:48Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
+  "updated_at": "2026-07-05T11:52:05Z"
 }

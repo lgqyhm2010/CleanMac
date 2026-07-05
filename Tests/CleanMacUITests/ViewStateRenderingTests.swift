@@ -14,25 +14,25 @@ final class ViewStateRenderingTests: XCTestCase {
 
     func testCleanUpPageRendersPopulatedResults() throws {
         let store = makeStoreWithCandidates(language: .english)
-        let image = render(ContentView(store: store, initialSelection: .cleanUp))
+        let image = render(ContentView(store: store, initialSelection: .cleanUp, languageOverride: .english))
         try assertContentIsVisible(image, "Clean up page rendered blank with candidates present")
     }
 
     func testCleanUpPageRendersInChinese() throws {
         let store = makeStoreWithCandidates(language: .chinese)
-        let image = render(ContentView(store: store, initialSelection: .cleanUp))
+        let image = render(ContentView(store: store, initialSelection: .cleanUp, languageOverride: .chinese))
         try assertContentIsVisible(image, "Clean up page rendered blank in Chinese")
     }
 
     func testDuplicatesPageRendersDuplicateGroups() throws {
         let store = makeStoreWithDuplicates(language: .english)
-        let image = render(ContentView(store: store, initialSelection: .duplicates))
+        let image = render(ContentView(store: store, initialSelection: .duplicates, languageOverride: .english))
         try assertContentIsVisible(image, "Duplicates page rendered blank with duplicate groups present")
     }
 
     func testUninstallerPageRendersPlans() throws {
         let store = makeStoreWithUninstallPlans(language: .english)
-        let image = render(ContentView(store: store, initialSelection: .uninstaller))
+        let image = render(ContentView(store: store, initialSelection: .uninstaller, languageOverride: .english))
         try assertContentIsVisible(image, "Uninstaller page rendered blank with plans present")
     }
 
@@ -46,7 +46,7 @@ final class ViewStateRenderingTests: XCTestCase {
         }
         """
         store.status = .aiReviewFinished
-        let image = render(ContentView(store: store, initialSelection: .aiReview))
+        let image = render(ContentView(store: store, initialSelection: .aiReview, languageOverride: .english))
         try assertContentIsVisible(image, "AI review page rendered blank with output present")
     }
 
@@ -54,13 +54,13 @@ final class ViewStateRenderingTests: XCTestCase {
         let store = makeStoreWithCandidates(language: .english)
         store.errorMessage = .system("AI command exited with code 1: something went wrong")
         store.status = .aiReviewFailed
-        let image = render(ContentView(store: store, initialSelection: .aiReview))
+        let image = render(ContentView(store: store, initialSelection: .aiReview, languageOverride: .english))
         try assertContentIsVisible(image, "AI review page rendered blank with a failure error message present")
     }
 
     func testDiskOverviewRendersAfterScanReport() throws {
         let store = makeStoreWithCandidates(language: .english)
-        let image = render(ContentView(store: store, initialSelection: .diskOverview))
+        let image = render(ContentView(store: store, initialSelection: .diskOverview, languageOverride: .english))
         try assertContentIsVisible(image, "Disk overview rendered blank after a scan report")
     }
 
@@ -82,7 +82,7 @@ final class ViewStateRenderingTests: XCTestCase {
         store.selectedCandidateID = candidates.first?.id
         store.status = .candidatesFound(candidates.count)
 
-        let image = render(ContentView(store: store, initialSelection: .aiReview))
+        let image = render(ContentView(store: store, initialSelection: .aiReview, languageOverride: .english))
         try assertContentIsVisible(image, "AI review page rendered blank with a detected tool present")
     }
 

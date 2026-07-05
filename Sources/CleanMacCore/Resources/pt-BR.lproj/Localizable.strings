@@ -18,6 +18,8 @@
 "followSystem" = "Seguir o sistema";
 "french" = "Francês";
 "hiddenFiles" = "Arquivos ocultos";
+"healthy" = "Saudável";
+"help" = "Ajuda";
 "hindi" = "Hindi";
 "include" = "Incluir";
 "japanese" = "Japonês";
@@ -25,6 +27,8 @@
 "minimumSize" = "Tamanho mínimo";
 "model" = "Modelo";
 "defaultModel" = "Padrão";
+"dashboardReadyToScan" = "Pronto para escanear seu Mac";
+"dashboardQuickSafePrivate" = "Rápido · Seguro · Privado";
 "aiSummary" = "Resumo";
 "safeToDelete" = "Seguro para excluir";
 "riskyItems" = "Arriscado";
@@ -39,6 +43,7 @@
 "noReview" = "Sem revisão";
 "potential" = "Potencial";
 "permissions" = "Permissões";
+"privateByDesign" = "Privado por design";
 "protection" = "Proteção";
 "question" = "Pergunta";
 "quitCleanMac" = "Encerrar CleanMac";
@@ -60,6 +65,10 @@
 "size" = "Tamanho";
 "spanish" = "Espanhol";
 "status" = "Status";
+"trustLocalAI" = "IA local";
+"trustMoveToTrash" = "Mover para o Lixo";
+"trustNoCloudUpload" = "Sem upload na nuvem";
+"trustNoTelemetry" = "Sem telemetria";
 "openSettings" = "Abrir ajustes";
 "arabic" = "Árabe";
 "bengali" = "Bengali";
