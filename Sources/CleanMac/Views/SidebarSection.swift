@@ -43,14 +43,14 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
     var illustrationAsset: CleanMacIllustrationAsset {
         switch self {
         case .diskOverview: .diskOverview
-        case .speedUp: .permissionShield
+        case .speedUp: .speedUp
         case .cleanUp: .cleanupTrash
-        case .manageSpace: .diskOverview
+        case .manageSpace: .manageSpace
         case .duplicates: .duplicates
-        case .uninstaller: .cleanupTrash
-        case .analyzeSpace: .diskOverview
+        case .uninstaller: .appUninstall
+        case .analyzeSpace: .spaceAnalysis
         case .aiReview: .aiReview
-        case .settings: .permissionShield
+        case .settings: .settings
         }
     }
 

@@ -13,7 +13,7 @@
     {"name": "Finalize checkpoint and commit", "status": "done"}
   ],
   "current": {
-    "focus": "GOAL complete. Six dashboard illustration PNGs were regenerated and checked in with their chroma-key sources. CleanMacFeatureImage no longer falls back to SF Symbols. Source guards prove the fallback branch is gone and all expected PNGs exist/decode. Fresh screenshot evidence was generated at docs/design/assets/reimagined-cleanmac-dashboard-current.png with a side-by-side comparison at docs/design/assets/reimagined-cleanmac-dashboard-comparison.png. Verification: env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 106 XCTest tests and 12 Swift Testing tests; git diff --check passed; ./script/build_and_run.sh --verify exited 0; ps aux confirmed dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 54202.",
+    "focus": "GOAL complete with follow-up icon uniqueness repair. The sidebar and feature pages now use distinct generated PNG assets for speed-up, manage-space, app-uninstall, space-analysis, and settings instead of reusing permission shield, disk overview, or cleanup-trash artwork. CleanMacFeatureImage no longer falls back to SF Symbols. Source guards prove the fallback branch is gone, all expected PNGs exist/decode, every sidebar function maps to a unique illustration asset, and Settings/App Uninstaller pages use feature-specific artwork. Fresh screenshot evidence was refreshed at docs/design/assets/reimagined-cleanmac-dashboard-current.png with a side-by-side comparison at docs/design/assets/reimagined-cleanmac-dashboard-comparison.png. Verification: env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 108 XCTest tests and 12 Swift Testing tests; CLEANMAC_UI_SNAPSHOT_DIR=/tmp/cleanmac-ui-snapshots-icons swift test --filter UIRenderingSmokeTests/testEverySidebarPageRendersVisibleMainContent passed and produced sidebar page screenshots; git diff --check passed; ./script/build_and_run.sh --verify exited 0.",
     "next_action": "Stop scheduling after committing this final checkpoint.",
     "blockers": ""
   },
@@ -39,8 +39,8 @@
       "reason": "The design comparison found every existing mascot/feature image diverged from the reference dashboard, and mixing old and new illustration styles would preserve the alignment problem."
     },
     {
-      "decision": "Keep the scope to the six existing dashboard illustration assets and not add feature-app-uninstall in this pass.",
-      "reason": "The user asked to align current mascot/feature PNGs in the reimagined dashboard; adding a new app-uninstall asset would expand SwiftUI mapping and screenshot scope beyond the specific dashboard mismatch."
+      "decision": "Expand the asset set so every sidebar function has its own generated PNG.",
+      "reason": "Follow-up review found Speed up and Settings shared permission-shield artwork, while Manage space, Uninstall apps, and Analyze space reused unrelated feature art. Each function now has a distinct illustration asset and test guard."
     },
     {
       "decision": "Regenerate feature-duplicates with a green chroma-key background.",
@@ -52,5 +52,5 @@
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && git diff --check && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-05T13:40:12Z"
+  "updated_at": "2026-07-05T14:25:33Z"
 }

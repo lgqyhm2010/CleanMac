@@ -165,10 +165,15 @@ final class RealDataAndLocalizationTests: XCTestCase {
         let expectedAssets = [
             "cleanmac-mascot",
             "feature-disk-overview",
+            "feature-speed-up",
             "feature-cleanup-trash",
+            "feature-manage-space",
             "feature-duplicates",
+            "feature-app-uninstall",
+            "feature-space-analysis",
             "feature-ai-review",
-            "feature-permission-shield"
+            "feature-permission-shield",
+            "feature-settings"
         ]
 
         for asset in expectedAssets {
@@ -181,6 +186,38 @@ final class RealDataAndLocalizationTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(image.size.width, 512, "\(asset) is too small for dashboard feature art")
             XCTAssertGreaterThanOrEqual(image.size.height, 512, "\(asset) is too small for dashboard feature art")
         }
+    }
+
+    func testSidebarFunctionsUseDistinctIllustrationAssets() {
+        let assetsBySection = Dictionary(
+            uniqueKeysWithValues: SidebarSection.allCases.map { ($0, $0.illustrationAsset.rawValue) }
+        )
+
+        XCTAssertEqual(assetsBySection[.diskOverview], "feature-disk-overview")
+        XCTAssertEqual(assetsBySection[.speedUp], "feature-speed-up")
+        XCTAssertEqual(assetsBySection[.cleanUp], "feature-cleanup-trash")
+        XCTAssertEqual(assetsBySection[.manageSpace], "feature-manage-space")
+        XCTAssertEqual(assetsBySection[.duplicates], "feature-duplicates")
+        XCTAssertEqual(assetsBySection[.uninstaller], "feature-app-uninstall")
+        XCTAssertEqual(assetsBySection[.analyzeSpace], "feature-space-analysis")
+        XCTAssertEqual(assetsBySection[.aiReview], "feature-ai-review")
+        XCTAssertEqual(assetsBySection[.settings], "feature-settings")
+
+        XCTAssertEqual(
+            Set(assetsBySection.values).count,
+            SidebarSection.allCases.count,
+            "Every sidebar function should have its own illustration asset."
+        )
+    }
+
+    func testSettingsAndUninstallerPagesUseFeatureSpecificArtwork() throws {
+        let settingsSource = try sourceFile("Sources/CleanMac/Views/SettingsView.swift")
+        let uninstallerSource = try sourceFile("Sources/CleanMac/Views/AppUninstallerView.swift")
+
+        XCTAssertTrue(settingsSource.contains("asset: .settings"))
+        XCTAssertFalse(settingsSource.contains("asset: .permissionShield"))
+        XCTAssertTrue(uninstallerSource.contains("asset: .appUninstall"))
+        XCTAssertFalse(uninstallerSource.contains("asset: .cleanupTrash"))
     }
 
     func testAppKitMenusUseLocalizedResources() throws {

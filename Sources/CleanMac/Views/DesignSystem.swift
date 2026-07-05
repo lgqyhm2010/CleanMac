@@ -162,10 +162,15 @@ extension AnyTransition {
 enum CleanMacIllustrationAsset: String {
     case mascot = "cleanmac-mascot"
     case diskOverview = "feature-disk-overview"
+    case speedUp = "feature-speed-up"
     case cleanupTrash = "feature-cleanup-trash"
+    case manageSpace = "feature-manage-space"
     case duplicates = "feature-duplicates"
+    case appUninstall = "feature-app-uninstall"
+    case spaceAnalysis = "feature-space-analysis"
     case aiReview = "feature-ai-review"
     case permissionShield = "feature-permission-shield"
+    case settings = "feature-settings"
 }
 
 struct CleanMacPage<Content: View>: View {
