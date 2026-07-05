@@ -56,6 +56,14 @@ final class AIToolDetectorTests: XCTestCase {
         XCTAssertEqual(claude?.modelOptions.compactMap(\.flagValue), ["fable", "opus", "sonnet", "haiku"])
     }
 
+    func testCodexArgumentsSkipTheGitRepoTrustCheck() {
+        // A Finder-launched app runs with cwd "/", which is not a git repo; without
+        // this flag `codex exec` refuses to run: "Not inside a trusted directory
+        // and --skip-git-repo-check was not specified."
+        let codex = AIToolProfile.knownProfiles.first { $0.id == "codex" }
+        XCTAssertEqual(codex?.arguments, ["exec", "--skip-git-repo-check"])
+    }
+
     func testCodexModelOptionsUseCurrentIDs() {
         // codex has no alias mechanism; IDs verified against developers.openai.com/codex/models
         // (July 2026: gpt-5.5 default flagship, gpt-5.4 fallback, gpt-5.4-mini light).

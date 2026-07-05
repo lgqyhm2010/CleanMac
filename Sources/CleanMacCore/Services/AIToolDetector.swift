@@ -54,7 +54,9 @@ public struct AIToolProfile: Identifiable, Equatable, Sendable {
     public static let knownProfiles: [AIToolProfile] = [
         AIToolProfile(
             id: "codex", displayName: "Codex", binaryName: "codex",
-            arguments: ["exec"], promptDelivery: .standardInput,
+            // --skip-git-repo-check: codex refuses to run outside a trusted/git
+            // directory, and the app's home-directory cwd is neither.
+            arguments: ["exec", "--skip-git-repo-check"], promptDelivery: .standardInput,
             modelFlag: "-m",
             // codex has no alias mechanism, so these are pinned IDs
             // (developers.openai.com/codex/models, July 2026) and need refreshing

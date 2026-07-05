@@ -437,11 +437,15 @@ public struct AICommand: Equatable, Sendable {
     /// Environment for the spawned process. `nil` inherits the parent's environment;
     /// a value replaces it wholesale (used to hand the child an augmented `PATH`).
     public var environment: [String: String]?
+    /// Working directory for the spawned process. `nil` inherits the parent's cwd —
+    /// which is "/" for a Finder-launched app, never the right context for a CLI.
+    public var workingDirectory: String?
 
-    public init(executable: String, arguments: [String] = [], environment: [String: String]? = nil) {
+    public init(executable: String, arguments: [String] = [], environment: [String: String]? = nil, workingDirectory: String? = nil) {
         self.executable = executable
         self.arguments = arguments
         self.environment = environment
+        self.workingDirectory = workingDirectory
     }
 }
 

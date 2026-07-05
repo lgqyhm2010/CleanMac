@@ -177,7 +177,25 @@ final class AIReviewServiceTests: XCTestCase {
 
         _ = try await service.review(candidates: [sampleCandidate()], userQuestion: "safe?", model: model)
 
-        XCTAssertEqual(runner.commands[0].arguments, ["exec", "-m", "gpt-5.1"])
+        XCTAssertEqual(runner.commands[0].arguments, ["exec", "--skip-git-repo-check", "-m", "gpt-5.1"])
+    }
+
+    func testReviewRunsTheToolFromTheUserHomeDirectory() async throws {
+        // A Finder-launched app inherits cwd "/" — never the right context for a CLI
+        // that scans its working directory (claude project discovery, codex trust check).
+        let runner = RecordingCommandRunner()
+        let tool = DetectedAITool(
+            profile: AIToolProfile.knownProfiles.first { $0.id == "claude" }!,
+            executablePath: "/usr/bin/ai"
+        )
+        let service = AIReviewService(tool: tool, runner: runner)
+
+        _ = try await service.review(candidates: [sampleCandidate()], userQuestion: "safe?")
+
+        XCTAssertEqual(
+            runner.commands[0].workingDirectory,
+            FileManager.default.homeDirectoryForCurrentUser.path
+        )
     }
 
     func testReviewInsertsModelFlagBeforeBaseArgumentsForArgumentTools() async throws {

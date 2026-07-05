@@ -106,14 +106,18 @@ public final class AIReviewService {
         // directly follow its "-p", so the pair goes before the base arguments there.
         let modelArguments = model?.flagValue.map { [tool.profile.modelFlag, $0] } ?? []
 
+        // Run from the user's home: a Finder-launched app inherits cwd "/", which
+        // CLIs treat as their working context (codex trust check, claude project scan).
+        let workingDirectory = FileManager.default.homeDirectoryForCurrentUser.path
+
         let command: AICommand
         let standardInput: String
         switch tool.profile.promptDelivery {
         case .standardInput:
-            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + modelArguments, environment: environment)
+            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + modelArguments, environment: environment, workingDirectory: workingDirectory)
             standardInput = prompt
         case .argument:
-            command = AICommand(executable: tool.executablePath, arguments: modelArguments + tool.profile.arguments + [prompt], environment: environment)
+            command = AICommand(executable: tool.executablePath, arguments: modelArguments + tool.profile.arguments + [prompt], environment: environment, workingDirectory: workingDirectory)
             standardInput = ""
         }
         let result = try await runner.run(command: command, standardInput: standardInput)
@@ -158,6 +162,9 @@ public struct ProcessCommandRunner: CommandRunning {
         // caller can hand the child an augmented PATH.
         if let environment = command.environment {
             process.environment = environment
+        }
+        if let workingDirectory = command.workingDirectory {
+            process.currentDirectoryURL = URL(filePath: workingDirectory)
         }
 
         let inputPipe = Pipe()
