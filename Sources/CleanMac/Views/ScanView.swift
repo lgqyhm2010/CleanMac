@@ -19,6 +19,8 @@ struct ScanView: View {
                 openResults: openResults
             )
 
+            TrustBadgeStrip(language: language)
+
             PermissionGuideView(
                 guide: .fullDiskAccess(),
                 language: language,
@@ -315,6 +317,65 @@ private struct DiskSegment: Identifiable {
     var value: String
     var color: Color
     var weight: CGFloat
+}
+
+private struct TrustBadgeStrip: View {
+    var language: ResolvedLanguage
+
+    var body: some View {
+        CleanMacPanel(padding: 12, tint: CleanMacTheme.mint) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], alignment: .leading, spacing: 10) {
+                TrustBadgeItem(
+                    title: L10n.text(.trustLocalAI, language: language),
+                    symbolName: "sparkles",
+                    tint: CleanMacTheme.purple
+                )
+                TrustBadgeItem(
+                    title: L10n.text(.trustMoveToTrash, language: language),
+                    symbolName: "trash",
+                    tint: CleanMacTheme.mint
+                )
+                TrustBadgeItem(
+                    title: L10n.text(.trustNoTelemetry, language: language),
+                    symbolName: "shield.checkered",
+                    tint: CleanMacTheme.mint
+                )
+                TrustBadgeItem(
+                    title: L10n.text(.trustNoCloudUpload, language: language),
+                    symbolName: "icloud.slash",
+                    tint: CleanMacTheme.peach
+                )
+            }
+        }
+    }
+}
+
+private struct TrustBadgeItem: View {
+    var title: String
+    var symbolName: String
+    var tint: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbolName)
+                .imageScale(.small)
+                .font(.callout.weight(.bold))
+                .foregroundStyle(tint)
+                .frame(width: 26, height: 26)
+                .background(tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .strokeBorder(CleanMacTheme.ink, lineWidth: 1.4)
+                }
+
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(CleanMacTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 private struct OverviewFeatureGrid: View {

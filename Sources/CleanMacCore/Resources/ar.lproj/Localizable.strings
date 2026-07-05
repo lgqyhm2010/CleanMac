@@ -60,6 +60,10 @@
 "size" = "الحجم";
 "spanish" = "الإسبانية";
 "status" = "الحالة";
+"trustLocalAI" = "ذكاء اصطناعي محلي";
+"trustMoveToTrash" = "نقل إلى المهملات";
+"trustNoCloudUpload" = "لا رفع إلى السحابة";
+"trustNoTelemetry" = "بلا قياس عن بعد";
 "openSettings" = "فتح الإعدادات";
 "arabic" = "العربية";
 "bengali" = "البنغالية";

@@ -19,12 +19,14 @@ enum CleanMacTheme {
     static let chrome = Color(hex: 0xEFE7D6)
     static let desk = Color(hex: 0xEDF1F4)
     static let shadow = Color(hex: 0xE7DECD)
-    static let titlebar = Color(hex: 0x2C2640)
-    static let sidebar = Color(hex: 0x2C2640)
-    static let sidebarBorder = Color(hex: 0x3A3458)
-    static let sidebarText = Color(hex: 0x7070C0)
-    static let sidebarPrimaryText = Color(hex: 0xE8E0FF)
-    static let sidebarRowText = Color(hex: 0xC0C0E0)
+    static let titlebar = paper
+    static let sidebar = paper
+    static let sidebarBorder = ink
+    static let sidebarDivider = ink.opacity(0.12)
+    static let sidebarSelectedFill = Color(hex: 0xEAF2FF)
+    static let sidebarText = secondaryText
+    static let sidebarPrimaryText = ink
+    static let sidebarRowText = ink
     static let secondaryText = Color(hex: 0x706B82)
 
     static let accent = Color(hex: 0x5DAEE7)
@@ -208,24 +210,44 @@ struct CleanMacPageBackground: View {
         GeometryReader { proxy in
             ZStack {
                 CleanMacTheme.warmPane
-
-                Circle()
-                    .fill(accent.opacity(0.16))
-                    .frame(width: min(proxy.size.width, 460), height: min(proxy.size.width, 460))
-                    .blur(radius: 70)
-                    .offset(x: proxy.size.width * 0.30, y: -proxy.size.height * 0.30)
-
-                Circle()
-                    .fill(CleanMacTheme.peach.opacity(0.11))
-                    .frame(width: 360, height: 360)
-                    .blur(radius: 80)
-                    .offset(x: -proxy.size.width * 0.36, y: proxy.size.height * 0.30)
+                CleanMacPaperTexture(accent: accent)
 
                 CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.86, y: proxy.size.height * 0.18), delay: 0.1)
                 CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.68, y: proxy.size.height * 0.72), delay: 0.8)
                 CleanMacSparkle(position: CGPoint(x: proxy.size.width * 0.16, y: proxy.size.height * 0.30), delay: 1.3)
             }
             .ignoresSafeArea()
+        }
+    }
+}
+
+private struct CleanMacPaperTexture: View {
+    var accent: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .topLeading) {
+                Path { path in
+                    let spacing: CGFloat = 28
+                    var x: CGFloat = -proxy.size.height
+                    while x < proxy.size.width {
+                        path.move(to: CGPoint(x: x, y: proxy.size.height))
+                        path.addLine(to: CGPoint(x: x + proxy.size.height, y: 0))
+                        x += spacing
+                    }
+                }
+                .stroke(CleanMacTheme.ink.opacity(0.035), style: StrokeStyle(lineWidth: 1, dash: [5, 12]))
+
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(accent.opacity(0.08))
+                    .frame(width: min(320, proxy.size.width * 0.36), height: 10)
+                    .offset(x: proxy.size.width * 0.60, y: 28)
+
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(CleanMacTheme.peach.opacity(0.10))
+                    .frame(width: min(260, proxy.size.width * 0.30), height: 10)
+                    .offset(x: proxy.size.width * 0.10, y: max(160, proxy.size.height - 58))
+            }
         }
     }
 }
@@ -241,7 +263,7 @@ struct CleanMacAppTitleBar: View {
                 Spacer()
                 Text(title)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color(hex: 0x9090B0))
+                    .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)
                 Spacer()
             }

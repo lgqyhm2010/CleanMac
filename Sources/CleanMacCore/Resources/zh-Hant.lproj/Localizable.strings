@@ -60,6 +60,10 @@
 "size" = "大小";
 "spanish" = "西班牙文";
 "status" = "狀態";
+"trustLocalAI" = "本地 AI";
+"trustMoveToTrash" = "移到垃圾桶";
+"trustNoCloudUpload" = "不雲端上傳";
+"trustNoTelemetry" = "無遙測";
 "openSettings" = "開啟設定";
 "arabic" = "阿拉伯文";
 "bengali" = "孟加拉文";

@@ -88,6 +88,28 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertFalse(source.contains(".animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.float), value: floating)"))
     }
 
+    func testReimaginedDashboardUsesPaperChromeAndTrustStrip() throws {
+        let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
+        let sidebarSource = try sourceFile("Sources/CleanMac/Views/SidebarView.swift")
+        let scanSource = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
+
+        XCTAssertTrue(designSystemSource.contains("static let sidebar = paper"))
+        XCTAssertTrue(designSystemSource.contains("static let sidebarText = secondaryText"))
+        XCTAssertFalse(designSystemSource.contains(".blur(radius: 70)"))
+        XCTAssertFalse(designSystemSource.contains(".blur(radius: 80)"))
+
+        XCTAssertTrue(sidebarSource.contains("CleanMacTheme.sidebarSelectedFill"))
+        XCTAssertTrue(sidebarSource.contains("CleanMacTheme.sidebarDivider"))
+        XCTAssertFalse(sidebarSource.contains("Color.white.opacity(0.12)"))
+        XCTAssertFalse(sidebarSource.contains("foregroundStyle(isSelected ? Color.white"))
+
+        XCTAssertTrue(scanSource.contains("private struct TrustBadgeStrip"))
+        XCTAssertTrue(scanSource.contains("TrustBadgeStrip(language: language)"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustLocalAI"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustNoTelemetry"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustNoCloudUpload"))
+    }
+
     func testAppKitMenusUseLocalizedResources() throws {
         let source = try sourceFile("Sources/CleanMac/App/CleanMacApp.swift")
         let rawMenuLiterals = [

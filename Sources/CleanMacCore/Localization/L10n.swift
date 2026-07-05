@@ -67,6 +67,10 @@ public enum L10n {
         case size
         case spanish
         case status
+        case trustLocalAI
+        case trustMoveToTrash
+        case trustNoCloudUpload
+        case trustNoTelemetry
         case openSettings
         case free
         case used

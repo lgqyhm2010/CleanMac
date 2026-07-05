@@ -60,6 +60,10 @@
 "size" = "Размер";
 "spanish" = "Испанский";
 "status" = "Статус";
+"trustLocalAI" = "Локальный ИИ";
+"trustMoveToTrash" = "Переместить в Корзину";
+"trustNoCloudUpload" = "Без облачной загрузки";
+"trustNoTelemetry" = "Без телеметрии";
 "openSettings" = "Открыть настройки";
 "arabic" = "Арабский";
 "bengali" = "Бенгальский";

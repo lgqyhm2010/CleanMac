@@ -2,19 +2,19 @@
   "mode": "goal",
   "objective": "Use imagegen to re-imagine CleanMac's current design, then implement the refreshed visual direction on a fresh branch from latest origin/main.",
   "exit_condition": "The goal is complete when the branch is based on latest origin/main, the current UI/design context has been inspected, an imagegen concept has been generated and saved or referenced for the implementation, focused failing tests or source guards cover the intended UI/design behavior before production changes, the refreshed design is implemented in the app, verification commands pass, .loopgoal/state.json records the final state, and the intended changes are committed.",
-  "status": "in_progress",
-  "iteration": 0,
+  "status": "done",
+  "iteration": 1,
   "phases": [
     {"name": "Branch from latest origin/main and initialize checkpoint", "status": "done"},
     {"name": "Inspect current UI structure and runtime design surface", "status": "done"},
-    {"name": "Generate imagegen visual concept and distill implementable direction", "status": "todo"},
-    {"name": "Add failing tests/source guards for the design change", "status": "todo"},
-    {"name": "Implement refreshed design", "status": "todo"},
-    {"name": "Verify, update checkpoint, and commit", "status": "todo"}
+    {"name": "Generate imagegen visual concept and distill implementable direction", "status": "done"},
+    {"name": "Add failing tests/source guards for the design change", "status": "done"},
+    {"name": "Implement refreshed design", "status": "done"},
+    {"name": "Verify, update checkpoint, and commit", "status": "done"}
   ],
   "current": {
-    "focus": "Fresh branch codex/reimagined-cleanmac-design created from origin/main 612239cd672bd372bf35e848471890e9781f0504. Baseline verification passed: env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test ran 100 XCTest tests and 12 Swift Testing tests with 0 failures. Three read-only explorer subagents mapped the UI structure, test surface, and imagegen prompt evidence.",
-    "next_action": "Generate the imagegen visual concept and distill it into scoped SwiftUI implementation changes.",
+    "focus": "GOAL complete. Imagegen concept was generated and saved at docs/design/assets/reimagined-cleanmac-dashboard.png. SwiftUI implementation now uses paper sidebar chrome, a non-blurred paper-texture background, and a localized trust strip for Local AI, Move to Trash, No Telemetry, and No Cloud Upload. Tests were red first, then green. Final verification: git diff --check passed; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 102 XCTest tests and 12 Swift Testing tests; ./script/build_and_run.sh --verify exited 0; pgrep found dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 48940.",
+    "next_action": "Stop scheduling after committing the implementation.",
     "blockers": ""
   },
   "decisions": [
@@ -37,8 +37,20 @@
     {
       "decision": "Keep implementation centered on the existing playful desktop utility design language.",
       "reason": "Repo design docs, assets, and explorer evidence point to thick ink outlines, warm paper panels, colorful feature badges, local AI second opinion, Move to Trash safety, privacy, and safety-rule trust as the product identity."
+    },
+    {
+      "decision": "Use the imagegen output as an implementation reference rather than a pixel-perfect target.",
+      "reason": "The generated mockup was strongest as a direction for shell, dashboard, and trust affordances; the production code should keep existing data flow, localization, and SwiftUI components intact."
+    },
+    {
+      "decision": "Add source and pixel guards before production changes.",
+      "reason": "The first CleanMacUITests run failed on paper sidebar brightness, dashboard trust-strip source expectations, and blurred background/source expectations, proving the new tests described missing behavior before implementation."
+    },
+    {
+      "decision": "Localize trust-strip copy across all 11 app locales.",
+      "reason": "The new trust labels are user-visible and the repo's localization tests require every static L10n key to exist in every .lproj resource."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
-  "updated_at": "2026-07-05T10:26:21Z"
+  "updated_at": "2026-07-05T10:40:43Z"
 }

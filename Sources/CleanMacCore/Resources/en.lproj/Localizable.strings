@@ -60,6 +60,10 @@
 "size" = "Size";
 "spanish" = "Spanish";
 "status" = "Status";
+"trustLocalAI" = "Local AI";
+"trustMoveToTrash" = "Move to Trash";
+"trustNoCloudUpload" = "No Cloud Upload";
+"trustNoTelemetry" = "No Telemetry";
 "openSettings" = "Open Settings";
 "arabic" = "Arabic";
 "bengali" = "Bengali";

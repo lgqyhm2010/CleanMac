@@ -28,8 +28,8 @@ struct SidebarView: View {
             .padding(.vertical, 10)
             .overlay(alignment: .bottom) {
                 Rectangle()
-                    .fill(CleanMacTheme.sidebarBorder)
-                    .frame(height: 2)
+                    .fill(CleanMacTheme.sidebarDivider)
+                    .frame(height: 1)
             }
 
             ScrollView {
@@ -73,8 +73,8 @@ struct SidebarView: View {
         .background(CleanMacTheme.sidebar)
         .overlay(alignment: .trailing) {
             Rectangle()
-                .fill(CleanMacTheme.ink)
-                .frame(width: 3)
+                .fill(CleanMacTheme.sidebarBorder)
+                .frame(width: 2)
         }
     }
 
@@ -104,7 +104,7 @@ struct SidebarView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(section.title(language: language))
                         .font(.callout.weight(isSelected ? .bold : .semibold))
-                        .foregroundStyle(isSelected ? Color.white : CleanMacTheme.sidebarRowText)
+                        .foregroundStyle(CleanMacTheme.sidebarRowText)
                         .lineLimit(1)
                     Text(section.subtitle(language: language))
                         .font(.caption)
@@ -117,17 +117,25 @@ struct SidebarView: View {
                 if !value.isEmpty {
                     Text(value)
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(tint)
+                        .foregroundStyle(isSelected ? CleanMacTheme.ink : tint)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                 }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
-            .background(isSelected ? Color.white.opacity(0.12) : Color.clear, in: CleanMacTheme.panelShape)
+            .background(
+                isSelected
+                    ? CleanMacTheme.sidebarSelectedFill
+                    : (isHovered ? tint.opacity(0.10) : CleanMacTheme.paper.opacity(0.001)),
+                in: CleanMacTheme.panelShape
+            )
             .overlay {
                 CleanMacTheme.panelShape
-                    .strokeBorder(isSelected ? tint : Color.clear, lineWidth: 2)
+                    .strokeBorder(
+                        isSelected ? CleanMacTheme.ink : (isHovered ? tint.opacity(0.72) : CleanMacTheme.sidebarDivider),
+                        lineWidth: isSelected ? 2 : 1
+                    )
             }
             .contentShape(Rectangle())
         }

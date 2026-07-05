@@ -60,6 +60,10 @@
 "size" = "サイズ";
 "spanish" = "スペイン語";
 "status" = "状態";
+"trustLocalAI" = "ローカル AI";
+"trustMoveToTrash" = "ゴミ箱へ移動";
+"trustNoCloudUpload" = "クラウド送信なし";
+"trustNoTelemetry" = "テレメトリなし";
 "openSettings" = "設定を開く";
 "arabic" = "アラビア語";
 "bengali" = "ベンガル語";

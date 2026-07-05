@@ -60,6 +60,10 @@
 "size" = "आकार";
 "spanish" = "स्पेनिश";
 "status" = "स्थिति";
+"trustLocalAI" = "स्थानीय AI";
+"trustMoveToTrash" = "Trash में ले जाएं";
+"trustNoCloudUpload" = "क्लाउड अपलोड नहीं";
+"trustNoTelemetry" = "कोई टेलीमेट्री नहीं";
 "openSettings" = "सेटिंग्स खोलें";
 "arabic" = "अरबी";
 "bengali" = "बंगाली";
