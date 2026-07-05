@@ -1,3 +1,4 @@
+import AppKit
 import CleanMacCore
 import Foundation
 import XCTest
@@ -149,6 +150,39 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertTrue(scanSource.contains("L10n.text(.trustNoCloudUpload"))
     }
 
+    func testReimaginedDashboardIllustrationsCannotFallBackToSystemSymbols() throws {
+        let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
+
+        XCTAssertTrue(designSystemSource.contains("CleanMacIllustrationImageCache.shared.image(for: asset)"))
+        XCTAssertTrue(designSystemSource.contains("Image(nsImage: image)"))
+        XCTAssertFalse(designSystemSource.contains("fallbackSymbolName"))
+        XCTAssertFalse(designSystemSource.contains("CleanMacPulseIcon(symbolName: asset."))
+        XCTAssertFalse(designSystemSource.contains("Image(systemName: asset."))
+    }
+
+    func testReimaginedDashboardIllustrationPNGsExistForEveryAsset() throws {
+        let resourcesURL = packageRoot().appending(path: "Sources/CleanMac/Resources/Images")
+        let expectedAssets = [
+            "cleanmac-mascot",
+            "feature-disk-overview",
+            "feature-cleanup-trash",
+            "feature-duplicates",
+            "feature-ai-review",
+            "feature-permission-shield"
+        ]
+
+        for asset in expectedAssets {
+            let url = resourcesURL.appending(path: "\(asset).png")
+            let data = try Data(contentsOf: url)
+
+            XCTAssertEqual(Array(data.prefix(8)), [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], "\(asset) is not a PNG")
+
+            let image = try XCTUnwrap(NSImage(contentsOf: url), "\(asset) does not decode as NSImage")
+            XCTAssertGreaterThanOrEqual(image.size.width, 512, "\(asset) is too small for dashboard feature art")
+            XCTAssertGreaterThanOrEqual(image.size.height, 512, "\(asset) is too small for dashboard feature art")
+        }
+    }
+
     func testAppKitMenusUseLocalizedResources() throws {
         let source = try sourceFile("Sources/CleanMac/App/CleanMacApp.swift")
         let rawMenuLiterals = [
@@ -166,11 +200,14 @@ final class RealDataAndLocalizationTests: XCTestCase {
         }
     }
 
+    private func packageRoot() -> URL {
+        URL(filePath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+    }
+
     private func sourceFile(_ relativePath: String) throws -> String {
-        let root = URL(filePath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        return try String(contentsOf: root.appending(path: relativePath), encoding: .utf8)
+        try String(contentsOf: packageRoot().appending(path: relativePath), encoding: .utf8)
     }
 }

@@ -5,16 +5,16 @@
   "status": "in_progress",
   "iteration": 0,
   "phases": [
-    {"name": "Initialize checkpoint and branch from latest origin/main", "status": "in_progress"},
-    {"name": "Read-only asset and UI investigation", "status": "todo"},
-    {"name": "Write failing source guards for real PNG usage", "status": "todo"},
-    {"name": "Regenerate PNG assets and wire SwiftUI resource loading", "status": "todo"},
+    {"name": "Initialize checkpoint and branch from latest origin/main", "status": "done"},
+    {"name": "Read-only asset and UI investigation", "status": "done"},
+    {"name": "Write failing source guards for real PNG usage", "status": "done"},
+    {"name": "Regenerate PNG assets and wire SwiftUI resource loading", "status": "in_progress"},
     {"name": "Screenshot comparison and verification", "status": "todo"},
     {"name": "Finalize checkpoint and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "Fresh branch codex/cleanmac-png-assets-alignment was created from origin/main at 8ecf3834371e298589fc0f4ade6b6dbc86f815c8. Next step is read-only investigation of current PNG assets, design reference, screenshot flow, and SwiftUI image references.",
-    "next_action": "Run read-only investigation, then add failing source guards before production edits.",
+    "focus": "Read-only investigation found all six runtime PNGs are present and bundled, but every dashboard illustration can silently fall back to SF Symbols through CleanMacIllustrationAsset.fallbackSymbolName and CleanMacFeatureImage's CleanMacPulseIcon branch. Visual review against docs/design/assets/reimagined-cleanmac-dashboard.png found mismatched mascot, disk overview, cleanup trash, duplicates, AI review, and permission shield artwork. A source guard test was added and verified red: env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test --filter RealDataAndLocalizationTests/testReimaginedDashboardIllustrationsCannotFallBackToSystemSymbols failed on the fallbackSymbolName and CleanMacPulseIcon assertions.",
+    "next_action": "Copy generated chroma-key sources into ImagesSource, remove chroma-key backgrounds into Images, remove SF Symbol fallback from CleanMacFeatureImage, then rerun the guard test.",
     "blockers": ""
   },
   "decisions": [
@@ -33,8 +33,16 @@
     {
       "decision": "Use source guards for bundle PNG usage rather than relying only on screenshots.",
       "reason": "The regression risk is SwiftUI silently falling back to SF Symbols or missing generated PNGs; tests should catch that at source/resource level."
+    },
+    {
+      "decision": "Regenerate all six existing dashboard illustration PNGs rather than only the most obvious mismatch.",
+      "reason": "The design comparison found every existing mascot/feature image diverged from the reference dashboard, and mixing old and new illustration styles would preserve the alignment problem."
+    },
+    {
+      "decision": "Keep the scope to the six existing dashboard illustration assets and not add feature-app-uninstall in this pass.",
+      "reason": "The user asked to align current mascot/feature PNGs in the reimagined dashboard; adding a new app-uninstall asset would expand SwiftUI mapping and screenshot scope beyond the specific dashboard mismatch."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && git diff --check && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-05T12:54:55Z"
+  "updated_at": "2026-07-05T13:07:19Z"
 }
