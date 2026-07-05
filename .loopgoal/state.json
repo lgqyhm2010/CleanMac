@@ -8,13 +8,13 @@
     {"name": "Initialize checkpoint and branch from latest origin/main", "status": "done"},
     {"name": "Read-only asset and UI investigation", "status": "done"},
     {"name": "Write failing source guards for real PNG usage", "status": "done"},
-    {"name": "Regenerate PNG assets and wire SwiftUI resource loading", "status": "in_progress"},
-    {"name": "Screenshot comparison and verification", "status": "todo"},
+    {"name": "Regenerate PNG assets and wire SwiftUI resource loading", "status": "done"},
+    {"name": "Screenshot comparison and verification", "status": "in_progress"},
     {"name": "Finalize checkpoint and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "Read-only investigation found all six runtime PNGs are present and bundled, but every dashboard illustration can silently fall back to SF Symbols through CleanMacIllustrationAsset.fallbackSymbolName and CleanMacFeatureImage's CleanMacPulseIcon branch. Visual review against docs/design/assets/reimagined-cleanmac-dashboard.png found mismatched mascot, disk overview, cleanup trash, duplicates, AI review, and permission shield artwork. A source guard test was added and verified red: env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test --filter RealDataAndLocalizationTests/testReimaginedDashboardIllustrationsCannotFallBackToSystemSymbols failed on the fallbackSymbolName and CleanMacPulseIcon assertions.",
-    "next_action": "Copy generated chroma-key sources into ImagesSource, remove chroma-key backgrounds into Images, remove SF Symbol fallback from CleanMacFeatureImage, then rerun the guard test.",
+    "focus": "Six generated chroma-key sources were copied into Sources/CleanMac/Resources/ImagesSource and converted to alpha PNGs in Sources/CleanMac/Resources/Images. CleanMacFeatureImage no longer falls back to CleanMacPulseIcon/SF Symbols when an illustration is missing. The red source guard now passes, and the PNG existence/decode guard passes. Resource metadata confirms all six runtime assets are 1254x1254 RGBA PNGs with alpha.",
+    "next_action": "Generate a fresh dashboard screenshot with CLEANMAC_UI_SNAPSHOT_DIR, compare it against docs/design/assets/reimagined-cleanmac-dashboard.png, then run full verification commands.",
     "blockers": ""
   },
   "decisions": [
@@ -41,8 +41,12 @@
     {
       "decision": "Keep the scope to the six existing dashboard illustration assets and not add feature-app-uninstall in this pass.",
       "reason": "The user asked to align current mascot/feature PNGs in the reimagined dashboard; adding a new app-uninstall asset would expand SwiftUI mapping and screenshot scope beyond the specific dashboard mismatch."
+    },
+    {
+      "decision": "Regenerate feature-duplicates with a green chroma-key background.",
+      "reason": "The first magenta-key duplicate-documents asset preserved the concept but despill washed out lavender accents; green keying preserved the purple/lavender reference colors without visible key fringe."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && git diff --check && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-05T13:07:19Z"
+  "updated_at": "2026-07-05T13:26:25Z"
 }

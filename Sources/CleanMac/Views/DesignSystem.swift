@@ -166,17 +166,6 @@ enum CleanMacIllustrationAsset: String {
     case duplicates = "feature-duplicates"
     case aiReview = "feature-ai-review"
     case permissionShield = "feature-permission-shield"
-
-    var fallbackSymbolName: String {
-        switch self {
-        case .mascot: "desktopcomputer"
-        case .diskOverview: "internaldrive"
-        case .cleanupTrash: "trash"
-        case .duplicates: "doc.on.doc"
-        case .aiReview: "sparkles"
-        case .permissionShield: "lock.shield"
-        }
-    }
 }
 
 struct CleanMacPage<Content: View>: View {
@@ -798,7 +787,7 @@ struct CleanMacFeatureImage: View {
                     .resizable()
                     .scaledToFit()
             } else {
-                CleanMacPulseIcon(symbolName: asset.fallbackSymbolName, tint: tint, isActive: isActive)
+                Color.clear
             }
         }
         .offset(y: -5 * progress)
@@ -836,6 +825,7 @@ private final class CleanMacIllustrationImageCache {
               let image = NSImage(contentsOf: url)
         else {
             missingAssets.insert(asset)
+            assertionFailure("Missing CleanMac illustration asset: \(asset.rawValue).png")
             return nil
         }
 
