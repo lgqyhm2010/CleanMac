@@ -25,6 +25,8 @@
 "minimumSize" = "न्यूनतम आकार";
 "model" = "मॉडल";
 "defaultModel" = "डिफ़ॉल्ट";
+"dashboardReadyToScan" = "आपका Mac स्कैन करने के लिए तैयार";
+"dashboardQuickSafePrivate" = "तेज़ · सुरक्षित · निजी";
 "aiSummary" = "सारांश";
 "safeToDelete" = "हटाने के लिए सुरक्षित";
 "riskyItems" = "जोखिम भरा";

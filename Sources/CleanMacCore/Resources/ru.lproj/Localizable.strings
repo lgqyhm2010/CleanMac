@@ -25,6 +25,8 @@
 "minimumSize" = "Минимальный размер";
 "model" = "Модель";
 "defaultModel" = "По умолчанию";
+"dashboardReadyToScan" = "Готово к сканированию Mac";
+"dashboardQuickSafePrivate" = "Быстро · Безопасно · Приватно";
 "aiSummary" = "Итог";
 "safeToDelete" = "Можно удалить";
 "riskyItems" = "Рискованно";

@@ -25,6 +25,8 @@
 "minimumSize" = "最小サイズ";
 "model" = "モデル";
 "defaultModel" = "デフォルト";
+"dashboardReadyToScan" = "Mac をスキャンする準備完了";
+"dashboardQuickSafePrivate" = "高速 · 安全 · プライベート";
 "aiSummary" = "概要";
 "safeToDelete" = "削除しても安全";
 "riskyItems" = "リスクあり";

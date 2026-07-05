@@ -25,6 +25,8 @@
 "minimumSize" = "الحد الأدنى للحجم";
 "model" = "النموذج";
 "defaultModel" = "افتراضي";
+"dashboardReadyToScan" = "جاهز لفحص Mac";
+"dashboardQuickSafePrivate" = "سريع · آمن · خاص";
 "aiSummary" = "الملخص";
 "safeToDelete" = "آمن للحذف";
 "riskyItems" = "محفوف بالمخاطر";

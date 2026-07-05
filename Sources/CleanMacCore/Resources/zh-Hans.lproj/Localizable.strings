@@ -25,6 +25,8 @@
 "minimumSize" = "最小大小";
 "model" = "模型";
 "defaultModel" = "默认";
+"dashboardReadyToScan" = "准备扫描你的 Mac";
+"dashboardQuickSafePrivate" = "快速 · 安全 · 私密";
 "aiSummary" = "总结";
 "safeToDelete" = "可安全删除";
 "riskyItems" = "有风险";

@@ -743,7 +743,7 @@ struct CleanMacFeatureImage: View {
     }
 
     private var image: NSImage? {
-        guard let url = Bundle.module.url(forResource: asset.rawValue, withExtension: "png", subdirectory: "Images") else {
+        guard let url = Bundle.module.url(forResource: asset.rawValue, withExtension: "png") else {
             return nil
         }
         return NSImage(contentsOf: url)

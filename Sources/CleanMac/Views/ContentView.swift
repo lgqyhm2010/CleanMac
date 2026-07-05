@@ -33,6 +33,12 @@ struct ContentView: View {
                             language: resolvedLanguage,
                             openResults: {
                                 selection = .cleanUp
+                            },
+                            openAIReview: {
+                                selection = .aiReview
+                            },
+                            openSettings: {
+                                selection = .settings
                             }
                         )
                     case .uninstaller:

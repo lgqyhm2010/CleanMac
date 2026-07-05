@@ -13,7 +13,7 @@
     {"name": "Verify, update checkpoint, and commit", "status": "done"}
   ],
   "current": {
-    "focus": "GOAL complete. Imagegen concept was generated and saved at docs/design/assets/reimagined-cleanmac-dashboard.png. SwiftUI implementation now uses paper sidebar chrome, a non-blurred paper-texture background, and a localized trust strip for Local AI, Move to Trash, No Telemetry, and No Cloud Upload. Tests were red first, then green. Final verification: git diff --check passed; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 102 XCTest tests and 12 Swift Testing tests; ./script/build_and_run.sh --verify exited 0; pgrep found dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 48940.",
+    "focus": "GOAL complete after follow-up design comparison. Imagegen concept was generated and saved at docs/design/assets/reimagined-cleanmac-dashboard.png. SwiftUI implementation now uses paper sidebar chrome, a non-blurred paper-texture background, real bundled hand-drawn PNG assets, a top disk dashboard card, metric row, scan CTA strip, four feature cards, and a localized trust strip for Local AI, Move to Trash, No Telemetry, and No Cloud Upload. Tests were red first, then green. Final follow-up verification: git diff --check passed; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 102 XCTest tests and 12 Swift Testing tests; ./script/build_and_run.sh --verify exited 0; pgrep found dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 18873.",
     "next_action": "Stop scheduling after committing the implementation.",
     "blockers": ""
   },
@@ -49,8 +49,20 @@
     {
       "decision": "Localize trust-strip copy across all 11 app locales.",
       "reason": "The new trust labels are user-visible and the repo's localization tests require every static L10n key to exist in every .lproj resource."
+    },
+    {
+      "decision": "Treat the first implementation as insufficient after comparing the generated mockup and actual snapshot.",
+      "reason": "The actual UI still used the old vertical layout and SF Symbol fallbacks, so it did not match the imagegen concept closely enough."
+    },
+    {
+      "decision": "Load illustration PNGs from the SwiftPM bundle root instead of the Images subdirectory.",
+      "reason": ".process(\"Resources\") flattened the image files into CleanMac_CleanMac.bundle, so the previous subdirectory lookup silently fell back to SF Symbols."
+    },
+    {
+      "decision": "Rework ScanView into the imagegen dashboard structure.",
+      "reason": "The mockup's main reusable structure is top disk dashboard card, metric row, scan CTA, four feature cards, and trust strip; tests now guard those components."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
-  "updated_at": "2026-07-05T10:40:43Z"
+  "updated_at": "2026-07-05T10:59:44Z"
 }

@@ -25,6 +25,8 @@
 "minimumSize" = "Minimum Size";
 "model" = "Model";
 "defaultModel" = "Default";
+"dashboardReadyToScan" = "Ready to scan your Mac";
+"dashboardQuickSafePrivate" = "Quick · Safe · Private";
 "aiSummary" = "Summary";
 "safeToDelete" = "Safe to delete";
 "riskyItems" = "Risky";

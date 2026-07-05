@@ -32,6 +32,8 @@ public enum L10n {
         case minimumSize
         case model
         case defaultModel
+        case dashboardQuickSafePrivate
+        case dashboardReadyToScan
         case aiSummary
         case safeToDelete
         case riskyItems

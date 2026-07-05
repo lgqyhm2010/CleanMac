@@ -25,6 +25,8 @@
 "minimumSize" = "ন্যূনতম আকার";
 "model" = "মডেল";
 "defaultModel" = "ডিফল্ট";
+"dashboardReadyToScan" = "আপনার Mac স্ক্যানের জন্য প্রস্তুত";
+"dashboardQuickSafePrivate" = "দ্রুত · নিরাপদ · ব্যক্তিগত";
 "aiSummary" = "সারাংশ";
 "safeToDelete" = "নিরাপদে মুছে ফেলা যায়";
 "riskyItems" = "ঝুঁকিপূর্ণ";

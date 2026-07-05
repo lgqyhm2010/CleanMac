@@ -95,6 +95,8 @@ final class RealDataAndLocalizationTests: XCTestCase {
 
         XCTAssertTrue(designSystemSource.contains("static let sidebar = paper"))
         XCTAssertTrue(designSystemSource.contains("static let sidebarText = secondaryText"))
+        XCTAssertTrue(designSystemSource.contains("Bundle.module.url(forResource: asset.rawValue, withExtension: \"png\")"))
+        XCTAssertFalse(designSystemSource.contains("subdirectory: \"Images\""))
         XCTAssertFalse(designSystemSource.contains(".blur(radius: 70)"))
         XCTAssertFalse(designSystemSource.contains(".blur(radius: 80)"))
 
@@ -104,6 +106,11 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertFalse(sidebarSource.contains("foregroundStyle(isSelected ? Color.white"))
 
         XCTAssertTrue(scanSource.contains("private struct TrustBadgeStrip"))
+        XCTAssertTrue(scanSource.contains("private struct DiskOverviewDashboardCard"))
+        XCTAssertTrue(scanSource.contains("DashboardScanCTA("))
+        XCTAssertTrue(scanSource.contains("OverviewFeatureGrid("))
+        XCTAssertTrue(scanSource.contains("LazyVGrid(columns: Self.columns"))
+        XCTAssertFalse(scanSource.contains("DiskOverviewHeader(store: store"))
         XCTAssertTrue(scanSource.contains("TrustBadgeStrip(language: language)"))
         XCTAssertTrue(scanSource.contains("L10n.text(.trustLocalAI"))
         XCTAssertTrue(scanSource.contains("L10n.text(.trustNoTelemetry"))
