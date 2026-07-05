@@ -48,9 +48,10 @@ public struct AIToolProfile: Identifiable, Equatable, Sendable {
         self.modelOptions = modelOptions
     }
 
-    /// codex and claude read the prompt from stdin; gemini's `-p` requires the prompt as
-    /// the flag's own argument value (confirmed via each CLI's `--help`).
-    /// Model lists are curated presets — none of the CLIs can enumerate its models.
+    /// codex and claude read the prompt from stdin; gemini's and agy's `-p` require the
+    /// prompt as the flag's own argument value (confirmed via each CLI's `--help` /
+    /// published docs). Model lists are curated presets — none of the CLIs can
+    /// enumerate its models in a machine-readable way.
     public static let knownProfiles: [AIToolProfile] = [
         AIToolProfile(
             id: "codex", displayName: "Codex", binaryName: "codex",
@@ -80,6 +81,9 @@ public struct AIToolProfile: Identifiable, Equatable, Sendable {
                 AIModelOption(id: "haiku", displayName: "Haiku", flagValue: "haiku")
             ]
         ),
+        // Kept although Google retired the personal tier in June 2026 (`gemini -p`
+        // fails with IneligibleTierError there): paid Workspace/Cloud tiers still
+        // work, and detection only surfaces the tool when the binary is installed.
         AIToolProfile(
             id: "gemini", displayName: "Gemini CLI", binaryName: "gemini",
             arguments: ["-p"], promptDelivery: .argument,
@@ -90,6 +94,25 @@ public struct AIToolProfile: Identifiable, Equatable, Sendable {
                 .default,
                 AIModelOption(id: "pro", displayName: "Pro", flagValue: "pro"),
                 AIModelOption(id: "flash", displayName: "Flash", flagValue: "flash")
+            ]
+        ),
+        AIToolProfile(
+            id: "antigravity", displayName: "Antigravity CLI", binaryName: "agy",
+            // "-p" must stay last: agy takes the prompt as the flag's own argument
+            // value, which AIReviewService appends right after the base arguments.
+            // `--print-timeout 20m` lifts print mode's 5m default, which a long
+            // review with a thinking model can exceed.
+            arguments: ["--print-timeout", "20m", "-p"], promptDelivery: .argument,
+            modelFlag: "--model",
+            // agy has no alias mechanism; ids follow its Switch Model screen scheme
+            // (agy 1.0.x, July 2026) and need refreshing when Google rotates the
+            // lineup. Default = agy's own auto-selection (Gemini 3.5 Flash today).
+            modelOptions: [
+                .default,
+                AIModelOption(id: "gemini-3.5-flash", displayName: "Gemini 3.5 Flash", flagValue: "gemini-3.5-flash"),
+                AIModelOption(id: "gemini-3.1-pro", displayName: "Gemini 3.1 Pro", flagValue: "gemini-3.1-pro"),
+                AIModelOption(id: "claude-sonnet-4-6", displayName: "Claude Sonnet 4.6", flagValue: "claude-sonnet-4-6"),
+                AIModelOption(id: "claude-opus-4-6", displayName: "Claude Opus 4.6", flagValue: "claude-opus-4-6")
             ]
         )
     ]

@@ -213,6 +213,23 @@ final class AIReviewServiceTests: XCTestCase {
         XCTAssertTrue(arguments.last?.contains("safe?") ?? false)
     }
 
+    func testReviewAssemblesFullHeadlessAntigravityInvocation() async throws {
+        // The full agy command line: --model X --print-timeout 20m -p <prompt>.
+        // The prompt must land directly after "-p" (it is that flag's argument value),
+        // so the model pair goes first and "-p" stays last in the base arguments.
+        let runner = RecordingCommandRunner()
+        let profile = AIToolProfile.knownProfiles.first { $0.id == "antigravity" }!
+        let tool = DetectedAITool(profile: profile, executablePath: "/opt/homebrew/bin/agy")
+        let service = AIReviewService(tool: tool, runner: runner)
+        let model = profile.modelOptions.first { $0.flagValue == "gemini-3.1-pro" }!
+
+        _ = try await service.review(candidates: [sampleCandidate()], userQuestion: "safe?", model: model)
+
+        let arguments = runner.commands[0].arguments
+        XCTAssertEqual(Array(arguments.prefix(5)), ["--model", "gemini-3.1-pro", "--print-timeout", "20m", "-p"])
+        XCTAssertTrue(arguments.last?.contains("safe?") ?? false)
+    }
+
     func testReviewOmitsModelFlagForDefaultAndNilModel() async throws {
         let runner = RecordingCommandRunner()
         let profile = AIToolProfile.knownProfiles.first { $0.id == "claude" }!

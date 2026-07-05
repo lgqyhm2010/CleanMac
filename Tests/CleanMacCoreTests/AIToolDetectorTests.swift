@@ -15,11 +15,12 @@ final class AIToolDetectorTests: XCTestCase {
     func testDetectsMultipleToolsInProfileOrder() {
         let locator = FakeExecutableLocator(found: [
             "codex": "/opt/homebrew/bin/codex",
-            "gemini": "/opt/homebrew/bin/gemini"
+            "gemini": "/opt/homebrew/bin/gemini",
+            "agy": "/opt/homebrew/bin/agy"
         ])
         let detector = AIToolDetector(locator: locator)
 
-        XCTAssertEqual(detector.detectAvailableTools().map(\.id), ["codex", "gemini"])
+        XCTAssertEqual(detector.detectAvailableTools().map(\.id), ["codex", "gemini", "antigravity"])
     }
 
     func testReturnsEmptyWhenNoKnownToolIsFound() {
@@ -34,6 +35,7 @@ final class AIToolDetectorTests: XCTestCase {
         XCTAssertEqual(profiles["codex"]?.promptDelivery, .standardInput)
         XCTAssertEqual(profiles["claude"]?.promptDelivery, .standardInput)
         XCTAssertEqual(profiles["gemini"]?.promptDelivery, .argument)
+        XCTAssertEqual(profiles["antigravity"]?.promptDelivery, .argument)
     }
 
     func testKnownProfilesExposeDefaultFirstModelOptions() {
@@ -48,6 +50,7 @@ final class AIToolDetectorTests: XCTestCase {
         XCTAssertEqual(flags["claude"], "--model")
         XCTAssertEqual(flags["codex"], "-m")
         XCTAssertEqual(flags["gemini"], "-m")
+        XCTAssertEqual(flags["antigravity"], "--model")
     }
 
     func testClaudeModelOptionsUseAliases() {
@@ -76,6 +79,28 @@ final class AIToolDetectorTests: XCTestCase {
         // generation, unlike pinned `-preview` ids that break when models GA.
         let gemini = AIToolProfile.knownProfiles.first { $0.id == "gemini" }
         XCTAssertEqual(gemini?.modelOptions.compactMap(\.flagValue), ["pro", "flash"])
+    }
+
+    func testAntigravityRunsHeadlessPrintModeWithPromptDirectlyAfterDashP() {
+        // agy's `-p` takes the prompt as the flag's own argument value, so "-p" must be
+        // the LAST base argument — AIReviewService appends the prompt right after it.
+        // `--print-timeout 20m` lifts print mode's 5m default, which a long review with
+        // a thinking model can exceed.
+        let antigravity = AIToolProfile.knownProfiles.first { $0.id == "antigravity" }
+        XCTAssertEqual(antigravity?.binaryName, "agy")
+        XCTAssertEqual(antigravity?.arguments, ["--print-timeout", "20m", "-p"])
+        XCTAssertEqual(antigravity?.displayName, "Antigravity CLI")
+    }
+
+    func testAntigravityModelOptionsUseCurrentIDs() {
+        // agy has no alias mechanism; ids follow the Switch Model screen scheme
+        // (gemini-3.1-pro / claude-opus-4-6 style, agy 1.0.x, July 2026) and need
+        // refreshing when Google rotates the lineup. Default = agy auto-selection.
+        let antigravity = AIToolProfile.knownProfiles.first { $0.id == "antigravity" }
+        XCTAssertEqual(
+            antigravity?.modelOptions.compactMap(\.flagValue),
+            ["gemini-3.5-flash", "gemini-3.1-pro", "claude-sonnet-4-6", "claude-opus-4-6"]
+        )
     }
 
     // Exercises the REAL PATHExecutableLocator logic (not a fake) — the load-bearing
