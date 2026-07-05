@@ -1,10 +1,8 @@
 "add" = "إضافة";
-"aiCLI" = "AI CLI";
 "aiReview" = "مراجعة AI";
 "appLanguage" = "اللغة";
 "applications" = "التطبيقات";
 "appUninstaller" = "مزيل التطبيقات";
-"arguments" = "الوسائط";
 "askAI" = "اسأل AI";
 "candidates" = "العناصر المرشحة";
 "category" = "الفئة";
@@ -12,11 +10,10 @@
 "cleaner" = "المنظف";
 "clear" = "مسح";
 "clearSelection" = "مسح التحديد";
-"command" = "الأمر";
+"aiTool" = "أداة الذكاء الاصطناعي";
 "duplicateGroup" = "مجموعة مكررة";
 "duplicates" = "التكرارات";
 "english" = "الإنجليزية";
-"executable" = "ملف تنفيذي";
 "folders" = "المجلدات";
 "followSystem" = "اتباع النظام";
 "french" = "الفرنسية";
@@ -26,6 +23,12 @@
 "japanese" = "اليابانية";
 "largeFile" = "ملف كبير";
 "minimumSize" = "الحد الأدنى للحجم";
+"model" = "النموذج";
+"defaultModel" = "افتراضي";
+"aiSummary" = "الملخص";
+"safeToDelete" = "آمن للحذف";
+"riskyItems" = "محفوف بالمخاطر";
+"needsUserReview" = "يتطلب مراجعتك";
 "moveToTrash" = "نقل إلى سلة المهملات";
 "moveSelectedItemsToTrash" = "نقل العناصر المحددة إلى سلة المهملات؟";
 "moving" = "جار النقل";
@@ -176,6 +179,6 @@
 "error.itemsCouldNotBeMoved" = "تعذر نقل %ld عناصر.";
 "error.itemsWereProtected" = "تم تخطي %ld عناصر محمية.";
 "error.selectItemForAIReview" = "حدد عنصرا واحدا على الأقل لمراجعة AI.";
-"error.setAIExecutable" = "عيّن ملف AI CLI التنفيذي في الإعدادات.";
+"error.noAIToolDetected" = "لم يتم العثور على أداة AI CLI. ثبّت codex أو claude أو gemini.";
 
 "defaultAIQuestion" = "يرجى تحديد ما إذا كانت هذه الملفات مناسبة للنقل إلى سلة المهملات، واذكر أي شيء يجب أن أؤكده يدويا.";

@@ -1,10 +1,8 @@
 "add" = "जोड़ें";
-"aiCLI" = "AI CLI";
 "aiReview" = "AI समीक्षा";
 "appLanguage" = "भाषा";
 "applications" = "ऐप्लिकेशन";
 "appUninstaller" = "ऐप अनइंस्टॉलर";
-"arguments" = "आर्ग्युमेंट";
 "askAI" = "AI से पूछें";
 "candidates" = "उम्मीदवार";
 "category" = "श्रेणी";
@@ -12,11 +10,10 @@
 "cleaner" = "क्लीनर";
 "clear" = "साफ करें";
 "clearSelection" = "चयन साफ करें";
-"command" = "कमांड";
+"aiTool" = "AI टूल";
 "duplicateGroup" = "डुप्लिकेट समूह";
 "duplicates" = "डुप्लिकेट";
 "english" = "अंग्रेज़ी";
-"executable" = "एक्जीक्यूटेबल";
 "folders" = "फ़ोल्डर";
 "followSystem" = "सिस्टम का पालन करें";
 "french" = "फ़्रेंच";
@@ -26,6 +23,12 @@
 "japanese" = "जापानी";
 "largeFile" = "बड़ी फ़ाइल";
 "minimumSize" = "न्यूनतम आकार";
+"model" = "मॉडल";
+"defaultModel" = "डिफ़ॉल्ट";
+"aiSummary" = "सारांश";
+"safeToDelete" = "हटाने के लिए सुरक्षित";
+"riskyItems" = "जोखिम भरा";
+"needsUserReview" = "आपकी समीक्षा आवश्यक";
 "moveToTrash" = "ट्रैश में ले जाएँ";
 "moveSelectedItemsToTrash" = "चयनित आइटम ट्रैश में ले जाएँ?";
 "moving" = "ले जाया जा रहा है";
@@ -176,6 +179,6 @@
 "error.itemsCouldNotBeMoved" = "%ld आइटम ले जाए नहीं जा सके।";
 "error.itemsWereProtected" = "%ld सुरक्षित आइटम छोड़े गए।";
 "error.selectItemForAIReview" = "AI समीक्षा के लिए कम से कम एक आइटम चुनें।";
-"error.setAIExecutable" = "सेटिंग्स में AI CLI executable सेट करें।";
+"error.noAIToolDetected" = "कोई AI CLI टूल नहीं मिला। codex, claude या gemini इंस्टॉल करें।";
 
 "defaultAIQuestion" = "कृपया तय करें कि ये फ़ाइलें ट्रैश में ले जाने योग्य हैं या नहीं, और जिन बातों की मुझे मैन्युअल पुष्टि करनी चाहिए उन्हें सूचीबद्ध करें।";

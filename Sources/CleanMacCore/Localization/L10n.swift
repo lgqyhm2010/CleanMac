@@ -3,13 +3,11 @@ import Foundation
 public enum L10n {
     public enum Key: CaseIterable, Sendable {
         case add
-        case aiCLI
         case aiReview
         case appLanguage
         case appTagline
         case applications
         case appUninstaller
-        case arguments
         case askAI
         case candidates
         case category
@@ -17,12 +15,11 @@ public enum L10n {
         case cleaner
         case clear
         case clearSelection
-        case command
+        case aiTool
         case duplicateGroup
         case duplicates
         case edit
         case english
-        case executable
         case folders
         case followSystem
         case french
@@ -33,6 +30,12 @@ public enum L10n {
         case largeFile
         case manage
         case minimumSize
+        case model
+        case defaultModel
+        case aiSummary
+        case safeToDelete
+        case riskyItems
+        case needsUserReview
         case moveToTrash
         case moveSelectedItemsToTrash
         case moving
@@ -330,8 +333,8 @@ public enum L10n {
             return format("error.itemsWereProtected", language: language, count)
         case .selectItemForAIReview:
             return localized("error.selectItemForAIReview", language: language)
-        case .setAIExecutable:
-            return localized("error.setAIExecutable", language: language)
+        case .noAIToolDetected:
+            return localized("error.noAIToolDetected", language: language)
         case .system(let message):
             return message
         }

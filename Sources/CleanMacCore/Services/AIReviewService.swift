@@ -4,16 +4,37 @@ public protocol CommandRunning {
     func run(command: AICommand, standardInput: String) async throws -> CommandResult
 }
 
-public enum AIReviewError: Error, Equatable {
-    case commandFailed(exitCode: Int32, standardError: String)
+public enum AIReviewError: Error, Equatable, LocalizedError {
+    case commandFailed(exitCode: Int32, standardError: String, standardOutput: String)
+
+    public var errorDescription: String? {
+        switch self {
+        case let .commandFailed(exitCode, standardError, standardOutput):
+            // claude prints fatal errors ("Not logged in · Please run /login") to
+            // stdout with an empty stderr, so the user-facing detail must draw on both.
+            // Each stream is capped to its tail: codex can stream a whole transcript to
+            // stdout before failing, and CLIs print the fatal line last.
+            let detail = [standardError, standardOutput]
+                .map { Self.tail($0, limit: 400) }
+                .filter { !$0.isEmpty }
+                .joined(separator: "\n")
+            return "AI command exited with code \(exitCode): \(detail.isEmpty ? "no output" : detail)"
+        }
+    }
+
+    private static func tail(_ text: String, limit: Int) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > limit else { return trimmed }
+        return "…" + trimmed.suffix(limit)
+    }
 }
 
 public final class AIReviewService {
-    private let command: AICommand
+    private let tool: DetectedAITool
     private let runner: CommandRunning
 
-    public init(command: AICommand, runner: CommandRunning = ProcessCommandRunner()) {
-        self.command = command
+    public init(tool: DetectedAITool, runner: CommandRunning = ProcessCommandRunner()) {
+        self.tool = tool
         self.runner = runner
     }
 
@@ -38,7 +59,12 @@ public final class AIReviewService {
         return """
         You are helping review macOS disk-cleanup candidates before deletion.
         The user will move selected files to Trash, not permanently delete them.
-        Answer in concise JSON with keys: summary, safe_to_delete, risky, needs_user_review.
+        Respond with JSON only — no markdown fences, no prose outside the JSON.
+        Schema:
+        {"summary": "<one-paragraph overall assessment>",
+         "safe_to_delete": [{"path": "<absolute path>", "reason": "<short reason>"}],
+         "risky": [{"path": "...", "reason": "..."}],
+         "needs_user_review": [{"path": "...", "reason": "..."}]}
         Prefer caution for personal documents, source code, app data, and unknown paths.
 
         User question:
@@ -49,13 +75,57 @@ public final class AIReviewService {
         """
     }
 
-    public func review(candidates: [CleaningCandidate], userQuestion: String) async throws -> AIReview {
+    /// Claude Code marks every process in its own subprocess tree with these variables.
+    /// If CleanMac was launched from such a session (e.g. during development), a spawned
+    /// `claude` would inherit them and misdetect a nested session. User-facing config
+    /// (ANTHROPIC_BASE_URL, CLAUDE_CONFIG_DIR, …) is deliberately kept.
+    private static let nestedClaudeSessionMarkers: Set<String> = [
+        "CLAUDECODE",
+        "CLAUDE_CODE_ENTRYPOINT",
+        "CLAUDE_CODE_EXECPATH",
+        "CLAUDE_CODE_SESSION_ID",
+        "CLAUDE_CODE_SSE_PORT"
+    ]
+
+    /// The environment handed to the spawned CLI: the parent's, minus nested-session
+    /// markers, with the augmented PATH so a Finder-launched app (which inherits only
+    /// launchd's minimal PATH) can still resolve the tool's `env node` shebang and any
+    /// subprocesses it spawns. See ExecutableSearchPath.
+    static func childEnvironment(from base: [String: String]) -> [String: String] {
+        var environment = base.filter { !nestedClaudeSessionMarkers.contains($0.key) }
+        environment["PATH"] = ExecutableSearchPath.combinedPATH()
+        return environment
+    }
+
+    public func review(candidates: [CleaningCandidate], userQuestion: String, model: AIModelOption? = nil) async throws -> AIReview {
         let prompt = makePrompt(candidates: candidates, userQuestion: userQuestion)
-        let result = try await runner.run(command: command, standardInput: prompt)
+
+        let environment = Self.childEnvironment(from: ProcessInfo.processInfo.environment)
+
+        // The model pair's position depends on prompt delivery: gemini's prompt must
+        // directly follow its "-p", so the pair goes before the base arguments there.
+        let modelArguments = model?.flagValue.map { [tool.profile.modelFlag, $0] } ?? []
+
+        // Run from the user's home: a Finder-launched app inherits cwd "/", which
+        // CLIs treat as their working context (codex trust check, claude project scan).
+        let workingDirectory = FileManager.default.homeDirectoryForCurrentUser.path
+
+        let command: AICommand
+        let standardInput: String
+        switch tool.profile.promptDelivery {
+        case .standardInput:
+            command = AICommand(executable: tool.executablePath, arguments: tool.profile.arguments + modelArguments, environment: environment, workingDirectory: workingDirectory)
+            standardInput = prompt
+        case .argument:
+            command = AICommand(executable: tool.executablePath, arguments: modelArguments + tool.profile.arguments + [prompt], environment: environment, workingDirectory: workingDirectory)
+            standardInput = ""
+        }
+        let result = try await runner.run(command: command, standardInput: standardInput)
         guard result.exitCode == 0 else {
             throw AIReviewError.commandFailed(
                 exitCode: result.exitCode,
-                standardError: result.standardError
+                standardError: result.standardError,
+                standardOutput: result.standardOutput
             )
         }
         return AIReview(output: result.standardOutput, reviewedAt: Date())
@@ -88,6 +158,14 @@ public struct ProcessCommandRunner: CommandRunning {
         let process = Process()
         process.executableURL = URL(filePath: command.executable)
         process.arguments = command.arguments
+        // nil environment inherits the parent's; a value replaces it wholesale so the
+        // caller can hand the child an augmented PATH.
+        if let environment = command.environment {
+            process.environment = environment
+        }
+        if let workingDirectory = command.workingDirectory {
+            process.currentDirectoryURL = URL(filePath: workingDirectory)
+        }
 
         let inputPipe = Pipe()
         let outputPipe = Pipe()

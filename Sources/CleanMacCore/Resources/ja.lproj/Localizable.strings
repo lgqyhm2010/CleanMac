@@ -1,10 +1,8 @@
 "add" = "追加";
-"aiCLI" = "AI CLI";
 "aiReview" = "AI レビュー";
 "appLanguage" = "言語";
 "applications" = "アプリケーション";
 "appUninstaller" = "アプリのアンインストーラ";
-"arguments" = "引数";
 "askAI" = "AI に質問";
 "candidates" = "候補";
 "category" = "カテゴリ";
@@ -12,11 +10,10 @@
 "cleaner" = "クリーナー";
 "clear" = "クリア";
 "clearSelection" = "選択をクリア";
-"command" = "コマンド";
+"aiTool" = "AI ツール";
 "duplicateGroup" = "重複グループ";
 "duplicates" = "重複ファイル";
 "english" = "英語";
-"executable" = "実行ファイル";
 "folders" = "フォルダ";
 "followSystem" = "システムに従う";
 "french" = "フランス語";
@@ -26,6 +23,12 @@
 "japanese" = "日本語";
 "largeFile" = "大きなファイル";
 "minimumSize" = "最小サイズ";
+"model" = "モデル";
+"defaultModel" = "デフォルト";
+"aiSummary" = "概要";
+"safeToDelete" = "削除しても安全";
+"riskyItems" = "リスクあり";
+"needsUserReview" = "要確認";
 "moveToTrash" = "ゴミ箱に移動";
 "moveSelectedItemsToTrash" = "選択した項目をゴミ箱に移動しますか？";
 "moving" = "移動中";
@@ -176,6 +179,6 @@
 "error.itemsCouldNotBeMoved" = "%ld 項目を移動できませんでした。";
 "error.itemsWereProtected" = "%ld 件の保護済み項目をスキップしました。";
 "error.selectItemForAIReview" = "AI レビュー用に少なくとも 1 つの項目を選択してください。";
-"error.setAIExecutable" = "設定で AI CLI 実行ファイルを指定してください。";
+"error.noAIToolDetected" = "AI CLI ツールが見つかりません。codex、claude、gemini のいずれかをインストールしてください。";
 
 "defaultAIQuestion" = "これらのファイルをゴミ箱に移動してよいか判断し、手動確認が必要なものを列挙してください。";

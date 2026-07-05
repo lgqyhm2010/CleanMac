@@ -47,6 +47,40 @@ final class ProcessCommandRunnerTests: XCTestCase {
         XCTAssertEqual(result.standardError, "err")
     }
 
+    func testAppliesCommandEnvironmentToTheChildProcess() async throws {
+        // The spawned CLI must see the environment carried on the AICommand, otherwise the
+        // augmented PATH built by AIReviewService never reaches codex/gemini.
+        let command = AICommand(
+            executable: "/bin/sh",
+            arguments: ["-c", "printf %s \"$CLEANMAC_TEST_MARKER\""],
+            environment: ["CLEANMAC_TEST_MARKER": "reached-the-child"]
+        )
+
+        let result = try await withTimeout(seconds: 30) {
+            try await ProcessCommandRunner().run(command: command, standardInput: "")
+        }
+
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertEqual(result.standardOutput, "reached-the-child")
+    }
+
+    func testInheritsParentEnvironmentWhenCommandEnvironmentIsNil() async throws {
+        // nil environment must leave the child inheriting the parent's, not blank it out.
+        setenv("CLEANMAC_PARENT_MARKER", "from-parent", 1)
+        defer { unsetenv("CLEANMAC_PARENT_MARKER") }
+        let command = AICommand(
+            executable: "/bin/sh",
+            arguments: ["-c", "printf %s \"$CLEANMAC_PARENT_MARKER\""]
+        )
+
+        let result = try await withTimeout(seconds: 30) {
+            try await ProcessCommandRunner().run(command: command, standardInput: "")
+        }
+
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertEqual(result.standardOutput, "from-parent")
+    }
+
     private struct TimeoutError: Error {}
 
     private func withTimeout<T: Sendable>(

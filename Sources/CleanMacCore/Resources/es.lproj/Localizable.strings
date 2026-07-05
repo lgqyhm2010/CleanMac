@@ -1,10 +1,8 @@
 "add" = "Añadir";
-"aiCLI" = "AI CLI";
 "aiReview" = "Revisión de IA";
 "appLanguage" = "Idioma";
 "applications" = "Aplicaciones";
 "appUninstaller" = "Desinstalador de apps";
-"arguments" = "Argumentos";
 "askAI" = "Preguntar a IA";
 "candidates" = "Candidatos";
 "category" = "Categoría";
@@ -12,11 +10,10 @@
 "cleaner" = "Limpiador";
 "clear" = "Limpiar";
 "clearSelection" = "Borrar selección";
-"command" = "Comando";
+"aiTool" = "Herramienta de IA";
 "duplicateGroup" = "Grupo duplicado";
 "duplicates" = "Duplicados";
 "english" = "Inglés";
-"executable" = "Ejecutable";
 "folders" = "Carpetas";
 "followSystem" = "Seguir sistema";
 "french" = "Francés";
@@ -26,6 +23,12 @@
 "japanese" = "Japonés";
 "largeFile" = "Archivo grande";
 "minimumSize" = "Tamaño mínimo";
+"model" = "Modelo";
+"defaultModel" = "Predeterminado";
+"aiSummary" = "Resumen";
+"safeToDelete" = "Seguro para eliminar";
+"riskyItems" = "Arriesgado";
+"needsUserReview" = "Requiere tu revisión";
 "moveToTrash" = "Mover a la papelera";
 "moveSelectedItemsToTrash" = "¿Mover los elementos seleccionados a la papelera?";
 "moving" = "Moviendo";
@@ -176,6 +179,6 @@
 "error.itemsCouldNotBeMoved" = "No se pudieron mover %ld elementos.";
 "error.itemsWereProtected" = "Se omitieron %ld elementos protegidos.";
 "error.selectItemForAIReview" = "Selecciona al menos un elemento para la revisión de IA.";
-"error.setAIExecutable" = "Configura un ejecutable de AI CLI en Ajustes.";
+"error.noAIToolDetected" = "No se encontró ninguna herramienta de AI CLI. Instala codex, claude o gemini.";
 
 "defaultAIQuestion" = "Decide si estos archivos son adecuados para moverlos a la papelera y enumera cualquier cosa que deba confirmar manualmente.";

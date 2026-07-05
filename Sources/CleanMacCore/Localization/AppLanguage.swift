@@ -146,6 +146,6 @@ public enum CleaningErrorMessage: Equatable, Sendable {
     case itemsCouldNotBeMoved(Int)
     case itemsWereProtected(Int)
     case selectItemForAIReview
-    case setAIExecutable
+    case noAIToolDetected
     case system(String)
 }

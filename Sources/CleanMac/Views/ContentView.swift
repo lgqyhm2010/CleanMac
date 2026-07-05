@@ -6,8 +6,6 @@ struct ContentView: View {
     @State private var selection: SidebarSection?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
-    @AppStorage("aiExecutable") private var aiExecutable = "/usr/bin/env"
-    @AppStorage("aiArguments") private var aiArguments = "codex exec"
 
     init(store: CleaningStore? = nil, initialSelection: SidebarSection = .diskOverview) {
         let preference = AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey))
@@ -50,8 +48,6 @@ struct ContentView: View {
                     case .aiReview:
                         AIReviewView(
                             store: store,
-                            aiExecutable: $aiExecutable,
-                            aiArguments: $aiArguments,
                             language: resolvedLanguage
                         )
                     case .settings:

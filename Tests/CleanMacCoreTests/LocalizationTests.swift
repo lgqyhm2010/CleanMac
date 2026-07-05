@@ -78,6 +78,7 @@ struct LocalizationTests {
             "status.candidatesFound",
             "status.movedToTrash",
             "error.itemsCouldNotBeMoved",
+            "error.noAIToolDetected",
             "defaultAIQuestion",
             "storage.freeOfTotal",
             "windowTitle"

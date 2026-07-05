@@ -50,10 +50,40 @@ final class ViewStateRenderingTests: XCTestCase {
         try assertContentIsVisible(image, "AI review page rendered blank with output present")
     }
 
+    func testAIReviewPageRendersErrorMessageAfterFailure() throws {
+        let store = makeStoreWithCandidates(language: .english)
+        store.errorMessage = .system("AI command exited with code 1: something went wrong")
+        store.status = .aiReviewFailed
+        let image = render(ContentView(store: store, initialSelection: .aiReview))
+        try assertContentIsVisible(image, "AI review page rendered blank with a failure error message present")
+    }
+
     func testDiskOverviewRendersAfterScanReport() throws {
         let store = makeStoreWithCandidates(language: .english)
         let image = render(ContentView(store: store, initialSelection: .diskOverview))
         try assertContentIsVisible(image, "Disk overview rendered blank after a scan report")
+    }
+
+    func testAIReviewPageRendersToolSelectionPills() throws {
+        let store = CleaningStore(
+            language: .english,
+            aiToolDetector: AIToolDetector(locator: FakeAIToolLocator(found: ["codex": "/opt/homebrew/bin/codex"]))
+        )
+        let candidates = sampleCandidates()
+        store.candidates = candidates
+        store.lastReport = ScanReport(
+            candidates: candidates,
+            duplicateGroups: [],
+            totalBytes: candidates.reduce(0) { $0 + $1.sizeBytes },
+            scannedFileCount: candidates.count,
+            skippedFileCount: 0
+        )
+        store.selection.selectMovable(candidates)
+        store.selectedCandidateID = candidates.first?.id
+        store.status = .candidatesFound(candidates.count)
+
+        let image = render(ContentView(store: store, initialSelection: .aiReview))
+        try assertContentIsVisible(image, "AI review page rendered blank with a detected tool present")
     }
 
     // MARK: - Store fixtures
@@ -248,5 +278,13 @@ final class ViewStateRenderingTests: XCTestCase {
             return 0
         }
         return total / Double(count)
+    }
+}
+
+private struct FakeAIToolLocator: ExecutableLocating {
+    let found: [String: String]
+
+    func locate(_ binaryName: String) -> String? {
+        found[binaryName]
     }
 }

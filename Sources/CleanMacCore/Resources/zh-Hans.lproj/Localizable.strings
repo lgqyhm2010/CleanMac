@@ -1,10 +1,8 @@
 "add" = "添加";
-"aiCLI" = "AI CLI";
 "aiReview" = "AI 审查";
 "appLanguage" = "语言";
 "applications" = "应用程序";
 "appUninstaller" = "应用卸载器";
-"arguments" = "参数";
 "askAI" = "询问 AI";
 "candidates" = "候选项";
 "category" = "类别";
@@ -12,11 +10,10 @@
 "cleaner" = "清理器";
 "clear" = "清除";
 "clearSelection" = "清除选择";
-"command" = "命令";
+"aiTool" = "AI 工具";
 "duplicateGroup" = "重复组";
 "duplicates" = "重复文件";
 "english" = "English";
-"executable" = "可执行文件";
 "folders" = "文件夹";
 "followSystem" = "跟随系统";
 "french" = "法语";
@@ -26,6 +23,12 @@
 "japanese" = "日语";
 "largeFile" = "大文件";
 "minimumSize" = "最小大小";
+"model" = "模型";
+"defaultModel" = "默认";
+"aiSummary" = "总结";
+"safeToDelete" = "可安全删除";
+"riskyItems" = "有风险";
+"needsUserReview" = "需人工确认";
 "moveToTrash" = "移到废纸篓";
 "moveSelectedItemsToTrash" = "将选中项目移到废纸篓？";
 "moving" = "正在移动";
@@ -176,6 +179,6 @@
 "error.itemsCouldNotBeMoved" = "%ld 个项目无法移动。";
 "error.itemsWereProtected" = "%ld 个受保护项目已跳过。";
 "error.selectItemForAIReview" = "请至少选择一个项目供 AI 审查。";
-"error.setAIExecutable" = "请在设置中配置 AI CLI 可执行文件。";
+"error.noAIToolDetected" = "未检测到 AI CLI 工具，请安装 codex、claude 或 gemini。";
 
 "defaultAIQuestion" = "请判断这些文件是否适合移到废纸篓，并列出需要我手动确认的项目。";

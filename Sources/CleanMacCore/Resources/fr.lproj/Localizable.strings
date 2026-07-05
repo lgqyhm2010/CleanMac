@@ -1,10 +1,8 @@
 "add" = "Ajouter";
-"aiCLI" = "AI CLI";
 "aiReview" = "Revue IA";
 "appLanguage" = "Langue";
 "applications" = "Applications";
 "appUninstaller" = "Désinstallateur d'apps";
-"arguments" = "Arguments";
 "askAI" = "Demander à l'IA";
 "candidates" = "Candidats";
 "category" = "Catégorie";
@@ -12,11 +10,10 @@
 "cleaner" = "Nettoyeur";
 "clear" = "Effacer";
 "clearSelection" = "Effacer la sélection";
-"command" = "Commande";
+"aiTool" = "Outil IA";
 "duplicateGroup" = "Groupe de doublons";
 "duplicates" = "Doublons";
 "english" = "Anglais";
-"executable" = "Exécutable";
 "folders" = "Dossiers";
 "followSystem" = "Suivre le système";
 "french" = "Français";
@@ -26,6 +23,12 @@
 "japanese" = "Japonais";
 "largeFile" = "Gros fichier";
 "minimumSize" = "Taille minimale";
+"model" = "Modèle";
+"defaultModel" = "Par défaut";
+"aiSummary" = "Résumé";
+"safeToDelete" = "Suppression sûre";
+"riskyItems" = "Risqué";
+"needsUserReview" = "À vérifier";
 "moveToTrash" = "Déplacer vers la corbeille";
 "moveSelectedItemsToTrash" = "Déplacer les éléments sélectionnés vers la corbeille ?";
 "moving" = "Déplacement";
@@ -176,6 +179,6 @@
 "error.itemsCouldNotBeMoved" = "%ld éléments n'ont pas pu être déplacés.";
 "error.itemsWereProtected" = "%ld éléments protégés ont été ignorés.";
 "error.selectItemForAIReview" = "Sélectionnez au moins un élément pour la revue IA.";
-"error.setAIExecutable" = "Définissez un exécutable AI CLI dans Réglages.";
+"error.noAIToolDetected" = "Aucun outil AI CLI trouvé. Installez codex, claude ou gemini.";
 
 "defaultAIQuestion" = "Détermine si ces fichiers peuvent être déplacés vers la corbeille et liste ce que je devrais confirmer manuellement.";

@@ -1,6 +1,7 @@
 .DS_Store
 .build/
 .loopgoal/
+.superpowers/
 dist/
 DerivedData/
 *.xcuserstate

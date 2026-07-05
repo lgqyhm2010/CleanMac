@@ -1,10 +1,8 @@
 "add" = "যোগ করুন";
-"aiCLI" = "AI CLI";
 "aiReview" = "AI পর্যালোচনা";
 "appLanguage" = "ভাষা";
 "applications" = "অ্যাপ্লিকেশন";
 "appUninstaller" = "অ্যাপ আনইনস্টলার";
-"arguments" = "আর্গুমেন্ট";
 "askAI" = "AI-কে জিজ্ঞেস করুন";
 "candidates" = "প্রার্থী";
 "category" = "বিভাগ";
@@ -12,11 +10,10 @@
 "cleaner" = "ক্লিনার";
 "clear" = "পরিষ্কার";
 "clearSelection" = "নির্বাচন পরিষ্কার";
-"command" = "কমান্ড";
+"aiTool" = "AI টুল";
 "duplicateGroup" = "ডুপ্লিকেট গ্রুপ";
 "duplicates" = "ডুপ্লিকেট";
 "english" = "ইংরেজি";
-"executable" = "এক্সিকিউটেবল";
 "folders" = "ফোল্ডার";
 "followSystem" = "সিস্টেম অনুসরণ করুন";
 "french" = "ফরাসি";
@@ -26,6 +23,12 @@
 "japanese" = "জাপানি";
 "largeFile" = "বড় ফাইল";
 "minimumSize" = "ন্যূনতম আকার";
+"model" = "মডেল";
+"defaultModel" = "ডিফল্ট";
+"aiSummary" = "সারাংশ";
+"safeToDelete" = "নিরাপদে মুছে ফেলা যায়";
+"riskyItems" = "ঝুঁকিপূর্ণ";
+"needsUserReview" = "আপনার পর্যালোচনা প্রয়োজন";
 "moveToTrash" = "ট্র্যাশে সরান";
 "moveSelectedItemsToTrash" = "নির্বাচিত আইটেমগুলো ট্র্যাশে সরাবেন?";
 "moving" = "সরানো হচ্ছে";
@@ -176,6 +179,6 @@
 "error.itemsCouldNotBeMoved" = "%ld আইটেম সরানো যায়নি।";
 "error.itemsWereProtected" = "%ld সুরক্ষিত আইটেম বাদ গেছে।";
 "error.selectItemForAIReview" = "AI পর্যালোচনার জন্য অন্তত একটি আইটেম নির্বাচন করুন।";
-"error.setAIExecutable" = "সেটিংসে একটি AI CLI executable সেট করুন।";
+"error.noAIToolDetected" = "কোনো AI CLI টুল পাওয়া যায়নি। codex, claude বা gemini ইনস্টল করুন।";
 
 "defaultAIQuestion" = "এই ফাইলগুলো ট্র্যাশে সরানো উপযুক্ত কি না দয়া করে নির্ধারণ করুন, এবং আমাকে ম্যানুয়ালি নিশ্চিত করতে হবে এমন কিছু থাকলে তালিকা করুন।";

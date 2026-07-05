@@ -16,6 +16,7 @@ final class CleaningStore: ObservableObject {
     @Published var cleanupResult: CleanupResult?
     @Published var aiQuestion: String
     @Published var aiOutput = ""
+    @Published var aiReviewSummary: AIReviewSummary?
     @Published var status: CleaningStatus = .ready
     @Published var errorMessage: CleaningErrorMessage?
     @Published var isScanning = false
@@ -26,10 +27,78 @@ final class CleaningStore: ObservableObject {
     @Published var minimumSizeMegabytes = 1.0
     @Published var largeFileThresholdMegabytes = 500.0
     @Published var volumeSnapshot: StorageVolumeSnapshot?
+    @Published var detectedAITools: [DetectedAITool] = []
+    @Published var selectedAIToolID: String?
+    @Published var selectedModelIDsByTool: [String: String]
 
-    init(language: ResolvedLanguage = AppLanguage.system.resolved()) {
+    private let aiToolDetector: AIToolDetector
+    private static let aiToolPreferenceKey = "aiSelectedToolID"
+    private static let aiModelPreferenceKey = "aiModelPreferenceByTool"
+
+    init(language: ResolvedLanguage = AppLanguage.system.resolved(), aiToolDetector: AIToolDetector = AIToolDetector()) {
+        self.aiToolDetector = aiToolDetector
         aiQuestion = L10n.defaultAIQuestion(language: language)
+        selectedModelIDsByTool = UserDefaults.standard.dictionary(forKey: Self.aiModelPreferenceKey) as? [String: String] ?? [:]
         refreshVolumeSnapshot()
+        refreshDetectedAITools()
+    }
+
+    func refreshDetectedAITools() {
+        applyDetectedTools(aiToolDetector.detectAvailableTools())
+    }
+
+    private func applyDetectedTools(_ tools: [DetectedAITool]) {
+        detectedAITools = tools
+
+        if let selectedAIToolID, tools.contains(where: { $0.id == selectedAIToolID }) {
+            return
+        }
+
+        let storedID = UserDefaults.standard.string(forKey: Self.aiToolPreferenceKey)
+        if let storedID, tools.contains(where: { $0.id == storedID }) {
+            selectedAIToolID = storedID
+        } else if tools.count == 1 {
+            selectedAIToolID = tools[0].id
+        } else {
+            selectedAIToolID = nil
+        }
+    }
+
+    func selectAITool(_ id: String) {
+        selectedAIToolID = id
+        UserDefaults.standard.set(id, forKey: Self.aiToolPreferenceKey)
+    }
+
+    func selectModel(_ modelID: String, for toolID: String) {
+        selectedModelIDsByTool[toolID] = modelID
+        UserDefaults.standard.set(selectedModelIDsByTool, forKey: Self.aiModelPreferenceKey)
+    }
+
+    /// Keeps the raw text (fallback view, copying) and derives the structured
+    /// summary from it; nil summary means the UI shows the raw text.
+    func applyAIReviewOutput(_ output: String) {
+        aiOutput = output
+        aiReviewSummary = AIReviewOutputParser.parse(output)
+    }
+
+    /// Resolves the persisted choice against the tool's presets; unknown or missing
+    /// ids degrade to the first (Default) option so removed presets never break askAI.
+    func selectedModelOption(for toolID: String) -> AIModelOption? {
+        guard let profile = detectedAITools.first(where: { $0.id == toolID })?.profile else { return nil }
+        let storedID = selectedModelIDsByTool[toolID]
+        return profile.modelOptions.first { $0.id == storedID } ?? profile.modelOptions.first
+    }
+
+    /// Called when the AI Review screen appears: clears any error bled over from another
+    /// screen and refreshes the tool list off the main thread (the PATH scan is filesystem
+    /// IO we don't want to run synchronously on every visit).
+    func prepareAIReviewScreen() async {
+        errorMessage = nil
+        let detector = aiToolDetector
+        let tools = await Task.detached(priority: .userInitiated) {
+            detector.detectAvailableTools()
+        }.value
+        applyDetectedTools(tools)
     }
 
     var selectedCandidates: [CleaningCandidate] {
@@ -277,14 +346,15 @@ final class CleaningStore: ObservableObject {
         }
     }
 
-    func askAI(executable: String, argumentsText: String) {
+    func askAI() {
         let targets = selectedCandidates
         guard !targets.isEmpty else {
             errorMessage = .selectItemForAIReview
             return
         }
-        guard !executable.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = .setAIExecutable
+        refreshDetectedAITools()
+        guard let selectedAIToolID, let tool = detectedAITools.first(where: { $0.id == selectedAIToolID }) else {
+            errorMessage = .noAIToolDetected
             return
         }
         guard !isReviewingWithAI else { return }
@@ -292,19 +362,17 @@ final class CleaningStore: ObservableObject {
         isReviewingWithAI = true
         errorMessage = nil
         aiOutput = ""
+        aiReviewSummary = nil
         status = .askingAI
 
-        let command = AICommand(
-            executable: executable,
-            arguments: CommandLineArguments.split(argumentsText)
-        )
         let question = aiQuestion
+        let model = selectedModelOption(for: tool.id)
 
         Task {
             do {
-                let review = try await AIReviewService(command: command)
-                    .review(candidates: targets, userQuestion: question)
-                aiOutput = review.output
+                let review = try await AIReviewService(tool: tool)
+                    .review(candidates: targets, userQuestion: question, model: model)
+                applyAIReviewOutput(review.output)
                 status = .aiReviewFinished
             } catch {
                 errorMessage = .system(error.localizedDescription)
