@@ -1,56 +1,44 @@
 {
   "mode": "goal",
-  "objective": "Complete CleanMac real local functionality and localization coverage on a new branch.",
-  "exit_condition": "The goal is complete when current CleanMac features use real local data instead of fake, demo, placeholder, or hardcoded sample data; incomplete localization has been replaced with resource-backed strings across supported locales with placeholder parity; relevant tests prove the behavior; swift test passes; and checkpoint plus implementation changes are committed.",
-  "status": "done",
-  "iteration": 1,
+  "objective": "Use imagegen to re-imagine CleanMac's current design, then implement the refreshed visual direction on a fresh branch from latest origin/main.",
+  "exit_condition": "The goal is complete when the branch is based on latest origin/main, the current UI/design context has been inspected, an imagegen concept has been generated and saved or referenced for the implementation, focused failing tests or source guards cover the intended UI/design behavior before production changes, the refreshed design is implemented in the app, verification commands pass, .loopgoal/state.json records the final state, and the intended changes are committed.",
+  "status": "in_progress",
+  "iteration": 0,
   "phases": [
-    {"name": "Create feature branch and checkpoint", "status": "done"},
-    {"name": "Audit fake data and incomplete localization gaps", "status": "done"},
-    {"name": "Add failing tests for real-data and localization gaps", "status": "done"},
-    {"name": "Implement real-data behavior and localization fixes", "status": "done"},
-    {"name": "Verify with SwiftPM tests and build", "status": "done"},
-    {"name": "Commit verified checkpoint and implementation", "status": "done"}
+    {"name": "Branch from latest origin/main and initialize checkpoint", "status": "done"},
+    {"name": "Inspect current UI structure and runtime design surface", "status": "done"},
+    {"name": "Generate imagegen visual concept and distill implementable direction", "status": "todo"},
+    {"name": "Add failing tests/source guards for the design change", "status": "todo"},
+    {"name": "Implement refreshed design", "status": "todo"},
+    {"name": "Verify, update checkpoint, and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "Goal complete: fake overview/sidebar capacity literals were replaced with real volume or scan data; sidebar, overview, app menu, and menu bar strings use resource-backed localization across all supported locales; full SwiftPM tests pass.",
-    "next_action": "Stop scheduling; implementation and checkpoint are ready for commit.",
+    "focus": "Fresh branch codex/reimagined-cleanmac-design created from origin/main 612239cd672bd372bf35e848471890e9781f0504. Baseline verification passed: env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test ran 100 XCTest tests and 12 Swift Testing tests with 0 failures. Three read-only explorer subagents mapped the UI structure, test surface, and imagegen prompt evidence.",
+    "next_action": "Generate the imagegen visual concept and distill it into scoped SwiftUI implementation changes.",
     "blockers": ""
   },
   "decisions": [
     {
       "decision": "Treat this as GOAL mode.",
-      "reason": "The objective is result-driven: real features and complete localization are the explicit end state."
+      "reason": "The user asked for a result-driven design re-imagination and implementation, not a recurring time-based loop."
     },
     {
-      "decision": "Use a normal feature branch in the current checkout instead of creating an extra worktree.",
-      "reason": "The user explicitly asked to checkout a new branch, and the working tree was clean on main before branching."
+      "decision": "Branch from origin/main 612239cd672bd372bf35e848471890e9781f0504.",
+      "reason": "The user explicitly requested latest remote main before cutting the branch."
     },
     {
-      "decision": "Use SwiftPM for verification.",
-      "reason": "CleanMac is package-first, and prior verified workflows use SwiftPM tests and builds."
+      "decision": "Stash the previous .loopgoal/state.json working-tree edit before switching branches.",
+      "reason": "It belonged to a completed earlier goal and would otherwise pollute this new checkpoint; stash preserves it without discarding user-visible state."
     },
     {
-      "decision": "Use tests-first for behavior changes.",
-      "reason": "Real-data behavior and localization fixes should be proven by failing tests before production changes."
+      "decision": "Remove the clean old worktree .claude/worktrees/busy-noether-2200b2 and reset generated .build/dist artifacts.",
+      "reason": "SwiftPM verification initially failed because the volume had only about 114 MiB free; the old worktree had no uncommitted changes and freeing it allowed a real baseline test run."
     },
     {
-      "decision": "Replace static overview and sidebar capacity numbers with StorageVolumeReporter and scan-derived totals.",
-      "reason": "The previous UI showed fixed GB values before a scan, which looked like real functionality but was not sourced from the local machine."
-    },
-    {
-      "decision": "Move sidebar, overview, edit menu, and menu bar status copy into Localizable.strings.",
-      "reason": "Swift-side language branches only covered part of Chinese and left other supported languages falling back to English."
-    },
-    {
-      "decision": "Use source-level regression tests for fake literals and menu hardcoding in addition to behavior tests.",
-      "reason": "The fake-data problem was visible in SwiftUI constants, so source guards make regressions cheap to catch."
-    },
-    {
-      "decision": "Treat SystemPermissionGuide default English text as model fallback rather than displayed localization.",
-      "reason": "PermissionGuideView already renders title, explanation, and instructions through L10n, while tests still validate the raw guide contents for the core model."
+      "decision": "Keep implementation centered on the existing playful desktop utility design language.",
+      "reason": "Repo design docs, assets, and explorer evidence point to thick ink outlines, warm paper panels, colorful feature badges, local AI second opinion, Move to Trash safety, privacy, and safety-rule trust as the product identity."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/codex-clang-module-cache swift test",
-  "updated_at": "2026-06-30T01:32:48Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
+  "updated_at": "2026-07-05T10:26:21Z"
 }
