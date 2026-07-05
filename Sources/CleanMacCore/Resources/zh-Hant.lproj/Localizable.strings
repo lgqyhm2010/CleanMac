@@ -18,6 +18,8 @@
 "followSystem" = "跟隨系統";
 "french" = "法文";
 "hiddenFiles" = "隱藏檔案";
+"healthy" = "健康";
+"help" = "說明";
 "hindi" = "印地文";
 "include" = "包含";
 "japanese" = "日文";
@@ -41,6 +43,7 @@
 "noReview" = "沒有審查結果";
 "potential" = "可清理";
 "permissions" = "權限";
+"privateByDesign" = "隱私優先設計";
 "protection" = "保護";
 "question" = "問題";
 "quitCleanMac" = "結束 CleanMac";

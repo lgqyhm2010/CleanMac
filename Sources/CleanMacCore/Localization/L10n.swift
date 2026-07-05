@@ -24,6 +24,8 @@ public enum L10n {
         case followSystem
         case french
         case hiddenFiles
+        case healthy
+        case help
         case hindi
         case include
         case japanese
@@ -48,6 +50,7 @@ public enum L10n {
         case noReview
         case potential
         case permissions
+        case privateByDesign
         case protection
         case question
         case quitCleanMac

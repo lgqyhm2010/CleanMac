@@ -3,17 +3,18 @@
   "objective": "Use imagegen to re-imagine CleanMac's current design, then implement the refreshed visual direction on a fresh branch from latest origin/main.",
   "exit_condition": "The goal is complete when the branch is based on latest origin/main, the current UI/design context has been inspected, an imagegen concept has been generated and saved or referenced for the implementation, focused failing tests or source guards cover the intended UI/design behavior before production changes, the refreshed design is implemented in the app, verification commands pass, .loopgoal/state.json records the final state, and the intended changes are committed.",
   "status": "done",
-  "iteration": 1,
+  "iteration": 2,
   "phases": [
     {"name": "Branch from latest origin/main and initialize checkpoint", "status": "done"},
     {"name": "Inspect current UI structure and runtime design surface", "status": "done"},
     {"name": "Generate imagegen visual concept and distill implementable direction", "status": "done"},
     {"name": "Add failing tests/source guards for the design change", "status": "done"},
     {"name": "Implement refreshed design", "status": "done"},
-    {"name": "Verify, update checkpoint, and commit", "status": "done"}
+    {"name": "Verify, update checkpoint, and commit", "status": "done"},
+    {"name": "Follow-up: tighten dashboard details after visual comparison", "status": "done"}
   ],
   "current": {
-    "focus": "GOAL complete after follow-up design comparison. Imagegen concept was generated and saved at docs/design/assets/reimagined-cleanmac-dashboard.png. SwiftUI implementation now uses paper sidebar chrome, a non-blurred paper-texture background, real bundled hand-drawn PNG assets, a top disk dashboard card, metric row, scan CTA strip, four feature cards, and a localized trust strip for Local AI, Move to Trash, No Telemetry, and No Cloud Upload. Tests were red first, then green. Final follow-up verification: git diff --check passed; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 102 XCTest tests and 12 Swift Testing tests; ./script/build_and_run.sh --verify exited 0; pgrep found dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 18873.",
+    "focus": "GOAL complete after second follow-up design comparison. The dashboard now matches the imagegen concept more closely: deterministic English UI snapshots via languageOverride, 48px titlebar with traffic lights, mascot brand, Settings and Help actions, content-level Disk Overview heading, private-by-design badge, Healthy disk status, inline CTA trust checklist, and more compact horizontal feature cards. Fresh snapshot generated at /tmp/cleanmac-snapshots2/diskOverview.png. Verification: focused red test failed before implementation, then passed; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 102 XCTest tests and 12 Swift Testing tests; git diff --check passed; ./script/build_and_run.sh --verify exited 0; pgrep found dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 55012.",
     "next_action": "Stop scheduling after committing the implementation.",
     "blockers": ""
   },
@@ -61,8 +62,24 @@
     {
       "decision": "Rework ScanView into the imagegen dashboard structure.",
       "reason": "The mockup's main reusable structure is top disk dashboard card, metric row, scan CTA, four feature cards, and trust strip; tests now guard those components."
+    },
+    {
+      "decision": "Reopen the completed design goal for one follow-up iteration.",
+      "reason": "The user pointed out remaining detail differences after seeing the first aligned screenshot."
+    },
+    {
+      "decision": "Add a ContentView language override for tests and snapshots.",
+      "reason": "Rendered snapshots were reading AppStorage instead of the injected store language, so local preferences could make comparison images switch languages unexpectedly."
+    },
+    {
+      "decision": "Move the page identity from a tiny centered titlebar into a content-level dashboard header.",
+      "reason": "The imagegen mockup treats the macOS titlebar as window chrome and the large Disk Overview row as the real page heading."
+    },
+    {
+      "decision": "Keep production language preference behavior while stabilizing test renderers.",
+      "reason": "Users should still see their chosen app language, but screenshot tests need deterministic output for design comparison."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
-  "updated_at": "2026-07-05T10:59:44Z"
+  "updated_at": "2026-07-05T11:20:52Z"
 }

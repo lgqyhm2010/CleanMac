@@ -18,6 +18,8 @@
 "followSystem" = "Follow System";
 "french" = "French";
 "hiddenFiles" = "Hidden Files";
+"healthy" = "Healthy";
+"help" = "Help";
 "hindi" = "Hindi";
 "include" = "Include";
 "japanese" = "Japanese";
@@ -41,6 +43,7 @@
 "noReview" = "No Review";
 "potential" = "Potential";
 "permissions" = "Permissions";
+"privateByDesign" = "Private by design";
 "protection" = "Protection";
 "question" = "Question";
 "quitCleanMac" = "Quit CleanMac";

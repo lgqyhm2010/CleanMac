@@ -4,12 +4,19 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var store: CleaningStore
     @State private var selection: SidebarSection?
+    private let languageOverride: ResolvedLanguage?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
 
-    init(store: CleaningStore? = nil, initialSelection: SidebarSection = .diskOverview) {
+    init(
+        store: CleaningStore? = nil,
+        initialSelection: SidebarSection = .diskOverview,
+        languageOverride: ResolvedLanguage? = nil
+    ) {
+        self.languageOverride = languageOverride
         let preference = AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey))
-        _store = StateObject(wrappedValue: store ?? CleaningStore(language: preference.resolved()))
+        let initialLanguage = languageOverride ?? preference.resolved()
+        _store = StateObject(wrappedValue: store ?? CleaningStore(language: initialLanguage))
         _selection = State(initialValue: initialSelection)
     }
 
@@ -19,7 +26,9 @@ struct ContentView: View {
                 title: L10n.windowTitle(
                     (selection ?? .diskOverview).title(language: resolvedLanguage),
                     language: resolvedLanguage
-                )
+                ),
+                language: resolvedLanguage,
+                openSettings: { selection = .settings }
             )
 
             HStack(spacing: 0) {
@@ -83,6 +92,6 @@ struct ContentView: View {
     }
 
     private var resolvedLanguage: ResolvedLanguage {
-        AppLanguage(storedRawValue: appLanguageRaw).resolved()
+        languageOverride ?? AppLanguage(storedRawValue: appLanguageRaw).resolved()
     }
 }

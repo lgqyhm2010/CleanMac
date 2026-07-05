@@ -18,6 +18,8 @@
 "followSystem" = "Как в системе";
 "french" = "Французский";
 "hiddenFiles" = "Скрытые файлы";
+"healthy" = "Исправен";
+"help" = "Справка";
 "hindi" = "Хинди";
 "include" = "Включить";
 "japanese" = "Японский";
@@ -41,6 +43,7 @@
 "noReview" = "Нет проверки";
 "potential" = "Потенциал";
 "permissions" = "Разрешения";
+"privateByDesign" = "Приватность по умолчанию";
 "protection" = "Защита";
 "question" = "Вопрос";
 "quitCleanMac" = "Выйти из CleanMac";

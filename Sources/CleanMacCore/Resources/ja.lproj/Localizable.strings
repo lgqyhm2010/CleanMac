@@ -18,6 +18,8 @@
 "followSystem" = "システムに従う";
 "french" = "フランス語";
 "hiddenFiles" = "隠しファイル";
+"healthy" = "正常";
+"help" = "ヘルプ";
 "hindi" = "ヒンディー語";
 "include" = "含める";
 "japanese" = "日本語";
@@ -41,6 +43,7 @@
 "noReview" = "レビューなし";
 "potential" = "候補";
 "permissions" = "権限";
+"privateByDesign" = "プライバシー重視設計";
 "protection" = "保護";
 "question" = "質問";
 "quitCleanMac" = "CleanMac を終了";

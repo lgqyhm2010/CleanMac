@@ -11,6 +11,8 @@ struct ScanView: View {
 
     var body: some View {
         CleanMacPage(accent: CleanMacTheme.accent) {
+            DashboardHeaderRow(language: language)
+
             DiskOverviewDashboardCard(store: store, language: language)
 
             DashboardMetricRow(store: store, language: language, openResults: openResults)
@@ -124,6 +126,64 @@ struct ScanView: View {
     }
 }
 
+private struct DashboardHeaderRow: View {
+    var language: ResolvedLanguage
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            HStack(spacing: 12) {
+                CleanMacFeatureImage(asset: .diskOverview, tint: CleanMacTheme.accent)
+                    .frame(width: 46, height: 46)
+
+                Text(L10n.text(.sidebarDiskOverviewTitle, language: language))
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(CleanMacTheme.ink)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 12)
+
+            DashboardPrivacyBadge(language: language)
+        }
+    }
+}
+
+private struct DashboardPrivacyBadge: View {
+    var language: ResolvedLanguage
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "checkmark.shield.fill")
+                .font(.title3.weight(.bold))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(CleanMacTheme.mint)
+                .frame(width: 30, height: 30)
+                .background(CleanMacTheme.mint.opacity(0.18), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(CleanMacTheme.ink, lineWidth: 1.4)
+                }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L10n.text(.privateByDesign, language: language))
+                    .font(.caption.weight(.bold))
+                Text("\(L10n.text(.trustNoTelemetry, language: language)). \(L10n.text(.trustNoCloudUpload, language: language)).")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(CleanMacTheme.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(CleanMacTheme.paper, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(CleanMacTheme.mint.opacity(0.85), lineWidth: 1.5)
+        }
+    }
+}
+
 private struct DiskOverviewHeader: View {
     @ObservedObject var store: CleaningStore
     var language: ResolvedLanguage
@@ -225,7 +285,7 @@ private struct DiskOverviewDashboardCard: View {
                             .font(.title2.weight(.bold))
                             .lineLimit(1)
                         StatusBadge(
-                            text: store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.trustMoveToTrash, language: language),
+                            text: store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.healthy, language: language),
                             symbolName: store.isScanning ? "magnifyingglass" : "checkmark",
                             tint: store.isScanning ? CleanMacTheme.accent : CleanMacTheme.mint,
                             isActive: store.isScanning
@@ -460,11 +520,7 @@ private struct DashboardScanCTA: View {
                     Text(L10n.text(.dashboardReadyToScan, language: language))
                         .font(.title3.weight(.bold))
                         .lineLimit(1)
-                    HStack(spacing: 8) {
-                        StatusBadge(text: L10n.text(.trustMoveToTrash, language: language), symbolName: "checkmark", tint: CleanMacTheme.mint)
-                        StatusBadge(text: L10n.text(.trustLocalAI, language: language), symbolName: "sparkles", tint: CleanMacTheme.purple)
-                        StatusBadge(text: L10n.text(.trustNoTelemetry, language: language), symbolName: "checkmark.shield", tint: CleanMacTheme.mint)
-                    }
+                    ScanTrustChecklist(language: language)
                 }
 
                 Spacer(minLength: 12)
@@ -487,6 +543,34 @@ private struct DashboardScanCTA: View {
                         .foregroundStyle(CleanMacTheme.secondaryText)
                 }
             }
+        }
+    }
+}
+
+private struct ScanTrustChecklist: View {
+    var language: ResolvedLanguage
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ScanTrustChecklistItem(title: L10n.text(.trustMoveToTrash, language: language))
+            ScanTrustChecklistItem(title: L10n.text(.trustLocalAI, language: language))
+            ScanTrustChecklistItem(title: L10n.text(.trustNoTelemetry, language: language))
+        }
+    }
+}
+
+private struct ScanTrustChecklistItem: View {
+    var title: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "checkmark.circle.fill")
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(CleanMacTheme.mint)
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
         }
     }
 }
@@ -755,21 +839,24 @@ private struct OverviewActionCard: View {
     var body: some View {
         CleanMacPanel(tint: tint) {
             VStack(alignment: .leading, spacing: 10) {
-                CleanMacFeatureImage(asset: asset, tint: tint, isActive: isActive)
-                    .frame(width: 68, height: 68)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(alignment: .top, spacing: 10) {
+                    CleanMacFeatureImage(asset: asset, tint: tint, isActive: isActive)
+                        .frame(width: 54, height: 54)
 
-                Text(title)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(CleanMacTheme.ink)
-                    .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(title)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(CleanMacTheme.ink)
+                            .lineLimit(1)
 
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(CleanMacTheme.secondaryText)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .frame(minHeight: 34)
+                        Text(detail)
+                            .font(.caption)
+                            .foregroundStyle(CleanMacTheme.secondaryText)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.82)
+                    }
+                }
 
                 Button(action: action) {
                     Label(buttonTitle, systemImage: buttonSymbol)
@@ -777,7 +864,7 @@ private struct OverviewActionCard: View {
                 }
                 .buttonStyle(CleanMacRaisedButtonStyle(tint: tint, prominent: true))
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 116, alignment: .top)
         }
     }
 }

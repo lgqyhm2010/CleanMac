@@ -89,13 +89,23 @@ final class RealDataAndLocalizationTests: XCTestCase {
     }
 
     func testReimaginedDashboardUsesPaperChromeAndTrustStrip() throws {
+        let contentSource = try sourceFile("Sources/CleanMac/Views/ContentView.swift")
         let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
         let sidebarSource = try sourceFile("Sources/CleanMac/Views/SidebarView.swift")
         let scanSource = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
 
+        XCTAssertTrue(contentSource.contains("private let languageOverride: ResolvedLanguage?"))
+        XCTAssertTrue(contentSource.contains("languageOverride ?? AppLanguage(storedRawValue: appLanguageRaw).resolved()"))
+        XCTAssertTrue(contentSource.contains("CleanMacAppTitleBar("))
+        XCTAssertTrue(contentSource.contains("openSettings: { selection = .settings }"))
+
         XCTAssertTrue(designSystemSource.contains("static let sidebar = paper"))
         XCTAssertTrue(designSystemSource.contains("static let sidebarText = secondaryText"))
         XCTAssertTrue(designSystemSource.contains("Bundle.module.url(forResource: asset.rawValue, withExtension: \"png\")"))
+        XCTAssertTrue(designSystemSource.contains("private struct TrafficLightDot"))
+        XCTAssertTrue(designSystemSource.contains("CleanMacFeatureImage(asset: .mascot"))
+        XCTAssertTrue(designSystemSource.contains("Button(action: openSettings)"))
+        XCTAssertTrue(designSystemSource.contains("L10n.text(.help"))
         XCTAssertFalse(designSystemSource.contains("subdirectory: \"Images\""))
         XCTAssertFalse(designSystemSource.contains(".blur(radius: 70)"))
         XCTAssertFalse(designSystemSource.contains(".blur(radius: 80)"))
@@ -106,6 +116,8 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertFalse(sidebarSource.contains("foregroundStyle(isSelected ? Color.white"))
 
         XCTAssertTrue(scanSource.contains("private struct TrustBadgeStrip"))
+        XCTAssertTrue(scanSource.contains("private struct DashboardHeaderRow"))
+        XCTAssertTrue(scanSource.contains("DashboardHeaderRow(language: language)"))
         XCTAssertTrue(scanSource.contains("private struct DiskOverviewDashboardCard"))
         XCTAssertTrue(scanSource.contains("DashboardScanCTA("))
         XCTAssertTrue(scanSource.contains("OverviewFeatureGrid("))

@@ -8,7 +8,7 @@ final class UIRenderingSmokeTests: XCTestCase {
     func testEverySidebarPageRendersVisibleMainContent() throws {
         for section in SidebarSection.allCases {
             let store = CleaningStore(language: .english)
-            let view = ContentView(store: store, initialSelection: section)
+            let view = ContentView(store: store, initialSelection: section, languageOverride: .english)
                 .frame(width: 1_180, height: 760)
 
             let image = render(view)
@@ -39,7 +39,7 @@ final class UIRenderingSmokeTests: XCTestCase {
 
     func testMinimumWindowUsesPaperSidebarChrome() throws {
         let store = CleaningStore(language: .english)
-        let view = ContentView(store: store, initialSelection: .diskOverview)
+        let view = ContentView(store: store, initialSelection: .diskOverview, languageOverride: .english)
             .frame(width: 1_020, height: 660)
 
         let image = render(view, width: 1_020, height: 660)

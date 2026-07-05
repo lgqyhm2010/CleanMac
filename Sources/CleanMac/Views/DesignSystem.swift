@@ -254,27 +254,75 @@ private struct CleanMacPaperTexture: View {
 
 struct CleanMacAppTitleBar: View {
     var title: String
+    var language: ResolvedLanguage
+    var openSettings: () -> Void = {}
 
     var body: some View {
         ZStack {
             CleanMacTheme.titlebar
 
-            HStack(spacing: 8) {
-                Spacer()
+            HStack(spacing: 16) {
+                HStack(spacing: 8) {
+                    TrafficLightDot(color: Color(hex: 0xFF6257))
+                    TrafficLightDot(color: Color(hex: 0xFDBC2E))
+                    TrafficLightDot(color: Color(hex: 0x29C940))
+                }
+                .frame(width: 76, alignment: .leading)
+
+                HStack(spacing: 9) {
+                    CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent)
+                        .frame(width: 30, height: 30)
+                    Text("CleanMac")
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(CleanMacTheme.ink)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 24)
+
                 Text(title)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)
-                Spacer()
+
+                Spacer(minLength: 24)
+
+                HStack(spacing: 18) {
+                    Button(action: openSettings) {
+                        Label(L10n.text(.settings, language: language), systemImage: "gearshape")
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: {}) {
+                        Label(L10n.text(.help, language: language), systemImage: "questionmark.circle")
+                    }
+                    .buttonStyle(.plain)
+                }
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(CleanMacTheme.ink)
             }
-            .padding(.horizontal, 78)
+            .padding(.horizontal, 18)
         }
-        .frame(height: 30)
+        .frame(height: 48)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(CleanMacTheme.ink)
                 .frame(height: 1.5)
         }
+    }
+}
+
+private struct TrafficLightDot: View {
+    var color: Color
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: 12, height: 12)
+            .overlay {
+                Circle()
+                    .strokeBorder(CleanMacTheme.ink.opacity(0.32), lineWidth: 1)
+            }
     }
 }
 

@@ -18,6 +18,8 @@
 "followSystem" = "सिस्टम का पालन करें";
 "french" = "फ़्रेंच";
 "hiddenFiles" = "छिपी फ़ाइलें";
+"healthy" = "स्वस्थ";
+"help" = "सहायता";
 "hindi" = "हिन्दी";
 "include" = "शामिल करें";
 "japanese" = "जापानी";
@@ -41,6 +43,7 @@
 "noReview" = "कोई समीक्षा नहीं";
 "potential" = "संभावित";
 "permissions" = "अनुमतियाँ";
+"privateByDesign" = "डिज़ाइन से निजी";
 "protection" = "सुरक्षा";
 "question" = "प्रश्न";
 "quitCleanMac" = "CleanMac बंद करें";
