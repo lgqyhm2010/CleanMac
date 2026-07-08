@@ -2,18 +2,18 @@
   "mode": "goal",
   "objective": "Switch CleanMac to the latest remote main branch and fix the issue where the app cannot scan installed applications.",
   "exit_condition": "The goal is complete when local main is fast-forwarded to the latest origin/main, the application scanning path can discover installed apps from /Applications and user Applications directories without being blocked by app bundle handling or permissions assumptions, focused tests cover the regression, swift test passes, ./script/build_and_run.sh --verify passes, .loopgoal/state.json records the final state, and the intended changes are committed.",
-  "status": "in_progress",
+  "status": "done",
   "iteration": 0,
   "phases": [
     {"name": "Initialize checkpoint on latest main", "status": "done"},
     {"name": "Read-only investigation of app scanning paths and tests", "status": "done"},
     {"name": "Implement application scan repair", "status": "done"},
-    {"name": "Verify app scan repair and runtime launch", "status": "in_progress"},
-    {"name": "Finalize checkpoint and commit", "status": "todo"}
+    {"name": "Verify app scan repair and runtime launch", "status": "done"},
+    {"name": "Finalize checkpoint and commit", "status": "done"}
   ],
   "current": {
-    "focus": "Implemented a best-effort AppUninstaller scan. It now skips unreadable directories/items instead of failing the whole scan, follows symlink .app entries discovered inside application roots, searches nested app bundles when an outer .app wrapper lacks valid metadata, and ignores unreadable support/size entries. Added focused AppUninstaller regressions and a CleaningStore scanApplications entry test. Red tests failed as expected before the implementation; AppUninstallerTests and CleaningStoreApplicationScanTests now pass. git diff --check passed.",
-    "next_action": "Run full swift test and ./script/build_and_run.sh --verify, then finalize checkpoint and commit.",
+    "focus": "GOAL complete. Local main was fast-forwarded to origin/main e1554c2 before work began. AppUninstaller now scans applications best-effort: unreadable directories/items are skipped instead of failing the whole scan, symlink .app entries discovered in application roots are included, wrapper-style outer .app bundles without valid metadata are searched for nested real app bundles, and support/size enumeration tolerates unreadable children. Focused red tests failed before implementation, then passed. Full verification passed: git diff --check, env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test with 114 XCTest tests and 12 Swift Testing tests, and ./script/build_and_run.sh --verify. Process evidence showed dist/CleanMac.app/Contents/MacOS/CleanMac running after launch verification.",
+    "next_action": "Stop scheduling; the exit condition is met.",
     "blockers": ""
   },
   "decisions": [
@@ -43,5 +43,5 @@
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-08T14:08:12Z"
+  "updated_at": "2026-07-08T14:10:07Z"
 }
