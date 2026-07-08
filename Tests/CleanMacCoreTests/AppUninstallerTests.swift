@@ -72,6 +72,49 @@ final class AppUninstallerTests: XCTestCase {
         XCTAssertTrue(plans.isEmpty)
     }
 
+    func testFindsSymlinkedApplicationBundlesInApplicationRoot() throws {
+        let sandbox = try makeTemporaryDirectory()
+        let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
+        let targets = sandbox.appending(path: "SystemApps", directoryHint: .isDirectory)
+        let target = try makeAppBundle(targets.appending(path: "Safari.app"), bundleIdentifier: "com.apple.Safari")
+        let symlink = apps.appending(path: "Safari.app")
+        try FileManager.default.createDirectory(at: apps, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: symlink, withDestinationURL: target)
+
+        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+
+        XCTAssertEqual(plans.map(\.bundleIdentifier), ["com.apple.Safari"])
+        guard let plan = plans.first else { return }
+        XCTAssertEqual(plan.appCandidate.url.path, symlink.path)
+    }
+
+    func testSearchesNestedAppWhenOuterWrapperHasNoBundleIdentifier() throws {
+        let sandbox = try makeTemporaryDirectory()
+        let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
+        let wrapper = apps.appending(path: "Wrapped.app/Wrapper", directoryHint: .isDirectory)
+        try makeAppBundle(wrapper.appending(path: "Wrapped.app"), bundleIdentifier: "com.example.wrapped")
+
+        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+
+        XCTAssertEqual(plans.map(\.bundleIdentifier), ["com.example.wrapped"])
+    }
+
+    func testUnreadableChildDirectoryDoesNotFailEntireApplicationScan() throws {
+        let sandbox = try makeTemporaryDirectory()
+        let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
+        try makeAppBundle(apps.appending(path: "Good.app"), bundleIdentifier: "com.example.good")
+        let unreadable = apps.appending(path: "BlockedFolder", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: unreadable, withIntermediateDirectories: true)
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: unreadable.path)
+        addTeardownBlock {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: unreadable.path)
+        }
+
+        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+
+        XCTAssertEqual(plans.map(\.bundleIdentifier), ["com.example.good"])
+    }
+
     func testPlanSelectsOnlyMovableUninstallCandidates() throws {
         let app = candidate(path: "/Applications/Demo.app", category: .application, protection: .requiresReview)
         let support = candidate(path: "/Users/me/Library/Caches/com.example.demo", category: .applicationSupport, protection: .requiresReview)

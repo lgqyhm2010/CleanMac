@@ -7,13 +7,13 @@
   "phases": [
     {"name": "Initialize checkpoint on latest main", "status": "done"},
     {"name": "Read-only investigation of app scanning paths and tests", "status": "done"},
-    {"name": "Implement application scan repair", "status": "in_progress"},
-    {"name": "Verify app scan repair and runtime launch", "status": "todo"},
+    {"name": "Implement application scan repair", "status": "done"},
+    {"name": "Verify app scan repair and runtime launch", "status": "in_progress"},
     {"name": "Finalize checkpoint and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "Read-only investigation found AppUninstaller is not best-effort on real file systems: one unreadable or unusual child/support item can throw the whole app scan, symlink .app entries can be skipped when discovered as children, and wrapper-style outer .app bundles without Info.plist are not searched for nested real app bundles. Baseline swift test passed in an escalated environment after the default sandbox blocked SwiftPM manifest execution.",
-    "next_action": "Write failing AppUninstaller regression tests, then implement the smallest best-effort scan repair.",
+    "focus": "Implemented a best-effort AppUninstaller scan. It now skips unreadable directories/items instead of failing the whole scan, follows symlink .app entries discovered inside application roots, searches nested app bundles when an outer .app wrapper lacks valid metadata, and ignores unreadable support/size entries. Added focused AppUninstaller regressions and a CleaningStore scanApplications entry test. Red tests failed as expected before the implementation; AppUninstallerTests and CleaningStoreApplicationScanTests now pass. git diff --check passed.",
+    "next_action": "Run full swift test and ./script/build_and_run.sh --verify, then finalize checkpoint and commit.",
     "blockers": ""
   },
   "decisions": [
@@ -36,8 +36,12 @@
     {
       "decision": "Use TDD for the repair.",
       "reason": "This is a bug fix and the repo already has focused AppUninstaller tests where the real filesystem edge cases can be reproduced."
+    },
+    {
+      "decision": "Keep the public AppUninstaller.scan signature unchanged.",
+      "reason": "Call sites already use try, and the fix only changes internal scanning to be best-effort rather than changing the public contract."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-08T14:01:32Z"
+  "updated_at": "2026-07-08T14:08:12Z"
 }
