@@ -71,62 +71,7 @@ struct ResultsView: View {
                 )
             }
         } else {
-            Table(store.candidates, selection: $store.selectedCandidateID) {
-                TableColumn("") { candidate in
-                    Toggle("", isOn: Binding(
-                        get: { store.selection.contains(candidate) },
-                        set: { store.toggle(candidate, selected: $0) }
-                    ))
-                    .labelsHidden()
-                }
-                .width(34)
-
-                TableColumn(L10n.text(.name, language: language)) { candidate in
-                    HStack(spacing: 8) {
-                        Image(systemName: candidate.category.symbolName)
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(categoryTint(candidate.category))
-                            .frame(width: 18)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(candidate.url.lastPathComponent)
-                                .lineLimit(1)
-                            Text(candidate.url.deletingLastPathComponent().path)
-                                .font(.caption)
-                                .foregroundStyle(CleanMacTheme.secondaryText)
-                                .lineLimit(1)
-                        }
-                    }
-                }
-
-                TableColumn(L10n.text(.category, language: language)) { candidate in
-                    Text(candidate.category.displayName(language: language))
-                }
-                .width(min: 110, ideal: 130)
-
-                TableColumn(L10n.text(.risk, language: language)) { candidate in
-                    StatusBadge(
-                        text: candidate.risk.displayName(language: language),
-                        symbolName: "exclamationmark.triangle",
-                        tint: CleanMacTheme.riskColor(candidate.risk)
-                    )
-                }
-                .width(min: 120, ideal: 140)
-
-                TableColumn(L10n.text(.protection, language: language)) { candidate in
-                    StatusBadge(
-                        text: candidate.protection.displayName(language: language),
-                        symbolName: candidate.protection.symbolName,
-                        tint: CleanMacTheme.protectionColor(candidate.protection)
-                    )
-                }
-                .width(min: 140, ideal: 165)
-
-                TableColumn(L10n.text(.size, language: language)) { candidate in
-                    Text(Formatters.bytes(candidate.sizeBytes))
-                        .monospacedDigit()
-                }
-                .width(min: 90, ideal: 110)
-            }
+            CandidatePaperTable(store: store, language: language)
         }
     }
 
@@ -203,7 +148,7 @@ struct ResultsView: View {
         return "\(base) · \(L10n.protectedItemCount(protectedCount, language: language))"
     }
 
-    private func categoryTint(_ category: CandidateCategory) -> Color {
+    fileprivate static func categoryTint(_ category: CandidateCategory) -> Color {
         switch category {
         case .cache, .temporary:
             CleanMacTheme.accent
@@ -218,6 +163,333 @@ struct ResultsView: View {
         case .other:
             .secondary
         }
+    }
+}
+
+private enum CandidateTableLayout {
+    static let checkboxWidth: CGFloat = 54
+    static let minimumNameWidth: CGFloat = 250
+    static let categoryWidth: CGFloat = 132
+    static let riskWidth: CGFloat = 166
+    static let protectionWidth: CGFloat = 182
+    static let sizeWidth: CGFloat = 136
+    static let minimumWidth: CGFloat = checkboxWidth + minimumNameWidth + categoryWidth + riskWidth + protectionWidth + sizeWidth
+}
+
+private struct CandidatePaperTable: View {
+    @ObservedObject var store: CleaningStore
+    var language: ResolvedLanguage
+
+    var body: some View {
+        GeometryReader { proxy in
+            let tableWidth = max(proxy.size.width, CandidateTableLayout.minimumWidth)
+
+            ScrollView(.horizontal) {
+                VStack(spacing: 0) {
+                    CandidateTableHeader(language: language)
+                        .frame(width: tableWidth)
+
+                    Rectangle()
+                        .fill(CleanMacTheme.sidebarDivider)
+                        .frame(height: 1)
+
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(Array(store.candidates.enumerated()), id: \.element.id) { index, candidate in
+                                CandidatePaperRow(
+                                    candidate: candidate,
+                                    isAlternate: index.isMultiple(of: 2),
+                                    isFocused: store.selectedCandidateID == candidate.id,
+                                    isSelectedForCleanup: store.selection.contains(candidate),
+                                    language: language,
+                                    toggleSelection: {
+                                        store.toggle(candidate, selected: !store.selection.contains(candidate))
+                                    },
+                                    focusCandidate: {
+                                        store.selectedCandidateID = candidate.id
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                    }
+                    .background(CleanMacTheme.paper)
+                }
+                .frame(width: tableWidth, height: proxy.size.height, alignment: .top)
+            }
+            .scrollContentBackground(.hidden)
+            .background(CleanMacTheme.paper)
+            .clipShape(CleanMacTheme.panelShape)
+            .environment(\.colorScheme, .light)
+        }
+    }
+}
+
+private struct CandidateTableHeader: View {
+    var language: ResolvedLanguage
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Text("")
+                .frame(width: CandidateTableLayout.checkboxWidth)
+
+            CandidateHeaderText(L10n.text(.name, language: language))
+                .frame(minWidth: CandidateTableLayout.minimumNameWidth, maxWidth: .infinity, alignment: .leading)
+
+            CandidateColumnDivider()
+
+            CandidateHeaderText(L10n.text(.category, language: language))
+                .frame(width: CandidateTableLayout.categoryWidth, alignment: .leading)
+
+            CandidateColumnDivider()
+
+            CandidateHeaderText(L10n.text(.risk, language: language))
+                .frame(width: CandidateTableLayout.riskWidth, alignment: .leading)
+
+            CandidateColumnDivider()
+
+            CandidateHeaderText(L10n.text(.protection, language: language))
+                .frame(width: CandidateTableLayout.protectionWidth, alignment: .leading)
+
+            CandidateColumnDivider()
+
+            CandidateHeaderText(L10n.text(.size, language: language), alignment: .trailing)
+                .frame(width: CandidateTableLayout.sizeWidth, alignment: .trailing)
+        }
+        .padding(.vertical, 12)
+        .padding(.trailing, 10)
+        .background {
+            LinearGradient(
+                colors: [
+                    CleanMacTheme.paper,
+                    CleanMacTheme.warmPane.opacity(0.92)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+}
+
+private struct CandidateHeaderText: View {
+    var title: String
+    var alignment: Alignment
+
+    init(_ title: String, alignment: Alignment = .leading) {
+        self.title = title
+        self.alignment = alignment
+    }
+
+    var body: some View {
+        Text(title)
+            .font(.caption.weight(.black))
+            .foregroundStyle(CleanMacTheme.ink.opacity(0.86))
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: alignment)
+            .padding(.horizontal, 14)
+    }
+}
+
+private struct CandidateColumnDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(CleanMacTheme.sidebarDivider.opacity(0.75))
+            .frame(width: 1, height: 24)
+    }
+}
+
+private struct CandidatePaperRow: View {
+    var candidate: CleaningCandidate
+    var isAlternate: Bool
+    var isFocused: Bool
+    var isSelectedForCleanup: Bool
+    var language: ResolvedLanguage
+    var toggleSelection: () -> Void
+    var focusCandidate: () -> Void
+
+    @State private var isHovered = false
+
+    private var tint: Color {
+        ResultsView.categoryTint(candidate.category)
+    }
+
+    private var rowFill: Color {
+        if isFocused {
+            return CleanMacTheme.accent.opacity(0.16)
+        }
+        if isHovered {
+            return CleanMacTheme.accent.opacity(0.08)
+        }
+        return isAlternate ? CleanMacTheme.warmPane.opacity(0.54) : CleanMacTheme.paper
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            CandidatePaperCheckbox(
+                isSelected: isSelectedForCleanup,
+                tint: CleanMacTheme.mint,
+                action: toggleSelection
+            )
+            .frame(width: CandidateTableLayout.checkboxWidth)
+
+            CandidateNameCell(candidate: candidate, tint: tint)
+                .frame(minWidth: CandidateTableLayout.minimumNameWidth, maxWidth: .infinity, alignment: .leading)
+
+            CandidateCategoryCell(candidate: candidate, language: language)
+                .frame(width: CandidateTableLayout.categoryWidth, alignment: .leading)
+
+            CandidateTableStatusPill(
+                text: candidate.risk.displayName(language: language),
+                symbolName: "exclamationmark.triangle",
+                tint: CleanMacTheme.riskColor(candidate.risk)
+            )
+            .frame(width: CandidateTableLayout.riskWidth, alignment: .leading)
+
+            CandidateTableStatusPill(
+                text: candidate.protection.displayName(language: language),
+                symbolName: candidate.protection.symbolName,
+                tint: CleanMacTheme.protectionColor(candidate.protection)
+            )
+            .frame(width: CandidateTableLayout.protectionWidth, alignment: .leading)
+
+            Text(Formatters.bytes(candidate.sizeBytes))
+                .font(.callout.weight(.bold))
+                .monospacedDigit()
+                .foregroundStyle(CleanMacTheme.ink)
+                .lineLimit(1)
+                .frame(width: CandidateTableLayout.sizeWidth, alignment: .trailing)
+                .padding(.trailing, 16)
+        }
+        .frame(minHeight: 60)
+        .background {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(rowFill)
+        }
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(isFocused ? CleanMacTheme.accent : .clear)
+                .frame(width: 5)
+                .padding(.vertical, 8)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(
+                    isFocused ? CleanMacTheme.accent.opacity(0.74) : CleanMacTheme.sidebarDivider.opacity(0.36),
+                    lineWidth: isFocused ? 1.5 : 1
+                )
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .onTapGesture(perform: focusCandidate)
+        .onHover { isHovered = $0 }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(candidate.url.lastPathComponent)
+        .accessibilityValue(Formatters.bytes(candidate.sizeBytes))
+        .accessibilityAddTraits(isFocused ? [.isSelected] : [])
+    }
+}
+
+private struct CandidatePaperCheckbox: View {
+    var isSelected: Bool
+    var tint: Color
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(isSelected ? tint.opacity(0.72) : CleanMacTheme.sidebarDivider.opacity(0.26))
+                    .frame(width: 22, height: 22)
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(CleanMacTheme.ink)
+                }
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(
+                        isSelected ? CleanMacTheme.ink.opacity(0.72) : CleanMacTheme.sidebarDivider.opacity(0.48),
+                        lineWidth: 1.2
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isSelected ? "Deselect item" : "Select item")
+    }
+}
+
+private struct CandidateNameCell: View {
+    var candidate: CleaningCandidate
+    var tint: Color
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: candidate.category.symbolName)
+                .font(.system(size: 14, weight: .bold))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(tint)
+                .frame(width: 30, height: 30)
+                .background(tint.opacity(0.13), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(tint.opacity(0.38), lineWidth: 1)
+                }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(candidate.url.lastPathComponent)
+                    .font(.callout.weight(.bold))
+                    .foregroundStyle(CleanMacTheme.ink)
+                    .lineLimit(1)
+
+                Text(candidate.url.deletingLastPathComponent().path)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(CleanMacTheme.secondaryText)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 6)
+        .padding(.trailing, 12)
+    }
+}
+
+private struct CandidateCategoryCell: View {
+    var candidate: CleaningCandidate
+    var language: ResolvedLanguage
+
+    var body: some View {
+        Text(candidate.category.displayName(language: language))
+            .font(.callout.weight(.semibold))
+            .foregroundStyle(CleanMacTheme.ink)
+            .lineLimit(1)
+            .padding(.horizontal, 14)
+    }
+}
+
+private struct CandidateTableStatusPill: View {
+    var text: String
+    var symbolName: String
+    var tint: Color
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbolName)
+                .imageScale(.small)
+            Text(text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+        }
+        .font(.caption.weight(.bold))
+        .foregroundStyle(CleanMacTheme.ink)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(tint.opacity(0.13), in: Capsule())
+        .overlay {
+            Capsule()
+                .strokeBorder(tint.opacity(0.64), lineWidth: 1.2)
+        }
+        .padding(.horizontal, 12)
     }
 }
 
