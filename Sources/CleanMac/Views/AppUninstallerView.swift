@@ -13,7 +13,7 @@ struct AppUninstallerView: View {
                 title: L10n.text(.appUninstaller, language: language),
                 subtitle: appStatusText,
                 symbolName: "app.badge",
-                asset: .cleanupTrash,
+                asset: .appUninstall,
                 tint: CleanMacTheme.pink,
                 isActive: store.isScanningApplications
             ) {
@@ -30,7 +30,7 @@ struct AppUninstallerView: View {
                     title: L10n.text(.applications, language: language),
                     value: "\(store.uninstallPlans.count)",
                     symbolName: "app",
-                    asset: .cleanupTrash,
+                    asset: .appUninstall,
                     tint: CleanMacTheme.pink,
                     isActive: store.isScanningApplications
                 )
@@ -98,7 +98,7 @@ struct AppUninstallerView: View {
                         CleanMacProgressState(
                             title: L10n.text(.scanning, language: language),
                             symbolName: "app.badge",
-                            asset: .cleanupTrash,
+                            asset: .appUninstall,
                             tint: CleanMacTheme.pink
                         )
                         .frame(minHeight: 180)
@@ -106,7 +106,7 @@ struct AppUninstallerView: View {
                         CleanMacEmptyState(
                             title: L10n.text(.noApplicationsFound, language: language),
                             symbolName: "app",
-                            asset: .cleanupTrash,
+                            asset: .appUninstall,
                             tint: CleanMacTheme.pink
                         )
                         .frame(minHeight: 180)
@@ -171,7 +171,7 @@ private struct UninstallPlanRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            CleanMacFeatureImage(asset: .cleanupTrash, tint: CleanMacTheme.pink)
+            CleanMacFeatureImage(asset: .appUninstall, tint: CleanMacTheme.pink)
                 .frame(width: 40, height: 40)
 
             VStack(alignment: .leading, spacing: 3) {

@@ -10,7 +10,7 @@ struct SettingsView: View {
                 title: L10n.text(.settings, language: resolvedLanguage),
                 subtitle: L10n.text(.permissions, language: resolvedLanguage),
                 symbolName: "gearshape",
-                asset: .permissionShield,
+                asset: .settings,
                 tint: CleanMacTheme.purple
             )
 

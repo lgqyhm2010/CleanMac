@@ -1,50 +1,56 @@
 {
   "mode": "goal",
-  "objective": "Optimize CleanMac scrolling performance and remove the main sources of visible jank.",
-  "exit_condition": "The goal is complete when scrolling-related SwiftUI hotspots have been inspected, the highest-impact jank source is fixed without weakening product behavior, focused source/test coverage or existing tests validate the change, the app builds/tests successfully, ./script/build_and_run.sh --verify confirms the app launches, .loopgoal/state.json records the final state, and the intended changes are committed.",
-  "status": "in_progress",
+  "objective": "Repair CleanMac reimagined dashboard PNG assets so the app uses real generated images aligned with docs/design/assets/reimagined-cleanmac-dashboard.png instead of SF Symbol fallbacks.",
+  "exit_condition": "The goal is complete when a branch from the latest origin/main contains regenerated project PNG assets for the mismatched mascot/feature artwork, SwiftUI loads those real bundle PNGs with source guards preventing SF Symbol fallback regressions, a fresh app screenshot has been generated for comparison against docs/design/assets/reimagined-cleanmac-dashboard.png, swift test, git diff --check, and ./script/build_and_run.sh --verify all pass, .loopgoal/state.json records the final state, and the intended changes are committed.",
+  "status": "done",
   "iteration": 0,
   "phases": [
-    {"name": "Initialize checkpoint and establish current repo state", "status": "done"},
-    {"name": "Read-only performance investigation", "status": "done"},
-    {"name": "Implement focused scrolling performance fixes", "status": "done"},
-    {"name": "Verify, update checkpoint, and commit", "status": "done"}
+    {"name": "Initialize checkpoint and branch from latest origin/main", "status": "done"},
+    {"name": "Read-only asset and UI investigation", "status": "done"},
+    {"name": "Write failing source guards for real PNG usage", "status": "done"},
+    {"name": "Regenerate PNG assets and wire SwiftUI resource loading", "status": "done"},
+    {"name": "Screenshot comparison and verification", "status": "done"},
+    {"name": "Finalize checkpoint and commit", "status": "done"}
   ],
   "current": {
-    "focus": "GOAL complete. Performance fixes landed: CleanMacPage now uses LazyVStack, static CleanMacPulseIcon and CleanMacFeatureImage instances no longer host TimelineView(.animation), CleanMacFeatureImage loads bundle PNGs through a main-actor cache, page background sparkles are static instead of repeatForever, and duplicate hashing after app scans/cleanup runs in a detached helper instead of the main actor. Verification: the new scrolling guard failed before implementation and passed after; the new duplicate-hashing guard failed before implementation and passed after; env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 104 XCTest tests and 12 Swift Testing tests; git diff --check passed; ./script/build_and_run.sh --verify exited 0; ps aux showed dist/CleanMac.app/Contents/MacOS/CleanMac running as PID 1170.",
-    "next_action": "Stop scheduling after committing the verified implementation.",
+    "focus": "GOAL complete with follow-up icon uniqueness repair. The sidebar and feature pages now use distinct generated PNG assets for speed-up, manage-space, app-uninstall, space-analysis, and settings instead of reusing permission shield, disk overview, or cleanup-trash artwork. CleanMacFeatureImage no longer falls back to SF Symbols. Source guards prove the fallback branch is gone, all expected PNGs exist/decode, every sidebar function maps to a unique illustration asset, and Settings/App Uninstaller pages use feature-specific artwork. Fresh screenshot evidence was refreshed at docs/design/assets/reimagined-cleanmac-dashboard-current.png with a side-by-side comparison at docs/design/assets/reimagined-cleanmac-dashboard-comparison.png. Verification: env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test passed with 108 XCTest tests and 12 Swift Testing tests; CLEANMAC_UI_SNAPSHOT_DIR=/tmp/cleanmac-ui-snapshots-icons swift test --filter UIRenderingSmokeTests/testEverySidebarPageRendersVisibleMainContent passed and produced sidebar page screenshots; git diff --check passed; ./script/build_and_run.sh --verify exited 0.",
+    "next_action": "Stop scheduling after committing this final checkpoint.",
     "blockers": ""
   },
   "decisions": [
     {
       "decision": "Treat this as GOAL mode.",
-      "reason": "The user requested a result-driven performance optimization, not a recurring time-based loop."
+      "reason": "The user requested a result-driven repair with explicit verification and commit gates, not a recurring time-based loop."
     },
     {
-      "decision": "Keep the exit condition tied to build/test plus launch verification rather than subjective smoothness alone.",
-      "reason": "The report is broad and local performance instrumentation may be limited, so the checkpoint needs a concrete completion gate while still targeting the visible scrolling jank."
+      "decision": "Start from latest origin/main instead of continuing the previous feature branch history directly.",
+      "reason": "The user explicitly requested using the latest remote main as the branch base; origin/main was fetched and advanced to 8ecf383."
     },
     {
-      "decision": "Prioritize the reusable illustration and page-layout path before deeper data-model refactors.",
-      "reason": "Both independent read-only investigations and main-agent review found CleanMacFeatureImage and CleanMacPulseIcon are used throughout scrolling surfaces while always hosting TimelineView(.animation), and CleanMacFeatureImage reloads bundle PNGs from body-time code."
+      "decision": "Keep subagents read-only for investigation only.",
+      "reason": "The user-provided AGENTS.md instructions forbid subagents from editing files, committing, reverting, installing dependencies, or running destructive commands."
     },
     {
-      "decision": "Keep subagents read-only for this goal.",
-      "reason": "The user-provided AGENTS.md instructions forbid subagents from editing files, so the main agent owns checkpoint writes, implementation, validation, and commits."
+      "decision": "Use source guards for bundle PNG usage rather than relying only on screenshots.",
+      "reason": "The regression risk is SwiftUI silently falling back to SF Symbols or missing generated PNGs; tests should catch that at source/resource level."
     },
     {
-      "decision": "Make inactive illustrations static rather than removing the active animation behavior entirely.",
-      "reason": "The jank source was always-on timeline work while scrolling; keeping TimelineView only for active scanning/review states preserves the design language with a much smaller redraw footprint."
+      "decision": "Regenerate all six existing dashboard illustration PNGs rather than only the most obvious mismatch.",
+      "reason": "The design comparison found every existing mascot/feature image diverged from the reference dashboard, and mixing old and new illustration styles would preserve the alignment problem."
     },
     {
-      "decision": "Make background sparkles static.",
-      "reason": "They are decorative and always present behind scroll views, so removing their repeatForever animation reduces continuous work without changing app behavior."
+      "decision": "Expand the asset set so every sidebar function has its own generated PNG.",
+      "reason": "Follow-up review found Speed up and Settings shared permission-shield artwork, while Manage space, Uninstall apps, and Analyze space reused unrelated feature art. Each function now has a distinct illustration asset and test guard."
     },
     {
-      "decision": "Move duplicate hashing into a nonisolated detached helper instead of a broader store refactor.",
-      "reason": "This removes known main-actor file hashing after app scans and cleanup while keeping the existing ObservableObject surface stable."
+      "decision": "Regenerate feature-duplicates with a green chroma-key background.",
+      "reason": "The first magenta-key duplicate-documents asset preserved the concept but despill washed out lavender accents; green keying preserved the purple/lavender reference colors without visible key fringe."
+    },
+    {
+      "decision": "Store the fresh dashboard screenshot and side-by-side comparison under docs/design/assets.",
+      "reason": "The design reference already lives there, and keeping the current rendered screenshot beside it makes future visual alignment reviews source-backed."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test",
-  "updated_at": "2026-07-05T11:52:05Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && git diff --check && ./script/build_and_run.sh --verify",
+  "updated_at": "2026-07-05T14:25:33Z"
 }
