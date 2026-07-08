@@ -24,6 +24,33 @@ final class ViewStateRenderingTests: XCTestCase {
         try assertContentIsVisible(image, "Clean up page rendered blank in Chinese")
     }
 
+    func testResultsTableKeepsPaperBackgroundInDarkAppearance() throws {
+        let store = makeStoreWithCandidates(language: .english)
+        let image = render(
+            ResultsView(store: store, language: .english)
+                .environment(\.colorScheme, .dark),
+            width: 900,
+            height: 560
+        )
+
+        let darkCoverage = try darkPixelCoverage(
+            of: image,
+            in: CGRect(x: 20, y: 20, width: 860, height: 520),
+            below: 0.20
+        )
+        XCTAssertLessThan(
+            darkCoverage,
+            0.20,
+            "Results table should keep the light paper background instead of inheriting a dark native table surface"
+        )
+    }
+
+    func testResultsViewUsesCustomPaperRowsInsteadOfNativeTable() throws {
+        let source = try String(contentsOf: URL(filePath: "Sources/CleanMac/Views/ResultsView.swift"))
+        XCTAssertFalse(source.contains("Table(store.candidates"))
+        XCTAssertFalse(source.contains("TableColumn("))
+    }
+
     func testDuplicatesPageRendersDuplicateGroups() throws {
         let store = makeStoreWithDuplicates(language: .english)
         let image = render(ContentView(store: store, initialSelection: .duplicates, languageOverride: .english))
@@ -250,6 +277,23 @@ final class ViewStateRenderingTests: XCTestCase {
     }
 
     private func averageBrightness(of image: NSImage, in rect: CGRect) throws -> Double {
+        try sampledPixelMetric(of: image, in: rect) { color in
+            (Double(color.redComponent) + Double(color.greenComponent) + Double(color.blueComponent)) / 3.0
+        }
+    }
+
+    private func darkPixelCoverage(of image: NSImage, in rect: CGRect, below threshold: Double) throws -> Double {
+        try sampledPixelMetric(of: image, in: rect) { color in
+            let brightness = (Double(color.redComponent) + Double(color.greenComponent) + Double(color.blueComponent)) / 3.0
+            return brightness < threshold ? 1.0 : 0.0
+        }
+    }
+
+    private func sampledPixelMetric(
+        of image: NSImage,
+        in rect: CGRect,
+        transform: (NSColor) -> Double
+    ) throws -> Double {
         guard
             let tiffData = image.tiffRepresentation,
             let bitmap = NSBitmapImageRep(data: tiffData)
@@ -268,7 +312,7 @@ final class ViewStateRenderingTests: XCTestCase {
         for y in stride(from: minY, to: maxY, by: 20) {
             for x in stride(from: minX, to: maxX, by: 20) {
                 guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB) else { continue }
-                total += (Double(color.redComponent) + Double(color.greenComponent) + Double(color.blueComponent)) / 3.0
+                total += transform(color)
                 count += 1
             }
         }
