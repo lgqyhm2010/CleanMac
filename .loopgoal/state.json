@@ -5,15 +5,15 @@
   "status": "in_progress",
   "iteration": 0,
   "phases": [
-    {"name": "Initialize checkpoint on latest main", "status": "in_progress"},
-    {"name": "Read-only investigation of app scanning paths and tests", "status": "todo"},
+    {"name": "Initialize checkpoint on latest main", "status": "done"},
+    {"name": "Read-only investigation of app scanning paths and tests", "status": "in_progress"},
     {"name": "Implement application scan repair", "status": "todo"},
     {"name": "Verify app scan repair and runtime launch", "status": "todo"},
     {"name": "Finalize checkpoint and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "Local main has been fast-forwarded to origin/main e1554c2. Initializing the current loop-goal checkpoint before investigating the application scan failure.",
-    "next_action": "Commit the checkpoint, then run read-only investigation of the app scanning implementation and existing tests.",
+    "focus": "Local main has been fast-forwarded to origin/main e1554c2 and the current loop-goal checkpoint has been initialized.",
+    "next_action": "Run read-only investigation of the app scanning implementation and existing tests.",
     "blockers": ""
   },
   "decisions": [
