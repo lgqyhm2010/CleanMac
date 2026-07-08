@@ -6,14 +6,14 @@
   "iteration": 0,
   "phases": [
     {"name": "Initialize checkpoint on latest main", "status": "done"},
-    {"name": "Read-only investigation of app scanning paths and tests", "status": "in_progress"},
-    {"name": "Implement application scan repair", "status": "todo"},
+    {"name": "Read-only investigation of app scanning paths and tests", "status": "done"},
+    {"name": "Implement application scan repair", "status": "in_progress"},
     {"name": "Verify app scan repair and runtime launch", "status": "todo"},
     {"name": "Finalize checkpoint and commit", "status": "todo"}
   ],
   "current": {
-    "focus": "Local main has been fast-forwarded to origin/main e1554c2 and the current loop-goal checkpoint has been initialized.",
-    "next_action": "Run read-only investigation of the app scanning implementation and existing tests.",
+    "focus": "Read-only investigation found AppUninstaller is not best-effort on real file systems: one unreadable or unusual child/support item can throw the whole app scan, symlink .app entries can be skipped when discovered as children, and wrapper-style outer .app bundles without Info.plist are not searched for nested real app bundles. Baseline swift test passed in an escalated environment after the default sandbox blocked SwiftPM manifest execution.",
+    "next_action": "Write failing AppUninstaller regression tests, then implement the smallest best-effort scan repair.",
     "blockers": ""
   },
   "decisions": [
@@ -28,8 +28,16 @@
     {
       "decision": "Use subagents only for read-only investigation.",
       "reason": "The user-provided AGENTS instructions allow parallel subagent investigation but reserve edits, verification, and commits for the main agent."
+    },
+    {
+      "decision": "Repair AppUninstaller as a best-effort scanner rather than changing the default application roots.",
+      "reason": "Both subagent investigation and main-thread checks confirmed /Applications exists and contains apps; the brittle path is per-item filesystem errors, symlink app children, and wrapper apps with nested real bundles."
+    },
+    {
+      "decision": "Use TDD for the repair.",
+      "reason": "This is a bug fix and the repo already has focused AppUninstaller tests where the real filesystem edge cases can be reproduced."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-08T13:55:20Z"
+  "updated_at": "2026-07-08T14:01:32Z"
 }
