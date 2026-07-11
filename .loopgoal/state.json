@@ -3,20 +3,20 @@
   "objective": "Fix every validated CleanMac project-review finding across uninstall safety, scan identity, AI review, release engineering, state management, localization, accessibility, and product navigation.",
   "exit_condition": "The goal is complete when every validated P1 and P2 finding from the 2026-07-11 project review is either fixed with regression coverage or deliberately removed from the product surface, all focused and full tests pass, the production app builds in release mode with arm64 and x86_64 support and version metadata, release workflows keep PR jobs read-only and secret-free and fail closed on signing/notarization failures, runtime launch verification passes, git diff --check passes, .loopgoal/state.json is marked done, and all intended changes are committed on codex/project-review-20260711.",
   "status": "in_progress",
-  "iteration": 3,
+  "iteration": 4,
   "phases": [
     {"name": "Initialize full-review repair checkpoint", "status": "done"},
     {"name": "Harden AppUninstaller planning and execution", "status": "done"},
     {"name": "Fix scan identity, duplicate safety, and cleanup revalidation", "status": "done"},
     {"name": "Make AI review complete, bounded, isolated, and honest", "status": "done"},
-    {"name": "Make release packaging and CI fail closed", "status": "todo"},
-    {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "todo"},
+    {"name": "Make release packaging and CI fail closed", "status": "done"},
+    {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "in_progress"},
     {"name": "Run full release and runtime verification", "status": "todo"},
     {"name": "Finalize checkpoint and commits", "status": "todo"}
   ],
   "current": {
-    "focus": "AI review phase complete. Reviews accept at most 80 disclosed items and a bounded question, send anonymous structured metadata rather than paths or candidate text, require every item ID exactly once, map IDs to local paths only after validation, use an environment allowlist and unique empty temporary cwd, enforce timeout/cancellation/output caps, and disclose provider network use in UI, all localized resources, READMEs, and the prototype. Red tests preceded implementation; the full suite passed with 134 XCTest tests plus 13 Swift Testing tests, release build, strings/script syntax, diff checks, and runtime launch verification.",
-    "next_action": "Commit the completed AI phase, reconcile checkpoint and worktree, then start release packaging and CI fail-closed repairs with a fresh read-only subagent.",
+    "focus": "Release phase complete. Pull-request and main preview builds are read-only and secret-free; tag publishing alone receives write permission and credentials. Actions are pinned to verified commit SHAs and the floating review plugin was removed. Release mode requires Developer ID, version/build metadata, explicit Accepted notarization status, stapling, validation, and Gatekeeper success. A real unsigned preview produced a 16 MB universal x86_64+arm64 app and valid 12 MB DMG with source artwork excluded. Eight release regressions, an executable ten-stage failure-injection harness, 142 XCTest tests, 13 Swift Testing tests, all strings/workflow/script checks, DMG verification, and GUI launch passed.",
+    "next_action": "Add red regressions for one mutually exclusive foreground operation, truthful ready/scanning/failure status copy, localized safety-rule explanations in all 11 languages, independently focusable result checkboxes, and reachable help/settings navigation; then implement and verify the full P2 surface.",
     "blockers": ""
   },
   "decisions": [
@@ -59,8 +59,16 @@
     {
       "decision": "Run AI CLIs from a unique empty temporary directory with an explicit environment allowlist, a 120-second process timeout, and task-cancellation termination; disclose that the installed CLI may contact its provider.",
       "reason": "The CLI needs selected provider credentials and PATH but not unrelated process secrets or the user's home as ambient project context, and remote-backed CLIs make no-cloud claims inaccurate."
+    },
+    {
+      "decision": "Keep local and pull-request DMGs behind an explicit --unsigned preview mode, while the default release path requires a version, build number, Developer ID Application identity, notarization credentials, successful stapling, and Gatekeeper assessment.",
+      "reason": "A deliberately labeled preview artifact is useful for testing, but a production release must never be published after missing credentials or a failed signing, notarization, validation, or architecture check."
+    },
+    {
+      "decision": "Build the production app independently for arm64 and x86_64, combine it with lipo, verify its plist and resources before packaging, and test every external release gate with injected command and status failures.",
+      "reason": "A host-only SwiftPM build cannot substantiate Intel support, static workflow assertions cannot prove fail-closed shell behavior, and source artwork should remain in the repository without entering the shipped resource bundle."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift build -c release --product CleanMac && bash -n script/build_and_run.sh script/build_dmg.sh script/verify_opensource.sh && git diff --check && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-11T08:35:20Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_dmg.sh --unsigned && script/verify_release.sh dist/CleanMac.app && hdiutil verify dist/CleanMac.dmg && bash -n script/build_and_run.sh script/build_dmg.sh script/verify_release.sh script/verify_opensource.sh Tests/ReleaseScriptTests.sh && git diff --check && ./script/build_and_run.sh --verify",
+  "updated_at": "2026-07-11T11:11:23Z"
 }

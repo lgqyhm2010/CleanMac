@@ -1,8 +1,5 @@
 name: Build DMG
 
-# Rebuild the distributable DMG on every change to main and on every tag,
-# so a fresh download is always available. Tags additionally publish the DMG
-# as a GitHub Release asset.
 on:
   push:
     branches: [main]
@@ -12,18 +9,21 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: build-dmg-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-dmg:
+  verify-preview:
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Select newest Xcode
         run: |
@@ -34,50 +34,87 @@ jobs:
       - name: Run tests
         run: swift test
 
-      - name: Import Developer ID certificate (optional)
-        id: import_cert
+      - name: Build and verify unsigned preview DMG
+        env:
+          CLEANMAC_BUILD_NUMBER: ${{ github.run_number }}
+        run: ./script/build_dmg.sh --unsigned
+
+      - name: Upload unsigned preview
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: CleanMac-unsigned-preview
+          path: dist/CleanMac.dmg
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Select newest Xcode
+        run: |
+          LATEST="$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -n "$LATEST" ]; then sudo xcode-select -s "$LATEST/Contents/Developer"; fi
+          swift --version
+
+      - name: Validate release tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
+
+      - name: Run tests
+        run: swift test
+
+      - name: Import Developer ID certificate
         env:
           CERT_B64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           CERT_PW: ${{ secrets.MACOS_CERT_PASSWORD }}
         run: |
-          if [ -z "${CERT_B64:-}" ]; then
-            echo "No signing certificate secret — building with an ad-hoc signature."
-            exit 0
-          fi
+          : "${CERT_B64:?MACOS_CERT_P12_BASE64 is required}"
+          : "${CERT_PW:?MACOS_CERT_PASSWORD is required}"
           KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
           KPW="$(uuidgen)"
           security create-keychain -p "$KPW" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KPW" "$KEYCHAIN"
-          echo "$CERT_B64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          printf '%s' "$CERT_B64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
           security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PW" -T /usr/bin/codesign
-          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security list-keychains -d user -s "$KEYCHAIN"
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KPW" "$KEYCHAIN" >/dev/null
           rm -f "$RUNNER_TEMP/cert.p12"
-          echo "signed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Build DMG
+      - name: Build signed and notarized release DMG
         env:
           CODESIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          CLEANMAC_BUILD_NUMBER: ${{ github.run_number }}
         run: |
-          chmod +x script/*.sh
-          ./script/build_dmg.sh
+          CLEANMAC_VERSION="${GITHUB_REF_NAME#v}" ./script/build_dmg.sh --release
 
-      - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload release artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: CleanMac-dmg
           path: dist/CleanMac.dmg
           if-no-files-found: error
 
-      - name: Publish to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/CleanMac.dmg \
-            --title "$GITHUB_REF_NAME" --generate-notes \
-          || gh release upload "$GITHUB_REF_NAME" dist/CleanMac.dmg --clobber
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/CleanMac.dmg --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/CleanMac.dmg \
+              --title "$GITHUB_REF_NAME" --generate-notes
+          fi
+
+      - name: Delete temporary signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" || true

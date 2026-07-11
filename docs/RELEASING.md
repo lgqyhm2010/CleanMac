@@ -5,9 +5,9 @@ CleanMac is distributed as a signed, notarized `.dmg`. This guide covers the
 [`script/build_dmg.sh`](../script/build_dmg.sh) and by GitHub Actions
 ([`.github/workflows/release-dmg.yml`](../.github/workflows/release-dmg.yml)).
 
-> You can always run `./script/build_dmg.sh` without any of this — it will fall
-> back to an **ad-hoc signature** and still produce a DMG. The steps below are
-> what make the DMG open with a plain double-click on other people's Macs.
+> `./script/build_dmg.sh --unsigned` creates an explicitly non-distributable
+> preview for local validation. The default release path never falls back: it
+> stops unless signing, notarization, stapling, and Gatekeeper checks all pass.
 
 ## Why signing + notarization?
 
@@ -46,17 +46,19 @@ xcrun notarytool store-credentials CleanMacNotary \
 ## Building a release locally
 
 ```bash
-# Uses your Developer ID cert + stored notary profile automatically:
-NOTARY_PROFILE=CleanMacNotary ./script/build_dmg.sh
+# Uses your Developer ID cert + stored notary profile:
+CLEANMAC_VERSION=1.0.0 CLEANMAC_BUILD_NUMBER=1 \
+  NOTARY_PROFILE=CleanMacNotary ./script/build_dmg.sh --release
 # -> dist/CleanMac.dmg  (signed, notarized, stapled)
 ```
 
-To force a specific identity: `CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./script/build_dmg.sh`.
+To force a specific identity, also set `CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"`.
 
 ## Automated releases (CI)
 
-Every push to `main` and every tag rebuilds the DMG. To also **sign + notarize**
-in CI, add these repository secrets (Settings → Secrets and variables → Actions):
+Pull requests and pushes to `main` build an unsigned preview in a read-only,
+secret-free job. Only a `v*` tag enters the publishing job. Add these repository
+secrets (Settings → Secrets and variables → Actions):
 
 | Secret | What it is |
 |--------|------------|
@@ -67,8 +69,9 @@ in CI, add these repository secrets (Settings → Secrets and variables → Acti
 | `APPLE_TEAM_ID` | Your 10-character team ID. |
 | `APPLE_APP_PASSWORD` | The app-specific password from the setup above. |
 
-Without these secrets the workflow still builds an (ad-hoc) DMG and uploads it
-as a build artifact, so CI never fails just because signing isn't configured.
+Missing or invalid release secrets fail the tag job. No DMG is attached to a
+GitHub Release unless signing, notarization, stapling, and Gatekeeper assessment
+all succeed.
 
 ## Cutting a versioned release
 

@@ -17,8 +17,11 @@ let package = Package(
             name: "CleanMac",
             dependencies: ["CleanMacCore"],
             path: "Sources/CleanMac",
+            exclude: [
+                "Resources/ImagesSource"
+            ],
             resources: [
-                .process("Resources")
+                .process("Resources/Images")
             ]
         ),
         .target(

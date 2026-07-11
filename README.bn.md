@@ -72,11 +72,7 @@ CleanMac আপনার `PATH`-এ সমর্থিত AI CLI শনাক্
 1. [Releases page](https://github.com/lgqyhm2010/CleanMac/releases/latest) থেকে সর্বশেষ **`CleanMac.dmg`** নিন।
 2. DMG খুলুন এবং **CleanMac**-কে **Applications**-এ টেনে আনুন।
 
-> **প্রথম লঞ্চ:** যদি macOS বলে যে অ্যাপটি যাচাই করা যাচ্ছে না (Gatekeeper) এমন একটি বিল্ডে যা এখনও নোটারাইজড নয়, তাহলে অ্যাপটিতে রাইট-ক্লিক করুন → **Open**, অথবা চালান:
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/CleanMac.app
-> ```
-> আনুষ্ঠানিকভাবে নোটারাইজড রিলিজগুলো একটি সাধারণ ডাবল-ক্লিকে খোলে।
+> অফিসিয়াল ডাউনলোড সাইন ও নোটারাইজড। Gatekeeper যাচাই করতে না পারলে quarantine বন্ধ করবেন না; ফাইলটি মুছে অফিসিয়াল Releases পেজ থেকে আবার ডাউনলোড করুন।
 
 ### প্রয়োজনীয়তা
 
@@ -106,20 +102,26 @@ swift test
 একটি একক স্ক্রিপ্ট অ্যাপটি বিল্ড করে এবং একটি বিতরণযোগ্য, টেনে-ইনস্টল-করা DMG প্যাকেজ করে:
 
 ```bash
-./script/build_dmg.sh          # -> dist/CleanMac.dmg
+# কেবল স্থানীয়, বিতরণ-অযোগ্য preview
+./script/build_dmg.sh --unsigned
+
+# আনুষ্ঠানিক release; Developer ID ও notarization credentials আবশ্যক
+CLEANMAC_VERSION=1.0.0 CLEANMAC_BUILD_NUMBER=1 \
+  NOTARY_PROFILE=CleanMacNotary ./script/build_dmg.sh --release
 ```
 
-Developer ID শংসাপত্র উপলব্ধ থাকলে স্ক্রিপ্টটি **সাইন ও নোটারাইজ** করে এবং অন্যথায় **সুন্দরভাবে অবনমিত হয়** (ad-hoc স্বাক্ষর), তাই এটি সবসময় একটি DMG তৈরি করে। এনভায়রনমেন্ট ভেরিয়েবলের মাধ্যমে সাইনিং কনফিগার করুন — কোনো সিক্রেট কখনোই হার্ড-কোড করা হয় না:
+আনুষ্ঠানিক release fail-closed: credential, version, architecture, signing, notarization, stapling বা Gatekeeper ব্যর্থ হলে build বন্ধ হয়। Environment variables দিয়ে কনফিগার করা হয় এবং secrets hard-code করা হয় না:
 
 | Variable | উদ্দেশ্য |
 |----------|---------|
 | `CODESIGN_IDENTITY` | সাইনিং আইডেন্টিটি, যেমন `Developer ID Application: Name (TEAMID)`। সেট না থাকলে স্বয়ংক্রিয়ভাবে শনাক্ত হয়। |
+| `CLEANMAC_VERSION` / `CLEANMAC_BUILD_NUMBER` | Release version ও numeric build number। |
 | `NOTARY_PROFILE` | একটি `notarytool` keychain প্রোফাইল নাম ([`docs/RELEASING.md`](docs/RELEASING.md) দেখুন)। |
 | `APPLE_ID` / `APPLE_TEAM_ID` / `APPLE_APP_PASSWORD` | বিকল্প নোটারাইজেশন শংসাপত্র (CI দ্বারা ব্যবহৃত)। |
 
-> প্রকৃত “ডাউনলোড-এবং-খোলা” বিতরণের জন্য একটি পেইড **Apple Developer ID Application** সার্টিফিকেট প্রয়োজন। একবারের সেটআপের জন্য [`docs/RELEASING.md`](docs/RELEASING.md) দেখুন। এটি ছাড়া, DMG-টি এখনও বিল্ড হয় তবে নোটারাইজড হয় না।
+> `--unsigned` শুধু local/PR validation-এর জন্য এবং formal release হিসেবে প্রকাশিত হয় না। [`docs/RELEASING.md`](docs/RELEASING.md) দেখুন।
 
-`main`-এ প্রতিটি push এবং প্রতিটি ট্যাগ স্বয়ংক্রিয়ভাবে GitHub Actions ([`.github/workflows/release-dmg.yml`](.github/workflows/release-dmg.yml)) এর মাধ্যমে DMG-টি পুনরায় বিল্ড ও প্রকাশ করে।
+PR ও `main` push কেবল read-only unsigned preview বানায়। সব check সফল হলে শুধু `v*` tag প্রকাশ করতে পারে ([workflow](.github/workflows/release-dmg.yml))।
 
 ## স্থানীয়করণ
 

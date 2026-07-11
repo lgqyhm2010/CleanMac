@@ -72,11 +72,7 @@ CleanMac は、`PATH` 上のサポート対象コマンドライン AI ツール
 1. [Releases ページ](https://github.com/lgqyhm2010/CleanMac/releases/latest)から最新の **`CleanMac.dmg`** を入手します。
 2. DMG を開き、**CleanMac** を **Applications** にドラッグします。
 
-> **初回起動：** まだ公証されていないビルドで、macOS がアプリを検証できない（Gatekeeper）と表示する場合は、アプリを右クリック → **開く** を選ぶか、次を実行します：
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/CleanMac.app
-> ```
-> 正式に公証されたリリースは、通常のダブルクリックで開きます。
+> 公式ダウンロードは署名・公証済みです。Gatekeeper が検証できない場合は隔離を無効にせず、削除して公式 Releases ページから再取得してください。
 
 ### 動作要件
 
@@ -106,20 +102,26 @@ swift test
 1 つのスクリプトでアプリをビルドし、配布可能なドラッグ＆ドロップでインストールできる DMG をパッケージングします：
 
 ```bash
-./script/build_dmg.sh          # -> dist/CleanMac.dmg
+# ローカル検証専用（配布不可）
+./script/build_dmg.sh --unsigned
+
+# 正式リリース（Developer ID と公証資格情報が必須）
+CLEANMAC_VERSION=1.0.0 CLEANMAC_BUILD_NUMBER=1 \
+  NOTARY_PROFILE=CleanMacNotary ./script/build_dmg.sh --release
 ```
 
-このスクリプトは、Developer ID の資格情報が利用可能な場合は**署名と公証を行い**、そうでない場合は**優雅にデグレード**（アドホック署名）するため、常に DMG を生成します。署名は環境変数で設定します — シークレットがハードコードされることは一切ありません：
+正式リリースは fail-closed です。資格情報、バージョン、アーキテクチャ、署名、公証、ステープル、Gatekeeper のいずれかが失敗するとビルドを中止します。設定は環境変数で行い、シークレットはハードコードしません：
 
 | 変数 | 目的 |
 |----------|---------|
 | `CODESIGN_IDENTITY` | 署名アイデンティティ。例：`Developer ID Application: Name (TEAMID)`。未設定の場合は自動検出されます。 |
+| `CLEANMAC_VERSION` / `CLEANMAC_BUILD_NUMBER` | リリース版と数値のビルド番号。 |
 | `NOTARY_PROFILE` | `notarytool` の keychain プロファイル名（[`docs/RELEASING.md`](docs/RELEASING.md) を参照）。 |
 | `APPLE_ID` / `APPLE_TEAM_ID` / `APPLE_APP_PASSWORD` | 代替の公証用資格情報（CI で使用）。 |
 
-> 本当の「ダウンロードして開く」形式の配布には、有料の **Apple Developer ID Application** 証明書が必要です。一度きりのセットアップについては [`docs/RELEASING.md`](docs/RELEASING.md) を参照してください。証明書がなくても DMG はビルドされますが、公証はされません。
+> `--unsigned` はローカル/PR 検証専用で、正式リリースには公開されません。設定は [`docs/RELEASING.md`](docs/RELEASING.md) を参照してください。
 
-`main` へのすべてのプッシュとすべてのタグは、GitHub Actions（[`.github/workflows/release-dmg.yml`](.github/workflows/release-dmg.yml)）を通じて自動的に DMG を再ビルドして公開します。
+PR と `main` への push は読み取り専用の未署名プレビューだけを構築し、`v*` タグのみが全検証後に正式版を公開できます（[workflow](.github/workflows/release-dmg.yml)）。
 
 ## ローカライゼーション
 

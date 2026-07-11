@@ -72,11 +72,7 @@ A lista de candidatos e o seu prompt são passados para a CLI via stdin/argument
 1. Baixe o **`CleanMac.dmg`** mais recente na [página de Releases](https://github.com/lgqyhm2010/CleanMac/releases/latest).
 2. Abra o DMG e arraste o **CleanMac** para **Aplicativos**.
 
-> **Primeira execução:** se o macOS disser que o app não pode ser verificado (Gatekeeper) em um build que ainda não foi notarizado, clique com o botão direito no app → **Abrir**, ou execute:
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/CleanMac.app
-> ```
-> Releases oficialmente notarizados abrem com um clique duplo normal.
+> Downloads oficiais são assinados e notarizados. Se o Gatekeeper não conseguir verificar um deles, não desative a quarentena; apague-o e baixe-o novamente na página oficial de Releases.
 
 ### Requisitos
 
@@ -106,20 +102,26 @@ swift test
 Um único script compila o app e empacota um DMG distribuível, do tipo arrastar-para-instalar:
 
 ```bash
-./script/build_dmg.sh          # -> dist/CleanMac.dmg
+# Prévia local, não distribuível
+./script/build_dmg.sh --unsigned
+
+# Release formal; requer Developer ID e credenciais de notarização
+CLEANMAC_VERSION=1.0.0 CLEANMAC_BUILD_NUMBER=1 \
+  NOTARY_PROFILE=CleanMacNotary ./script/build_dmg.sh --release
 ```
 
-O script **assina e notariza** quando as credenciais do Developer ID estão disponíveis e **degrada de forma controlada** (assinatura ad-hoc) caso contrário, então sempre produz um DMG. Configure a assinatura por meio de variáveis de ambiente — nenhum segredo é fixado no código:
+Releases formais falham de forma fechada: qualquer erro de credencial, versão, arquitetura, assinatura, notarização, stapling ou Gatekeeper interrompe o build. A configuração usa variáveis de ambiente e nenhum segredo é fixado no código:
 
 | Variável | Finalidade |
 |----------|---------|
 | `CODESIGN_IDENTITY` | Identidade de assinatura, por exemplo, `Developer ID Application: Name (TEAMID)`. Detectada automaticamente se não for definida. |
+| `CLEANMAC_VERSION` / `CLEANMAC_BUILD_NUMBER` | Versão do release e número de build numérico. |
 | `NOTARY_PROFILE` | Um nome de perfil de keychain do `notarytool` (veja [`docs/RELEASING.md`](docs/RELEASING.md)). |
 | `APPLE_ID` / `APPLE_TEAM_ID` / `APPLE_APP_PASSWORD` | Credenciais de notarização alternativas (usadas pela CI). |
 
-> A distribuição real de “baixar e abrir” exige um certificado pago **Apple Developer ID Application**. Veja [`docs/RELEASING.md`](docs/RELEASING.md) para a configuração inicial única. Sem ele, o DMG ainda é gerado, mas não é notarizado.
+> `--unsigned` serve apenas para validação local/PR e nunca é publicado como release. Veja [`docs/RELEASING.md`](docs/RELEASING.md).
 
-Cada push para a `main` e cada tag reconstrói e publica automaticamente o DMG via GitHub Actions ([`.github/workflows/release-dmg.yml`](.github/workflows/release-dmg.yml)).
+PRs e pushes para `main` só criam uma prévia sem assinatura e de leitura. Apenas uma tag `v*` publica após todas as verificações ([workflow](.github/workflows/release-dmg.yml)).
 
 ## Localização
 
