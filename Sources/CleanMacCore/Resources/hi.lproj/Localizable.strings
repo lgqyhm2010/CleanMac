@@ -11,6 +11,8 @@
 "clear" = "साफ करें";
 "clearSelection" = "चयन साफ करें";
 "aiTool" = "AI टूल";
+"aiPrivacyDisclosure" = "CleanMac आपका प्रश्न जैसा लिखा गया है वैसा ही, अधिकतम 80 चुने हुए आइटम के संशोधित मेटाडेटा के साथ, इंस्टॉल किए गए AI CLI को भेजता है। CLI अपने प्रदाता से संपर्क कर सकता है; फ़ाइल सामग्री और अपने आप एकत्र किए गए पूरे पथ शामिल नहीं होते।";
+"aiSelectionLimitMessage" = "AI समीक्षा एक बार में अधिकतम 80 चुने हुए आइटम का समर्थन करती है।";
 "duplicateGroup" = "डुप्लिकेट समूह";
 "duplicates" = "डुप्लिकेट";
 "english" = "अंग्रेज़ी";
@@ -43,7 +45,7 @@
 "noReview" = "कोई समीक्षा नहीं";
 "potential" = "संभावित";
 "permissions" = "अनुमतियाँ";
-"privateByDesign" = "डिज़ाइन से निजी";
+"privateByDesign" = "स्पष्ट गोपनीयता विकल्प";
 "protection" = "सुरक्षा";
 "question" = "प्रश्न";
 "quitCleanMac" = "CleanMac बंद करें";
@@ -65,9 +67,9 @@
 "size" = "आकार";
 "spanish" = "स्पेनिश";
 "status" = "स्थिति";
-"trustLocalAI" = "स्थानीय AI";
+"trustInstalledAICLI" = "इंस्टॉल किया गया AI CLI";
 "trustMoveToTrash" = "Trash में ले जाएं";
-"trustNoCloudUpload" = "क्लाउड अपलोड नहीं";
+"trustAIProviderNetwork" = "AI CLI क्लाउड का उपयोग कर सकता है";
 "trustNoTelemetry" = "कोई टेलीमेट्री नहीं";
 "openSettings" = "सेटिंग्स खोलें";
 "arabic" = "अरबी";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "स्थान विश्लेषण";
 "sidebarAnalyzeSpaceSubtitle" = "स्थान मानचित्र";
 "sidebarAIReviewTitle" = "AI समीक्षा";
-"sidebarAIReviewSubtitle" = "स्थानीय एजेंट";
+"sidebarAIReviewSubtitle" = "इंस्टॉल किया गया CLI";
 "sidebarSettingsTitle" = "सेटिंग्स";
 "sidebarSettingsSubtitle" = "भाषा और अधिक";
 "sidebarGroupOverview" = "अवलोकन";
 "sidebarGroupProTools" = "प्रो टूल";
-"sidebarGroupAILocal" = "स्थानीय AI";
+"sidebarGroupAILocal" = "AI CLI";
 "sidebarGroupSystem" = "सिस्टम";
 
 "category.cache" = "कैश";

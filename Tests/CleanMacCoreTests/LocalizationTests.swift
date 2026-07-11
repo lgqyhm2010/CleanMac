@@ -130,6 +130,18 @@ struct LocalizationTests {
         #expect(!source.contains("private static func chineseText"))
     }
 
+    @Test("AI privacy copy discloses provider network use")
+    func aiPrivacyCopyDisclosesProviderNetworkUse() throws {
+        let english = try loadStrings(for: .english)
+        let chinese = try loadStrings(for: .chinese)
+
+        #expect(english["trustAIProviderNetwork"] == "AI CLI may use cloud")
+        #expect(english["aiPrivacyDisclosure"]?.contains("automatically collected full paths") == true)
+        #expect(english["aiPrivacyDisclosure"]?.contains("question as written") == true)
+        #expect(chinese["trustAIProviderNetwork"]?.contains("可能") == true)
+        #expect(chinese["aiPrivacyDisclosure"]?.contains("完整路径") == true)
+    }
+
     @Test("Every localized string keeps English format placeholder parity")
     func everyLocalizedStringKeepsEnglishFormatPlaceholderParity() throws {
         let english = try loadStrings(for: .english)

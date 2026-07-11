@@ -2,6 +2,17 @@ import XCTest
 @testable import CleanMacCore
 
 final class AIReviewOutputParserTests: XCTestCase {
+    func testMapsAnonymousItemIDsBackToLocalPaths() throws {
+        let raw = #"{"summary":"ok","safe_to_delete":[{"item_id":"item-0001","reason":"cache"}],"risky":[],"needs_user_review":[]}"#
+
+        let parsed = try XCTUnwrap(AIReviewOutputParser.parse(
+            raw,
+            itemPathsByID: ["item-0001": "/Users/me/Library/Caches/a"]
+        ))
+
+        XCTAssertEqual(parsed.safeToDelete.first?.path, "/Users/me/Library/Caches/a")
+    }
+
     func testParsesCleanSchemaJSON() throws {
         let raw = """
         {"summary": "Mostly caches, one document needs review.",

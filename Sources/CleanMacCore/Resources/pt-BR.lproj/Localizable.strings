@@ -11,6 +11,8 @@
 "clear" = "Limpar";
 "clearSelection" = "Limpar seleção";
 "aiTool" = "Ferramenta de IA";
+"aiPrivacyDisclosure" = "O CleanMac envia sua pergunta como foi digitada, junto com metadados omitidos de até 80 itens selecionados, à CLI de IA instalada. A CLI pode contatar o provedor; o conteúdo dos arquivos e os caminhos completos coletados automaticamente não são incluídos.";
+"aiSelectionLimitMessage" = "A revisão de IA aceita até 80 itens selecionados por vez.";
 "duplicateGroup" = "Grupo duplicado";
 "duplicates" = "Duplicados";
 "english" = "Inglês";
@@ -43,7 +45,7 @@
 "noReview" = "Sem revisão";
 "potential" = "Potencial";
 "permissions" = "Permissões";
-"privateByDesign" = "Privado por design";
+"privateByDesign" = "Opções de privacidade explícitas";
 "protection" = "Proteção";
 "question" = "Pergunta";
 "quitCleanMac" = "Encerrar CleanMac";
@@ -65,9 +67,9 @@
 "size" = "Tamanho";
 "spanish" = "Espanhol";
 "status" = "Status";
-"trustLocalAI" = "IA local";
+"trustInstalledAICLI" = "CLI de IA instalada";
 "trustMoveToTrash" = "Mover para o Lixo";
-"trustNoCloudUpload" = "Sem upload na nuvem";
+"trustAIProviderNetwork" = "A CLI de IA pode usar a nuvem";
 "trustNoTelemetry" = "Sem telemetria";
 "openSettings" = "Abrir ajustes";
 "arabic" = "Árabe";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "Analisar espaço";
 "sidebarAnalyzeSpaceSubtitle" = "Mapa de espaço";
 "sidebarAIReviewTitle" = "Revisão de IA";
-"sidebarAIReviewSubtitle" = "Agente local";
+"sidebarAIReviewSubtitle" = "CLI instalada";
 "sidebarSettingsTitle" = "Ajustes";
 "sidebarSettingsSubtitle" = "Idioma e mais";
 "sidebarGroupOverview" = "Visão geral";
 "sidebarGroupProTools" = "Ferramentas pro";
-"sidebarGroupAILocal" = "IA local";
+"sidebarGroupAILocal" = "CLI de IA";
 "sidebarGroupSystem" = "Sistema";
 
 "category.cache" = "Caches";

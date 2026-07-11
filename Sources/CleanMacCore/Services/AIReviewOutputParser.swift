@@ -17,6 +17,10 @@ public struct AIReviewSummary: Equatable, Sendable {
     public let risky: [AIReviewItem]
     public let needsUserReview: [AIReviewItem]
 
+    public var allItems: [AIReviewItem] {
+        safeToDelete + risky + needsUserReview
+    }
+
     public init(summary: String?, safeToDelete: [AIReviewItem], risky: [AIReviewItem], needsUserReview: [AIReviewItem]) {
         self.summary = summary
         self.safeToDelete = safeToDelete
@@ -30,13 +34,16 @@ public struct AIReviewSummary: Equatable, Sendable {
 /// (bare path strings, alternate key names) — every stage here degrades to nil
 /// rather than throwing, and nil means "show the raw text instead".
 public enum AIReviewOutputParser {
-    public static func parse(_ raw: String) -> AIReviewSummary? {
+    public static func parse(
+        _ raw: String,
+        itemPathsByID: [String: String] = [:]
+    ) -> AIReviewSummary? {
         guard let jsonObject = extractJSONObject(from: raw) else { return nil }
 
         let summary = (jsonObject["summary"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeToDelete = items(from: jsonObject["safe_to_delete"])
-        let risky = items(from: jsonObject["risky"])
-        let needsUserReview = items(from: jsonObject["needs_user_review"])
+        let safeToDelete = items(from: jsonObject["safe_to_delete"], itemPathsByID: itemPathsByID)
+        let risky = items(from: jsonObject["risky"], itemPathsByID: itemPathsByID)
+        let needsUserReview = items(from: jsonObject["needs_user_review"], itemPathsByID: itemPathsByID)
 
         let hasContent = !(summary ?? "").isEmpty || !safeToDelete.isEmpty || !risky.isEmpty || !needsUserReview.isEmpty
         guard hasContent else { return nil }
@@ -62,19 +69,23 @@ public enum AIReviewOutputParser {
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
     }
 
-    private static let pathKeys = ["path", "file", "url"]
+    private static let pathKeys = ["item_id", "path", "file", "url"]
     private static let reasonKeys = ["reason", "note", "why"]
 
-    private static func items(from value: Any?) -> [AIReviewItem] {
+    private static func items(from value: Any?, itemPathsByID: [String: String]) -> [AIReviewItem] {
         guard let array = value as? [Any] else { return [] }
         return array.compactMap { element in
             if let path = element as? String {
                 let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? nil : AIReviewItem(path: trimmed, reason: nil)
+                guard !trimmed.isEmpty else { return nil }
+                return AIReviewItem(path: itemPathsByID[trimmed] ?? trimmed, reason: nil)
             }
             if let object = element as? [String: Any] {
                 guard let path = firstString(in: object, keys: pathKeys) else { return nil }
-                return AIReviewItem(path: path, reason: firstString(in: object, keys: reasonKeys))
+                return AIReviewItem(
+                    path: itemPathsByID[path] ?? path,
+                    reason: firstString(in: object, keys: reasonKeys)
+                )
             }
             return nil
         }

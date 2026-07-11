@@ -11,6 +11,8 @@
 "clear" = "クリア";
 "clearSelection" = "選択をクリア";
 "aiTool" = "AI ツール";
+"aiPrivacyDisclosure" = "CleanMac は入力した質問をそのまま、選択した最大 80 項目の匿名化メタデータとともにインストール済み AI CLI へ送ります。CLI はプロバイダーに接続する場合があります。ファイル内容と自動収集されたフルパスは含まれません。";
+"aiSelectionLimitMessage" = "AI レビューは一度に最大 80 項目まで対応します。";
 "duplicateGroup" = "重複グループ";
 "duplicates" = "重複ファイル";
 "english" = "英語";
@@ -43,7 +45,7 @@
 "noReview" = "レビューなし";
 "potential" = "候補";
 "permissions" = "権限";
-"privateByDesign" = "プライバシー重視設計";
+"privateByDesign" = "明示的なプライバシー選択";
 "protection" = "保護";
 "question" = "質問";
 "quitCleanMac" = "CleanMac を終了";
@@ -65,9 +67,9 @@
 "size" = "サイズ";
 "spanish" = "スペイン語";
 "status" = "状態";
-"trustLocalAI" = "ローカル AI";
+"trustInstalledAICLI" = "インストール済み AI CLI";
 "trustMoveToTrash" = "ゴミ箱へ移動";
-"trustNoCloudUpload" = "クラウド送信なし";
+"trustAIProviderNetwork" = "AI CLI はクラウドを使用する場合あり";
 "trustNoTelemetry" = "テレメトリなし";
 "openSettings" = "設定を開く";
 "arabic" = "アラビア語";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "容量分析";
 "sidebarAnalyzeSpaceSubtitle" = "容量マップ";
 "sidebarAIReviewTitle" = "AI レビュー";
-"sidebarAIReviewSubtitle" = "ローカルエージェント";
+"sidebarAIReviewSubtitle" = "インストール済み CLI";
 "sidebarSettingsTitle" = "設定";
 "sidebarSettingsSubtitle" = "言語とその他";
 "sidebarGroupOverview" = "概要";
 "sidebarGroupProTools" = "プロツール";
-"sidebarGroupAILocal" = "ローカル AI";
+"sidebarGroupAILocal" = "AI CLI";
 "sidebarGroupSystem" = "システム";
 
 "category.cache" = "キャッシュ";

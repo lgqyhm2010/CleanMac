@@ -505,12 +505,26 @@ public struct AICommand: Equatable, Sendable {
     /// Working directory for the spawned process. `nil` inherits the parent's cwd —
     /// which is "/" for a Finder-launched app, never the right context for a CLI.
     public var workingDirectory: String?
+    /// Hard wall-clock limit enforced by `ProcessCommandRunner`.
+    public var timeoutSeconds: TimeInterval
+    /// Maximum bytes retained from each output stream. The runner keeps draining
+    /// excess data to avoid deadlock but records only a bounded tail.
+    public var maximumCapturedOutputBytes: Int
 
-    public init(executable: String, arguments: [String] = [], environment: [String: String]? = nil, workingDirectory: String? = nil) {
+    public init(
+        executable: String,
+        arguments: [String] = [],
+        environment: [String: String]? = nil,
+        workingDirectory: String? = nil,
+        timeoutSeconds: TimeInterval = 120,
+        maximumCapturedOutputBytes: Int = 1_024 * 1_024
+    ) {
         self.executable = executable
         self.arguments = arguments
         self.environment = environment
         self.workingDirectory = workingDirectory
+        self.timeoutSeconds = timeoutSeconds
+        self.maximumCapturedOutputBytes = maximumCapturedOutputBytes
     }
 }
 
@@ -518,20 +532,34 @@ public struct CommandResult: Equatable, Sendable {
     public let exitCode: Int32
     public let standardOutput: String
     public let standardError: String
+    public let standardOutputWasTruncated: Bool
+    public let standardErrorWasTruncated: Bool
 
-    public init(exitCode: Int32, standardOutput: String, standardError: String) {
+    public init(
+        exitCode: Int32,
+        standardOutput: String,
+        standardError: String,
+        standardOutputWasTruncated: Bool = false,
+        standardErrorWasTruncated: Bool = false
+    ) {
         self.exitCode = exitCode
         self.standardOutput = standardOutput
         self.standardError = standardError
+        self.standardOutputWasTruncated = standardOutputWasTruncated
+        self.standardErrorWasTruncated = standardErrorWasTruncated
     }
 }
 
 public struct AIReview: Equatable, Sendable {
     public let output: String
     public let reviewedAt: Date
+    /// Local-only mapping used to turn anonymous model item IDs back into the paths
+    /// already visible in CleanMac. The paths are never included in the CLI prompt.
+    public let itemPathsByID: [String: String]
 
-    public init(output: String, reviewedAt: Date) {
+    public init(output: String, reviewedAt: Date, itemPathsByID: [String: String] = [:]) {
         self.output = output
         self.reviewedAt = reviewedAt
+        self.itemPathsByID = itemPathsByID
     }
 }

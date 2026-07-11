@@ -81,6 +81,31 @@ final class CleaningStoreAIToolSelectionTests: XCTestCase {
         XCTAssertEqual(store.errorMessage, .noAIToolDetected)
     }
 
+    func testAskAIRejectsSelectionsAboveTheDisclosedLimit() {
+        let store = makeStore(found: ["codex": "/a/codex"])
+        store.candidates = (0...AIReviewService.maximumCandidateCount).map { index in
+            CleaningCandidate(
+                url: URL(filePath: "/tmp/item-\(index)"),
+                sizeBytes: 1,
+                modifiedAt: nil,
+                category: .other,
+                risk: .reviewRecommended,
+                reasons: [],
+                isDirectory: false
+            )
+        }
+        store.selection.selectMovable(store.candidates)
+
+        XCTAssertTrue(store.aiSelectionExceedsLimit)
+        store.askAI()
+
+        XCTAssertFalse(store.isReviewingWithAI)
+        guard case let .system(message) = store.errorMessage else {
+            return XCTFail("expected a candidate-limit system message")
+        }
+        XCTAssertTrue(message.contains("80"))
+    }
+
     func testPreparingAIReviewScreenClearsErrorBledOverFromOtherScreensAndDetectsTools() async {
         let store = makeStore(found: ["codex": "/opt/homebrew/bin/codex"])
         // An error raised on a different screen (e.g. the Cleaner) must not linger on the

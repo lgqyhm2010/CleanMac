@@ -167,7 +167,7 @@ private struct DashboardPrivacyBadge: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n.text(.privateByDesign, language: language))
                     .font(.caption.weight(.bold))
-                Text("\(L10n.text(.trustNoTelemetry, language: language)). \(L10n.text(.trustNoCloudUpload, language: language)).")
+                Text("\(L10n.text(.trustNoTelemetry, language: language)). \(L10n.text(.trustAIProviderNetwork, language: language)).")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)
@@ -553,7 +553,7 @@ private struct ScanTrustChecklist: View {
     var body: some View {
         HStack(spacing: 14) {
             ScanTrustChecklistItem(title: L10n.text(.trustMoveToTrash, language: language))
-            ScanTrustChecklistItem(title: L10n.text(.trustLocalAI, language: language))
+            ScanTrustChecklistItem(title: L10n.text(.trustInstalledAICLI, language: language))
             ScanTrustChecklistItem(title: L10n.text(.trustNoTelemetry, language: language))
         }
     }
@@ -718,7 +718,7 @@ private struct TrustBadgeStrip: View {
         CleanMacPanel(padding: 12, tint: CleanMacTheme.mint) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], alignment: .leading, spacing: 10) {
                 TrustBadgeItem(
-                    title: L10n.text(.trustLocalAI, language: language),
+                    title: L10n.text(.trustInstalledAICLI, language: language),
                     symbolName: "sparkles",
                     tint: CleanMacTheme.purple
                 )
@@ -733,8 +733,8 @@ private struct TrustBadgeStrip: View {
                     tint: CleanMacTheme.mint
                 )
                 TrustBadgeItem(
-                    title: L10n.text(.trustNoCloudUpload, language: language),
-                    symbolName: "icloud.slash",
+                    title: L10n.text(.trustAIProviderNetwork, language: language),
+                    symbolName: "cloud",
                     tint: CleanMacTheme.peach
                 )
             }

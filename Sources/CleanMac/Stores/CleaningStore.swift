@@ -32,6 +32,7 @@ final class CleaningStore: ObservableObject {
     @Published var selectedModelIDsByTool: [String: String]
 
     private let aiToolDetector: AIToolDetector
+    private var aiReviewTask: Task<Void, Never>?
     private static let aiToolPreferenceKey = "aiSelectedToolID"
     private static let aiModelPreferenceKey = "aiModelPreferenceByTool"
 
@@ -76,9 +77,12 @@ final class CleaningStore: ObservableObject {
 
     /// Keeps the raw text (fallback view, copying) and derives the structured
     /// summary from it; nil summary means the UI shows the raw text.
-    func applyAIReviewOutput(_ output: String) {
+    func applyAIReviewOutput(
+        _ output: String,
+        itemPathsByID: [String: String] = [:]
+    ) {
         aiOutput = output
-        aiReviewSummary = AIReviewOutputParser.parse(output)
+        aiReviewSummary = AIReviewOutputParser.parse(output, itemPathsByID: itemPathsByID)
     }
 
     /// Resolves the persisted choice against the tool's presets; unknown or missing
@@ -131,6 +135,10 @@ final class CleaningStore: ObservableObject {
 
     var selectedSummary: CleaningSelectionSummary {
         selection.summary(for: candidates)
+    }
+
+    var aiSelectionExceedsLimit: Bool {
+        selectedSummary.selectedCount > AIReviewService.maximumCandidateCount
     }
 
     var selectedCandidate: CleaningCandidate? {
@@ -357,6 +365,13 @@ final class CleaningStore: ObservableObject {
             errorMessage = .selectItemForAIReview
             return
         }
+        guard targets.count <= AIReviewService.maximumCandidateCount else {
+            errorMessage = .system(AIReviewError.tooManyCandidates(
+                limit: AIReviewService.maximumCandidateCount,
+                actual: targets.count
+            ).localizedDescription)
+            return
+        }
         refreshDetectedAITools()
         guard let selectedAIToolID, let tool = detectedAITools.first(where: { $0.id == selectedAIToolID }) else {
             errorMessage = .noAIToolDetected
@@ -373,18 +388,29 @@ final class CleaningStore: ObservableObject {
         let question = aiQuestion
         let model = selectedModelOption(for: tool.id)
 
-        Task {
+        aiReviewTask = Task {
+            defer {
+                isReviewingWithAI = false
+                aiReviewTask = nil
+            }
             do {
                 let review = try await AIReviewService(tool: tool)
                     .review(candidates: targets, userQuestion: question, model: model)
-                applyAIReviewOutput(review.output)
+                try Task.checkCancellation()
+                applyAIReviewOutput(review.output, itemPathsByID: review.itemPathsByID)
                 status = .aiReviewFinished
+            } catch is CancellationError {
+                errorMessage = nil
+                status = .ready
             } catch {
                 errorMessage = .system(error.localizedDescription)
                 status = .aiReviewFailed
             }
-            isReviewingWithAI = false
         }
+    }
+
+    func cancelAIReview() {
+        aiReviewTask?.cancel()
     }
 
     private func refreshReportAfterCandidateChanges() async {

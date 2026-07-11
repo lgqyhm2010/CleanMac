@@ -11,6 +11,8 @@
 "clear" = "Effacer";
 "clearSelection" = "Effacer la sélection";
 "aiTool" = "Outil IA";
+"aiPrivacyDisclosure" = "CleanMac envoie votre question telle qu’elle est saisie, avec les métadonnées expurgées de 80 éléments sélectionnés au maximum, au CLI d’IA installé. Le CLI peut contacter son fournisseur ; le contenu des fichiers et les chemins complets collectés automatiquement ne sont pas inclus.";
+"aiSelectionLimitMessage" = "La revue IA accepte jusqu’à 80 éléments sélectionnés à la fois.";
 "duplicateGroup" = "Groupe de doublons";
 "duplicates" = "Doublons";
 "english" = "Anglais";
@@ -43,7 +45,7 @@
 "noReview" = "Aucune revue";
 "potential" = "Potentiel";
 "permissions" = "Autorisations";
-"privateByDesign" = "Confidentialité intégrée";
+"privateByDesign" = "Choix de confidentialité explicites";
 "protection" = "Protection";
 "question" = "Question";
 "quitCleanMac" = "Quitter CleanMac";
@@ -65,9 +67,9 @@
 "size" = "Taille";
 "spanish" = "Espagnol";
 "status" = "État";
-"trustLocalAI" = "IA locale";
+"trustInstalledAICLI" = "CLI d’IA installé";
 "trustMoveToTrash" = "Déplacer vers la corbeille";
-"trustNoCloudUpload" = "Aucun envoi cloud";
+"trustAIProviderNetwork" = "Le CLI d’IA peut utiliser le cloud";
 "trustNoTelemetry" = "Aucune télémétrie";
 "openSettings" = "Ouvrir les réglages";
 "arabic" = "Arabe";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "Analyser l’espace";
 "sidebarAnalyzeSpaceSubtitle" = "Carte de l’espace";
 "sidebarAIReviewTitle" = "Revue IA";
-"sidebarAIReviewSubtitle" = "Agent local";
+"sidebarAIReviewSubtitle" = "CLI installé";
 "sidebarSettingsTitle" = "Réglages";
 "sidebarSettingsSubtitle" = "Langue et plus";
 "sidebarGroupOverview" = "Aperçu";
 "sidebarGroupProTools" = "Outils pro";
-"sidebarGroupAILocal" = "IA locale";
+"sidebarGroupAILocal" = "CLI d’IA";
 "sidebarGroupSystem" = "Système";
 
 "category.cache" = "Caches";

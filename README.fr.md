@@ -6,7 +6,7 @@
 
 **Un nettoyeur de disque natif, privé et assisté par IA pour macOS.**
 
-Recherchez les caches, journaux, doublons, fichiers volumineux et applications inutilisées — passez-les en revue avec une CLI d'IA locale — et déplacez-les en toute sécurité vers la Corbeille. Aucun compte, aucune télémétrie, aucun réseau.
+Recherchez les caches, journaux, doublons, fichiers volumineux et applications inutilisées, faites examiner leurs métadonnées expurgées par un CLI d’IA installé, puis déplacez-les vers la Corbeille. CleanMac ne demande aucun compte et n’intègre aucune télémétrie ; le CLI d’IA peut utiliser le service réseau de son fournisseur.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B-black.svg)](#requirements)
@@ -33,7 +33,7 @@ Recherchez les caches, journaux, doublons, fichiers volumineux et applications i
 
 CleanMac est une application macOS native (SwiftUI) qui récupère de l'espace disque **en toute sécurité**. Elle analyse votre Mac à la recherche de candidats au nettoyage — caches, journaux, fichiers temporaires, doublons, fichiers surdimensionnés, données d'applications résiduelles — attribue à chacun un niveau de risque et vous permet de tout examiner avant que quoi que ce soit ne soit touché. Les fichiers vont dans la **Corbeille**, jamais directement vers une suppression définitive.
 
-Ce qui la distingue : elle peut confier la liste de suppression à une **CLI d'IA locale que vous avez déjà installée** (Claude Code, Codex ou Gemini CLI) pour obtenir un second avis sur ce qui peut être supprimé sans danger. L'IA s'exécute sur votre machine ; rien n'est envoyé en ligne.
+Ce qui la distingue : elle peut confier des **métadonnées expurgées et limitées** des éléments sélectionnés à un CLI d’IA installé (Claude Code, Codex ou Gemini CLI) pour obtenir un second avis. Votre question est envoyée telle quelle ; CleanMac n’ajoute ni contenu de fichier ni chemin complet, et le CLI peut contacter son fournisseur configuré.
 
 ## Fonctionnalités
 
@@ -44,11 +44,11 @@ Ce qui la distingue : elle peut confier la liste de suppression à une **CLI d'I
 - 🤖 **Revue IA (locale)** — demandez à une CLI d'IA installée de classer les candidats en *suppression sûre*, *risqué* et *à examiner*.
 - 🛡️ **La sécurité avant tout** — plus de 20 règles de sécurité et trois niveaux de protection empêchent la suppression des données système, de Mail/Messages/Safari et du Trousseau.
 - 🌍 **11 langues** — interface entièrement localisée qui suit la langue de votre système ou un choix manuel.
-- 🔒 **Privé par conception** — aucun appel réseau, aucune télémétrie, aucun compte.
+- 🔒 **Limite de confidentialité explicite** — aucun compte ni télémétrie CleanMac ; le transfert vers l’IA est expurgé et clairement signalé.
 
 ## Revue IA (locale)
 
-CleanMac détecte les outils d'IA en ligne de commande pris en charge sur votre `PATH` (y compris les emplacements courants de Homebrew, npm, asdf et volta) et vous laisse en choisir un pour examiner un lot de candidats au nettoyage. L'application construit une invite JSON structurée (chemin, taille, date de modification, catégorie, risque et les règles de sécurité applicables), exécute la CLI **depuis votre répertoire personnel** et analyse la réponse pour la reconvertir en groupes à code couleur.
+CleanMac détecte les outils d’IA compatibles sur votre `PATH` et permet d’examiner jusqu’à 80 candidats. Il envoie votre question et des métadonnées anonymes structurées (ID, taille, date, catégorie, risque et ID de règles), exécute le CLI depuis un répertoire temporaire vide et unique avec un délai de 120 secondes, puis n’accepte la réponse que si chaque élément est classé exactement une fois.
 
 | Outil | Binaire | Modèles disponibles |
 |------|--------|---------------------|
@@ -60,7 +60,7 @@ La liste des candidats et votre invite sont transmises à la CLI via stdin/argum
 
 ## Confidentialité et sécurité
 
-- **Aucun réseau.** CleanMac n'effectue aucun appel réseau. La revue IA se déroule localement via les CLI que vous avez installées vous-même.
+- **Information réseau de l’IA.** CleanMac n’intègre aucune télémétrie, mais un CLI d’IA installé peut contacter son fournisseur. La revue envoie votre question telle quelle, des ID anonymes et des métadonnées limitées, jamais le contenu des fichiers ni les chemins complets collectés automatiquement.
 - **Corbeille, pas `rm`.** Tout est déplacé via `FileManager.trashItem(at:)`, ce qui vous permet de le restaurer.
 - **Niveaux de protection.** `allowed` (caches/journaux/temporaires) → `requiresReview` (code source, stockage cloud, téléchargements, données de développement) → `blocked` (racine système, données d'applications, Mail/Messages/Safari, données de navigateur, Trousseau).
 - **L'accès complet au disque (Full Disk Access)** est facultatif mais recommandé afin que les analyses puissent voir les emplacements protégés de la bibliothèque. CleanMac vous guide pour l'accorder dans Réglages Système.

@@ -16,6 +16,8 @@ public enum L10n {
         case clear
         case clearSelection
         case aiTool
+        case aiPrivacyDisclosure
+        case aiSelectionLimitMessage
         case duplicateGroup
         case duplicates
         case edit
@@ -72,9 +74,9 @@ public enum L10n {
         case size
         case spanish
         case status
-        case trustLocalAI
+        case trustInstalledAICLI
         case trustMoveToTrash
-        case trustNoCloudUpload
+        case trustAIProviderNetwork
         case trustNoTelemetry
         case openSettings
         case free

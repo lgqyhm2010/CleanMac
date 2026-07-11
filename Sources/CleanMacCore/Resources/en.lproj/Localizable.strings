@@ -11,6 +11,8 @@
 "clear" = "Clear";
 "clearSelection" = "Clear Selection";
 "aiTool" = "AI Tool";
+"aiPrivacyDisclosure" = "CleanMac sends your question as written plus redacted metadata for up to 80 selected items to the installed AI CLI. The CLI may contact its provider; file contents and automatically collected full paths are not included.";
+"aiSelectionLimitMessage" = "AI review supports up to 80 selected items at a time.";
 "duplicateGroup" = "Duplicate Group";
 "duplicates" = "Duplicates";
 "english" = "English";
@@ -43,7 +45,7 @@
 "noReview" = "No Review";
 "potential" = "Potential";
 "permissions" = "Permissions";
-"privateByDesign" = "Private by design";
+"privateByDesign" = "Explicit privacy choices";
 "protection" = "Protection";
 "question" = "Question";
 "quitCleanMac" = "Quit CleanMac";
@@ -65,9 +67,9 @@
 "size" = "Size";
 "spanish" = "Spanish";
 "status" = "Status";
-"trustLocalAI" = "Local AI";
+"trustInstalledAICLI" = "Installed AI CLI";
 "trustMoveToTrash" = "Move to Trash";
-"trustNoCloudUpload" = "No Cloud Upload";
+"trustAIProviderNetwork" = "AI CLI may use cloud";
 "trustNoTelemetry" = "No Telemetry";
 "openSettings" = "Open Settings";
 "arabic" = "Arabic";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "Analyze space";
 "sidebarAnalyzeSpaceSubtitle" = "Space map";
 "sidebarAIReviewTitle" = "AI Review";
-"sidebarAIReviewSubtitle" = "Local agent";
+"sidebarAIReviewSubtitle" = "Installed CLI";
 "sidebarSettingsTitle" = "Settings";
 "sidebarSettingsSubtitle" = "Language and more";
 "sidebarGroupOverview" = "Overview";
 "sidebarGroupProTools" = "Pro tools";
-"sidebarGroupAILocal" = "AI - Local";
+"sidebarGroupAILocal" = "AI - CLI";
 "sidebarGroupSystem" = "System";
 
 "category.cache" = "Caches";

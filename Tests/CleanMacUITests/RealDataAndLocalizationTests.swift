@@ -109,6 +109,17 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertFalse(source.contains("let duplicateGroups = (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []"))
     }
 
+    func testAIReviewShowsDisclosureLimitAndCancellationControls() throws {
+        let source = try sourceFile("Sources/CleanMac/Views/AIReviewView.swift")
+        let storeSource = try sourceFile("Sources/CleanMac/Stores/CleaningStore.swift")
+
+        XCTAssertTrue(source.contains("L10n.text(.aiPrivacyDisclosure"))
+        XCTAssertTrue(source.contains("L10n.text(.aiSelectionLimitMessage"))
+        XCTAssertTrue(source.contains("store.cancelAIReview()"))
+        XCTAssertTrue(storeSource.contains("aiReviewTask?.cancel()"))
+        XCTAssertTrue(storeSource.contains("AIReviewService.maximumCandidateCount"))
+    }
+
     func testReimaginedDashboardUsesPaperChromeAndTrustStrip() throws {
         let contentSource = try sourceFile("Sources/CleanMac/Views/ContentView.swift")
         let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
@@ -145,9 +156,9 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertTrue(scanSource.contains("LazyVGrid(columns: Self.columns"))
         XCTAssertFalse(scanSource.contains("DiskOverviewHeader(store: store"))
         XCTAssertTrue(scanSource.contains("TrustBadgeStrip(language: language)"))
-        XCTAssertTrue(scanSource.contains("L10n.text(.trustLocalAI"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustInstalledAICLI"))
         XCTAssertTrue(scanSource.contains("L10n.text(.trustNoTelemetry"))
-        XCTAssertTrue(scanSource.contains("L10n.text(.trustNoCloudUpload"))
+        XCTAssertTrue(scanSource.contains("L10n.text(.trustAIProviderNetwork"))
     }
 
     func testReimaginedDashboardIllustrationsCannotFallBackToSystemSymbols() throws {

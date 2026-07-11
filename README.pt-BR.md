@@ -6,7 +6,7 @@
 
 **Um limpador de disco nativo, privado e assistido por IA para macOS.**
 
-Faça a varredura de caches, logs, duplicatas, arquivos grandes e apps não utilizados — revise-os com uma CLI de IA local — e mova-os com segurança para o Lixo. Sem conta, sem telemetria, sem rede.
+Faça a varredura de caches, logs, duplicatas, arquivos grandes e apps não utilizados, revise metadados omitidos com uma CLI de IA instalada e mova-os com segurança para o Lixo. O CleanMac não exige conta nem inclui telemetria; a CLI de IA pode usar o serviço de rede do provedor.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B-black.svg)](#requisitos)
@@ -33,7 +33,7 @@ Faça a varredura de caches, logs, duplicatas, arquivos grandes e apps não util
 
 O CleanMac é um app nativo do macOS (SwiftUI) que recupera espaço em disco **com segurança**. Ele varre o seu Mac em busca de candidatos à limpeza — caches, logs, arquivos temporários, duplicatas, arquivos gigantes, dados residuais de apps —, atribui um nível de risco a cada um e permite que você revise tudo antes que qualquer coisa seja tocada. Os arquivos vão para o **Lixo**, nunca direto para a exclusão permanente.
 
-O que o torna diferente: ele pode entregar a lista de exclusão para uma **CLI de IA local que você já tem instalada** (Claude Code, Codex ou Gemini CLI) em busca de uma segunda opinião sobre o que é seguro remover. A IA roda na sua máquina; nada é enviado.
+O que o torna diferente: ele pode entregar **metadados omitidos e limitados** dos itens selecionados a uma CLI de IA instalada (Claude Code, Codex ou Gemini CLI) para obter uma segunda opinião. Sua pergunta é enviada como foi digitada; o CleanMac não adiciona conteúdo de arquivos nem caminhos completos, e a CLI pode contatar o provedor configurado.
 
 ## Recursos
 
@@ -44,11 +44,11 @@ O que o torna diferente: ele pode entregar a lista de exclusão para uma **CLI d
 - 🤖 **Revisão por IA (local)** — peça a uma CLI de IA instalada para classificar os candidatos em *seguro para excluir*, *arriscado* e *precisa de revisão*.
 - 🛡️ **Segurança em primeiro lugar** — mais de 20 regras de segurança e três níveis de proteção impedem que dados do sistema, do Mail/Mensagens/Safari e do Keychain sejam excluídos.
 - 🌍 **11 idiomas** — interface totalmente localizada que segue o idioma do seu sistema ou uma substituição manual.
-- 🔒 **Privado por design** — sem chamadas de rede, sem telemetria, sem conta.
+- 🔒 **Limite de privacidade explícito** — sem telemetria ou conta do CleanMac; a entrega à IA é omitida e informada claramente.
 
 ## Revisão por IA (Local)
 
-O CleanMac detecta ferramentas de IA de linha de comando compatíveis no seu `PATH` (incluindo os locais comuns de Homebrew, npm, asdf e volta) e permite que você escolha uma para revisar um lote de candidatos à limpeza. O app monta um prompt JSON estruturado (caminho, tamanho, data de modificação, categoria, risco e as regras de segurança aplicáveis), executa a CLI **a partir do seu diretório home** e analisa a resposta convertendo-a de volta em grupos com código de cores.
+O CleanMac detecta ferramentas de IA compatíveis no seu `PATH` e permite revisar até 80 candidatos. Ele envia sua pergunta e metadados anônimos estruturados (ID, tamanho, data, categoria, risco e IDs de regras), executa a CLI em um diretório temporário vazio e exclusivo com limite de 120 segundos e só aceita a resposta se cada item for classificado exatamente uma vez.
 
 | Ferramenta | Binário | Modelos que você pode escolher |
 |------|--------|---------------------|
@@ -60,7 +60,7 @@ A lista de candidatos e o seu prompt são passados para a CLI via stdin/argument
 
 ## Privacidade e Segurança
 
-- **Sem rede.** O CleanMac não faz chamadas de rede. A revisão por IA acontece localmente por meio de CLIs que você mesmo instalou.
+- **Aviso de rede da IA.** O CleanMac não inclui telemetria, mas uma CLI de IA instalada pode contatar o provedor. A revisão envia sua pergunta como digitada, IDs anônimos e metadados limitados; nunca o conteúdo dos arquivos ou caminhos completos coletados automaticamente.
 - **Lixo, não `rm`.** Tudo é movido via `FileManager.trashItem(at:)`, então você pode restaurar.
 - **Níveis de proteção.** `allowed` (caches/logs/temp) → `requiresReview` (código-fonte, armazenamento em nuvem, downloads, dados de desenvolvimento) → `blocked` (raiz do sistema, dados de apps, Mail/Mensagens/Safari, dados de navegadores, Keychain).
 - **Full Disk Access** é opcional, mas recomendado para que as varreduras possam ver os locais protegidos da Library. O CleanMac orienta você a concedê-lo nas Ajustes do Sistema.
