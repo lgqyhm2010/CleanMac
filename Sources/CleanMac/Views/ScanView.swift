@@ -101,7 +101,7 @@ struct ScanView: View {
                             )
                         }
                         .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.accent, prominent: true))
-                        .disabled(store.isScanning || store.roots.isEmpty)
+                        .disabled(store.isBusy || store.roots.isEmpty)
 
                         if store.isScanning {
                             ProgressView()
@@ -285,9 +285,9 @@ private struct DiskOverviewDashboardCard: View {
                             .font(.title2.weight(.bold))
                             .lineLimit(1)
                         StatusBadge(
-                            text: store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.healthy, language: language),
-                            symbolName: store.isScanning ? "magnifyingglass" : "checkmark",
-                            tint: store.isScanning ? CleanMacTheme.accent : CleanMacTheme.mint,
+                            text: L10n.status(store.status, language: language),
+                            symbolName: CleanMacTheme.statusSymbol(store.status),
+                            tint: CleanMacTheme.statusColor(store.status),
                             isActive: store.isScanning
                         )
                     }
@@ -323,7 +323,7 @@ private struct DiskOverviewDashboardCard: View {
                         .frame(minWidth: 132)
                     }
                     .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.accent, prominent: true))
-                    .disabled(store.isScanning || store.roots.isEmpty)
+                    .disabled(store.isBusy || store.roots.isEmpty)
                 }
                 .frame(width: 174, alignment: .trailing)
             }
@@ -536,7 +536,7 @@ private struct DashboardScanCTA: View {
                         .frame(minWidth: 170)
                     }
                     .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.accent, prominent: true))
-                    .disabled(store.isScanning || store.roots.isEmpty)
+                    .disabled(store.isBusy || store.roots.isEmpty)
 
                     Text(L10n.text(.dashboardQuickSafePrivate, language: language))
                         .font(.caption.weight(.semibold))

@@ -67,6 +67,8 @@ public enum L10n {
         case scanning
         case selectAll
         case selectAllCandidates
+        case selectItem
+        case deselectItem
         case selectDuplicateCopies
         case selectUninstallItems
         case selected
@@ -244,6 +246,41 @@ public enum L10n {
             return format("scanReason.appUninstallSupportItem", language: language, bundleIdentifier)
         default:
             return reason
+        }
+    }
+
+    public static func safetyRule(_ match: SafetyRuleMatch, language: ResolvedLanguage) -> String {
+        "\(safetyRuleName(match.ruleID, language: language)): \(safetyRuleExplanation(match.protection, language: language))"
+    }
+
+    public static func safetyRuleName(_ ruleID: String, language: ResolvedLanguage) -> String {
+        switch ruleID {
+        case "cache": CandidateCategory.cache.displayName(language: language)
+        case "logs": CandidateCategory.logs.displayName(language: language)
+        case "temporary": CandidateCategory.temporary.displayName(language: language)
+        case "trash": CandidateCategory.trash.displayName(language: language)
+        case "downloads": CandidateCategory.downloads.displayName(language: language)
+        case "large-file": CandidateCategory.largeFile.displayName(language: language)
+        case "app-bundle": CandidateCategory.application.displayName(language: language)
+        case "app-uninstall-support": CandidateCategory.applicationSupport.displayName(language: language)
+        case "developer-cache": CandidateCategory.developer.displayName(language: language)
+        case "source-code": localized("safetyRuleName.sourceCode", language: language)
+        case "risk-usually-safe": DeletionRisk.usuallySafe.displayName(language: language)
+        case "risk-review": DeletionRisk.reviewRecommended.displayName(language: language)
+        case "risk-careful": DeletionRisk.beCareful.displayName(language: language)
+        case "system-root": localized("safetyRuleName.systemRoot", language: language)
+        case "app-data": localized("safetyRuleName.appData", language: language)
+        case "unknown-directory": localized("safetyRuleName.unknownDirectory", language: language)
+        case "cloud-storage": localized("safetyRuleName.cloudStorage", language: language)
+        default: DeletionProtection.requiresReview.displayName(language: language)
+        }
+    }
+
+    public static func safetyRuleExplanation(_ protection: DeletionProtection, language: ResolvedLanguage) -> String {
+        switch protection {
+        case .allowed: localized("safetyRule.allowed", language: language)
+        case .requiresReview: localized("safetyRule.requiresReview", language: language)
+        case .blocked: localized("safetyRule.blocked", language: language)
         }
     }
 

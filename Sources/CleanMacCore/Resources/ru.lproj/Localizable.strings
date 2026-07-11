@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "Инструмент AI CLI не найден. Установите codex, claude или gemini.";
 
 "defaultAIQuestion" = "Определите, подходят ли эти файлы для перемещения в Корзину, и перечислите все, что мне следует подтвердить вручную.";
+
+"selectItem" = "Выбрать объект";
+"deselectItem" = "Снять выбор";
+"safetyRule.allowed" = "Объект находится в распознанном месте очистки; проверьте его и сначала переместите в Корзину.";
+"safetyRule.requiresReview" = "Объект может содержать личные или важные данные; проверьте его перед перемещением.";
+"safetyRule.blocked" = "Правила безопасности защищают этот объект от очистки.";
+"safetyRuleName.systemRoot" = "Системный корень";
+"safetyRuleName.appData" = "Данные приложений";
+"safetyRuleName.sourceCode" = "Исходный код";
+"safetyRuleName.cloudStorage" = "Облачное хранилище";
+"safetyRuleName.unknownDirectory" = "Неизвестная папка";

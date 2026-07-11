@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "未偵測到 AI CLI 工具，請安裝 codex、claude 或 gemini。";
 
 "defaultAIQuestion" = "請判斷這些檔案是否適合移到垃圾桶，並列出需要我手動確認的項目。";
+
+"selectItem" = "選取項目";
+"deselectItem" = "取消選取項目";
+"safetyRule.allowed" = "此項目位於已識別的清理位置；請先檢查，再移到垃圾桶。";
+"safetyRule.requiresReview" = "此項目可能包含個人或重要資料；移動前請先檢查。";
+"safetyRule.blocked" = "安全規則已阻止清理此項目。";
+"safetyRuleName.systemRoot" = "系統目錄";
+"safetyRuleName.appData" = "App 資料";
+"safetyRuleName.sourceCode" = "原始碼";
+"safetyRuleName.cloudStorage" = "雲端儲存空間";
+"safetyRuleName.unknownDirectory" = "未知資料夾";

@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "لم يتم العثور على أداة AI CLI. ثبّت codex أو claude أو gemini.";
 
 "defaultAIQuestion" = "يرجى تحديد ما إذا كانت هذه الملفات مناسبة للنقل إلى سلة المهملات، واذكر أي شيء يجب أن أؤكده يدويا.";
+
+"selectItem" = "تحديد العنصر";
+"deselectItem" = "إلغاء تحديد العنصر";
+"safetyRule.allowed" = "هذا العنصر في موقع تنظيف معروف؛ راجعه ثم انقله إلى سلة المهملات أولاً.";
+"safetyRule.requiresReview" = "قد يحتوي هذا العنصر على بيانات شخصية أو مهمة؛ راجعه قبل نقله.";
+"safetyRule.blocked" = "تحمي قواعد الأمان هذا العنصر من التنظيف.";
+"safetyRuleName.systemRoot" = "جذر النظام";
+"safetyRuleName.appData" = "بيانات التطبيق";
+"safetyRuleName.sourceCode" = "الشفرة المصدرية";
+"safetyRuleName.cloudStorage" = "التخزين السحابي";
+"safetyRuleName.unknownDirectory" = "مجلد غير معروف";

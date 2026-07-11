@@ -32,7 +32,7 @@ struct AIReviewView: View {
                         )
                     }
                     .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.sectionTint(.aiReview), prominent: true))
-                    .disabled(!store.isReviewingWithAI && (
+                    .disabled(!store.isReviewingWithAI && (store.isBusy ||
                         store.selectedSummary.selectedCount == 0
                             || store.aiSelectionExceedsLimit
                             || store.selectedAIToolID == nil

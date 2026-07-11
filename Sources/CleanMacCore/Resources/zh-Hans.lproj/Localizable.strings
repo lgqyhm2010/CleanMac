@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "未检测到 AI CLI 工具，请安装 codex、claude 或 gemini。";
 
 "defaultAIQuestion" = "请判断这些文件是否适合移到废纸篓，并列出需要我手动确认的项目。";
+
+"selectItem" = "选择项目";
+"deselectItem" = "取消选择项目";
+"safetyRule.allowed" = "此项目位于已识别的清理位置；请先检查，再移到废纸篓。";
+"safetyRule.requiresReview" = "此项目可能包含个人或重要数据；移动前请先检查。";
+"safetyRule.blocked" = "安全规则已阻止清理此项目。";
+"safetyRuleName.systemRoot" = "系统目录";
+"safetyRuleName.appData" = "应用数据";
+"safetyRuleName.sourceCode" = "源代码";
+"safetyRuleName.cloudStorage" = "云存储";
+"safetyRuleName.unknownDirectory" = "未知文件夹";

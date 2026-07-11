@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "কোনো AI CLI টুল পাওয়া যায়নি। codex, claude বা gemini ইনস্টল করুন।";
 
 "defaultAIQuestion" = "এই ফাইলগুলো ট্র্যাশে সরানো উপযুক্ত কি না দয়া করে নির্ধারণ করুন, এবং আমাকে ম্যানুয়ালি নিশ্চিত করতে হবে এমন কিছু থাকলে তালিকা করুন।";
+
+"selectItem" = "আইটেম নির্বাচন করুন";
+"deselectItem" = "আইটেমের নির্বাচন সরান";
+"safetyRule.allowed" = "আইটেমটি স্বীকৃত পরিষ্কার স্থানে আছে; পর্যালোচনা করে প্রথমে ট্র্যাশে সরান।";
+"safetyRule.requiresReview" = "আইটেমটিতে ব্যক্তিগত বা গুরুত্বপূর্ণ তথ্য থাকতে পারে; সরানোর আগে পর্যালোচনা করুন।";
+"safetyRule.blocked" = "নিরাপত্তা নিয়ম এই আইটেমটিকে পরিষ্কার করা থেকে রক্ষা করে।";
+"safetyRuleName.systemRoot" = "সিস্টেম রুট";
+"safetyRuleName.appData" = "অ্যাপ্লিকেশন ডেটা";
+"safetyRuleName.sourceCode" = "সোর্স কোড";
+"safetyRuleName.cloudStorage" = "ক্লাউড স্টোরেজ";
+"safetyRuleName.unknownDirectory" = "অজানা ফোল্ডার";

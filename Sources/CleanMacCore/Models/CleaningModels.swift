@@ -101,9 +101,20 @@ public struct SafetyRuleMatch: Identifiable, Hashable, Codable, Sendable {
     public var id: String { ruleID }
 
     public let ruleID: String
-    public let name: String
-    public let explanation: String
     public let protection: DeletionProtection
+
+    public var name: String {
+        L10n.safetyRuleName(ruleID, language: .english)
+    }
+
+    public var explanation: String {
+        L10n.safetyRuleExplanation(protection, language: .english)
+    }
+
+    public init(ruleID: String, protection: DeletionProtection) {
+        self.ruleID = ruleID
+        self.protection = protection
+    }
 
     public init(
         ruleID: String,
@@ -111,10 +122,7 @@ public struct SafetyRuleMatch: Identifiable, Hashable, Codable, Sendable {
         explanation: String,
         protection: DeletionProtection
     ) {
-        self.ruleID = ruleID
-        self.name = name
-        self.explanation = explanation
-        self.protection = protection
+        self.init(ruleID: ruleID, protection: protection)
     }
 }
 

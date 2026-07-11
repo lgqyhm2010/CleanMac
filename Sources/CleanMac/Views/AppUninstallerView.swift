@@ -91,7 +91,7 @@ struct AppUninstallerView: View {
                             )
                         }
                         .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.pink, prominent: true))
-                        .disabled(store.isScanningApplications || store.appRoots.isEmpty)
+                        .disabled(store.isBusy || store.appRoots.isEmpty)
                     }
 
                     if store.isScanningApplications {

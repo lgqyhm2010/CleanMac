@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "AI CLI ツールが見つかりません。codex、claude、gemini のいずれかをインストールしてください。";
 
 "defaultAIQuestion" = "これらのファイルをゴミ箱に移動してよいか判断し、手動確認が必要なものを列挙してください。";
+
+"selectItem" = "項目を選択";
+"deselectItem" = "項目の選択を解除";
+"safetyRule.allowed" = "認識済みのクリーンアップ場所にある項目です。確認してからゴミ箱へ移動してください。";
+"safetyRule.requiresReview" = "個人データや重要なデータを含む可能性があります。移動前に確認してください。";
+"safetyRule.blocked" = "安全ルールにより、この項目はクリーンアップから保護されています。";
+"safetyRuleName.systemRoot" = "システム領域";
+"safetyRuleName.appData" = "アプリケーションデータ";
+"safetyRuleName.sourceCode" = "ソースコード";
+"safetyRuleName.cloudStorage" = "クラウドストレージ";
+"safetyRuleName.unknownDirectory" = "不明なフォルダ";

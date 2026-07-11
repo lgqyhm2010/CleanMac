@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "कोई AI CLI टूल नहीं मिला। codex, claude या gemini इंस्टॉल करें।";
 
 "defaultAIQuestion" = "कृपया तय करें कि ये फ़ाइलें ट्रैश में ले जाने योग्य हैं या नहीं, और जिन बातों की मुझे मैन्युअल पुष्टि करनी चाहिए उन्हें सूचीबद्ध करें।";
+
+"selectItem" = "आइटम चुनें";
+"deselectItem" = "आइटम का चयन हटाएँ";
+"safetyRule.allowed" = "यह आइटम पहचाने गए क्लीनअप स्थान में है; इसे जाँचें और पहले ट्रैश में भेजें।";
+"safetyRule.requiresReview" = "इस आइटम में निजी या महत्वपूर्ण डेटा हो सकता है; स्थानांतरित करने से पहले जाँचें।";
+"safetyRule.blocked" = "सुरक्षा नियम इस आइटम को क्लीनअप से बचाते हैं।";
+"safetyRuleName.systemRoot" = "सिस्टम रूट";
+"safetyRuleName.appData" = "ऐप्लिकेशन डेटा";
+"safetyRuleName.sourceCode" = "स्रोत कोड";
+"safetyRuleName.cloudStorage" = "क्लाउड स्टोरेज";
+"safetyRuleName.unknownDirectory" = "अज्ञात फ़ोल्डर";

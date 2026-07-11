@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "No AI CLI tool found. Install codex, claude, or gemini.";
 
 "defaultAIQuestion" = "Please decide whether these files are suitable to move to Trash, and list anything I should manually confirm.";
+
+"selectItem" = "Select item";
+"deselectItem" = "Deselect item";
+"safetyRule.allowed" = "This item matches a recognized cleanup location; review it and move it to Trash first.";
+"safetyRule.requiresReview" = "This item may contain personal or important data; review it before moving.";
+"safetyRule.blocked" = "Safety rules protect this item from cleanup.";
+"safetyRuleName.systemRoot" = "System root";
+"safetyRuleName.appData" = "Application data";
+"safetyRuleName.sourceCode" = "Source code";
+"safetyRuleName.cloudStorage" = "Cloud storage";
+"safetyRuleName.unknownDirectory" = "Unknown directory";

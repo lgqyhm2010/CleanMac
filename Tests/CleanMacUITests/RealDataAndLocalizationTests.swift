@@ -120,6 +120,33 @@ final class RealDataAndLocalizationTests: XCTestCase {
         XCTAssertTrue(storeSource.contains("AIReviewService.maximumCandidateCount"))
     }
 
+    func testForegroundActionsShareOneMutuallyExclusiveOperationState() throws {
+        let source = try sourceFile("Sources/CleanMac/Stores/CleaningStore.swift")
+
+        XCTAssertTrue(source.contains("ForegroundOperationState"))
+        XCTAssertTrue(source.contains("beginForegroundOperation"))
+        XCTAssertTrue(source.contains("isCurrentForegroundOperation"))
+        XCTAssertFalse(source.contains("@Published var isScanning = false"))
+        XCTAssertFalse(source.contains("@Published var isCleaning = false"))
+        XCTAssertFalse(source.contains("@Published var isReviewingWithAI = false"))
+        XCTAssertFalse(source.contains("@Published var isScanningApplications = false"))
+    }
+
+    func testOverviewStatusIsTruthfulBeforeAndAfterScanFailures() throws {
+        let source = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
+
+        XCTAssertTrue(source.contains("L10n.status(store.status, language: language)"))
+        XCTAssertFalse(source.contains("store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.healthy, language: language)"))
+    }
+
+    func testResultCheckboxRemainsAnIndependentAccessibilityElement() throws {
+        let source = try sourceFile("Sources/CleanMac/Views/ResultsView.swift")
+
+        XCTAssertTrue(source.contains(".accessibilityElement(children: .contain)"))
+        XCTAssertFalse(source.contains(".accessibilityElement(children: .combine)"))
+        XCTAssertTrue(source.contains("L10n.text(isSelected ? .deselectItem : .selectItem"))
+    }
+
     func testReimaginedDashboardUsesPaperChromeAndTrustStrip() throws {
         let contentSource = try sourceFile("Sources/CleanMac/Views/ContentView.swift")
         let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")

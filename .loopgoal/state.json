@@ -3,20 +3,20 @@
   "objective": "Fix every validated CleanMac project-review finding across uninstall safety, scan identity, AI review, release engineering, state management, localization, accessibility, and product navigation.",
   "exit_condition": "The goal is complete when every validated P1 and P2 finding from the 2026-07-11 project review is either fixed with regression coverage or deliberately removed from the product surface, all focused and full tests pass, the production app builds in release mode with arm64 and x86_64 support and version metadata, release workflows keep PR jobs read-only and secret-free and fail closed on signing/notarization failures, runtime launch verification passes, git diff --check passes, .loopgoal/state.json is marked done, and all intended changes are committed on codex/project-review-20260711.",
   "status": "in_progress",
-  "iteration": 4,
+  "iteration": 5,
   "phases": [
     {"name": "Initialize full-review repair checkpoint", "status": "done"},
     {"name": "Harden AppUninstaller planning and execution", "status": "done"},
     {"name": "Fix scan identity, duplicate safety, and cleanup revalidation", "status": "done"},
     {"name": "Make AI review complete, bounded, isolated, and honest", "status": "done"},
     {"name": "Make release packaging and CI fail closed", "status": "done"},
-    {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "in_progress"},
-    {"name": "Run full release and runtime verification", "status": "todo"},
-    {"name": "Finalize checkpoint and commits", "status": "todo"}
+    {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "done"},
+    {"name": "Run full release and runtime verification", "status": "done"},
+    {"name": "Finalize checkpoint and commits", "status": "in_progress"}
   ],
   "current": {
-    "focus": "Release phase complete. Pull-request and main preview builds are read-only and secret-free; tag publishing alone receives write permission and credentials. Actions are pinned to verified commit SHAs and the floating review plugin was removed. Release mode requires Developer ID, version/build metadata, explicit Accepted notarization status, stapling, validation, and Gatekeeper success. A real unsigned preview produced a 16 MB universal x86_64+arm64 app and valid 12 MB DMG with source artwork excluded. Eight release regressions, an executable ten-stage failure-injection harness, 142 XCTest tests, 13 Swift Testing tests, all strings/workflow/script checks, DMG verification, and GUI launch passed.",
-    "next_action": "Add red regressions for one mutually exclusive foreground operation, truthful ready/scanning/failure status copy, localized safety-rule explanations in all 11 languages, independently focusable result checkboxes, and reachable help/settings navigation; then implement and verify the full P2 surface.",
+    "focus": "All validated P1 and P2 findings are repaired. Scan, application scan, cleanup, and AI review now share one tokenized mutually exclusive foreground-operation state, and stale completion tokens cannot overwrite newer work. Overview status copy reflects ready, scanning, results, and failure states instead of claiming Healthy before a scan. Safety-rule names and explanations render through localized resources in all 11 languages. Result checkboxes remain independently focusable and localized. The exact full verification passed with 147 XCTest tests, 14 Swift Testing tests, a universal x86_64+arm64 preview app and valid DMG, script and diff checks, and GUI launch verification.",
+    "next_action": "Commit the completed P2 phase, rerun the exact verification from the committed tree, audit the original finding list and clean worktree, then mark the loop goal done.",
     "blockers": ""
   },
   "decisions": [
@@ -67,8 +67,16 @@
     {
       "decision": "Build the production app independently for arm64 and x86_64, combine it with lipo, verify its plist and resources before packaging, and test every external release gate with injected command and status failures.",
       "reason": "A host-only SwiftPM build cannot substantiate Intel support, static workflow assertions cannot prove fail-closed shell behavior, and source artwork should remain in the repository without entering the shipped resource bundle."
+    },
+    {
+      "decision": "Represent every foreground action with one tokenized operation state and require the matching token before applying or finishing asynchronous work.",
+      "reason": "Separate booleans allow scans, cleanup, and AI review to overlap and let stale tasks overwrite newer status and results; a single token establishes both mutual exclusion and completion ownership."
+    },
+    {
+      "decision": "Keep safety rule IDs stable in the engine and localize their presentation at the UI boundary, including localized accessibility actions.",
+      "reason": "Safety classification must remain language-independent while every supported language receives truthful rule and control descriptions without hardcoded English in the engine or result rows."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_dmg.sh --unsigned && script/verify_release.sh dist/CleanMac.app && hdiutil verify dist/CleanMac.dmg && bash -n script/build_and_run.sh script/build_dmg.sh script/verify_release.sh script/verify_opensource.sh Tests/ReleaseScriptTests.sh && git diff --check && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-11T11:11:23Z"
+  "updated_at": "2026-07-11T11:22:10Z"
 }

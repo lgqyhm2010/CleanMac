@@ -136,7 +136,7 @@ struct ResultsView: View {
                     )
                 }
                 .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.danger, prominent: true))
-                .disabled(store.selectedMovableCandidates.isEmpty || store.isCleaning)
+                .disabled(store.selectedMovableCandidates.isEmpty || store.isBusy)
             }
         }
     }
@@ -329,6 +329,7 @@ private struct CandidatePaperRow: View {
             CandidatePaperCheckbox(
                 isSelected: isSelectedForCleanup,
                 tint: CleanMacTheme.mint,
+                language: language,
                 action: toggleSelection
             )
             .frame(width: CandidateTableLayout.checkboxWidth)
@@ -382,7 +383,7 @@ private struct CandidatePaperRow: View {
         .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .onTapGesture(perform: focusCandidate)
         .onHover { isHovered = $0 }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel(candidate.url.lastPathComponent)
         .accessibilityValue(Formatters.bytes(candidate.sizeBytes))
         .accessibilityAddTraits(isFocused ? [.isSelected] : [])
@@ -392,6 +393,7 @@ private struct CandidatePaperRow: View {
 private struct CandidatePaperCheckbox: View {
     var isSelected: Bool
     var tint: Color
+    var language: ResolvedLanguage
     var action: () -> Void
 
     var body: some View {
@@ -416,7 +418,7 @@ private struct CandidatePaperCheckbox: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isSelected ? "Deselect item" : "Select item")
+        .accessibilityLabel(L10n.text(isSelected ? .deselectItem : .selectItem, language: language))
     }
 }
 
@@ -546,15 +548,15 @@ private struct CandidateDetailView: View {
                             .foregroundStyle(CleanMacTheme.secondaryText)
                     }
 
-                    if !candidate.userVisibleRules.isEmpty {
+                    if !candidate.ruleMatches.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(L10n.text(.rules, language: language))
                                 .font(.caption)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(CleanMacTheme.secondaryText)
 
-                            ForEach(candidate.userVisibleRules, id: \.self) { rule in
-                                Label(rule, systemImage: "list.bullet.clipboard")
+                            ForEach(candidate.ruleMatches) { rule in
+                                Label(L10n.safetyRule(rule, language: language), systemImage: "list.bullet.clipboard")
                                     .font(.caption)
                                     .foregroundStyle(CleanMacTheme.secondaryText)
                                     .lineLimit(2)

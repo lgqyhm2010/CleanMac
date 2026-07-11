@@ -193,3 +193,14 @@
 "error.noAIToolDetected" = "Aucun outil AI CLI trouvé. Installez codex, claude ou gemini.";
 
 "defaultAIQuestion" = "Détermine si ces fichiers peuvent être déplacés vers la corbeille et liste ce que je devrais confirmer manuellement.";
+
+"selectItem" = "Sélectionner l’élément";
+"deselectItem" = "Désélectionner l’élément";
+"safetyRule.allowed" = "Cet élément se trouve dans un emplacement de nettoyage reconnu ; vérifiez-le puis placez-le dans la corbeille.";
+"safetyRule.requiresReview" = "Cet élément peut contenir des données personnelles ou importantes ; vérifiez-le avant de le déplacer.";
+"safetyRule.blocked" = "Les règles de sécurité protègent cet élément du nettoyage.";
+"safetyRuleName.systemRoot" = "Racine système";
+"safetyRuleName.appData" = "Données d’application";
+"safetyRuleName.sourceCode" = "Code source";
+"safetyRuleName.cloudStorage" = "Stockage cloud";
+"safetyRuleName.unknownDirectory" = "Dossier inconnu";
