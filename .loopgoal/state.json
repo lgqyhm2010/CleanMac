@@ -1,47 +1,42 @@
 {
   "mode": "goal",
-  "objective": "Switch CleanMac to the latest remote main branch and fix the issue where the app cannot scan installed applications.",
-  "exit_condition": "The goal is complete when local main is fast-forwarded to the latest origin/main, the application scanning path can discover installed apps from /Applications and user Applications directories without being blocked by app bundle handling or permissions assumptions, focused tests cover the regression, swift test passes, ./script/build_and_run.sh --verify passes, .loopgoal/state.json records the final state, and the intended changes are committed.",
-  "status": "done",
+  "objective": "Fix every validated CleanMac project-review finding across uninstall safety, scan identity, AI review, release engineering, state management, localization, accessibility, and product navigation.",
+  "exit_condition": "The goal is complete when every validated P1 and P2 finding from the 2026-07-11 project review is either fixed with regression coverage or deliberately removed from the product surface, all focused and full tests pass, the production app builds in release mode with arm64 and x86_64 support and version metadata, release workflows keep PR jobs read-only and secret-free and fail closed on signing/notarization failures, runtime launch verification passes, git diff --check passes, .loopgoal/state.json is marked done, and all intended changes are committed on codex/project-review-20260711.",
+  "status": "in_progress",
   "iteration": 0,
   "phases": [
-    {"name": "Initialize checkpoint on latest main", "status": "done"},
-    {"name": "Read-only investigation of app scanning paths and tests", "status": "done"},
-    {"name": "Implement application scan repair", "status": "done"},
-    {"name": "Verify app scan repair and runtime launch", "status": "done"},
-    {"name": "Finalize checkpoint and commit", "status": "done"}
+    {"name": "Initialize full-review repair checkpoint", "status": "done"},
+    {"name": "Harden AppUninstaller planning and execution", "status": "todo"},
+    {"name": "Fix scan identity, duplicate safety, and cleanup revalidation", "status": "todo"},
+    {"name": "Make AI review complete, bounded, isolated, and honest", "status": "todo"},
+    {"name": "Make release packaging and CI fail closed", "status": "todo"},
+    {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "todo"},
+    {"name": "Run full release and runtime verification", "status": "todo"},
+    {"name": "Finalize checkpoint and commits", "status": "todo"}
   ],
   "current": {
-    "focus": "GOAL complete. Local main was fast-forwarded to origin/main e1554c2 before work began. AppUninstaller now scans applications best-effort: unreadable directories/items are skipped instead of failing the whole scan, symlink .app entries discovered in application roots are included, wrapper-style outer .app bundles without valid metadata are searched for nested real app bundles, and support/size enumeration tolerates unreadable children. Focused red tests failed before implementation, then passed. Full verification passed: git diff --check, env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test with 114 XCTest tests and 12 Swift Testing tests, and ./script/build_and_run.sh --verify. Process evidence showed dist/CleanMac.app/Contents/MacOS/CleanMac running after launch verification.",
-    "next_action": "Stop scheduling; the exit condition is met.",
+    "focus": "Checkpoint initialized from the latest origin/main review branch.",
+    "next_action": "Commit this checkpoint, then start the AppUninstaller safety phase with a fresh read-only subagent investigation.",
     "blockers": ""
   },
   "decisions": [
     {
-      "decision": "Treat this request as GOAL mode.",
-      "reason": "The user asked for a result-driven fix with a clear completion condition rather than a recurring loop."
+      "decision": "Treat the request as GOAL mode and include every validated project-review finding.",
+      "reason": "The user explicitly invoked loop-goal and asked to finish all identified problems, not only the top findings."
     },
     {
-      "decision": "Initialize the checkpoint after switching to latest main.",
-      "reason": "The previous checkpoint belonged to a completed image asset task on another branch; the user explicitly asked to work from the latest remote main for this repair."
+      "decision": "Use fail-closed behavior for deletion and release operations.",
+      "reason": "CleanMac presents itself as a safety-first cleaner; ambiguous ownership, stale file identity, signing failure, and incomplete AI coverage must block the operation rather than degrade silently."
     },
     {
-      "decision": "Use subagents only for read-only investigation.",
-      "reason": "The user-provided AGENTS instructions allow parallel subagent investigation but reserve edits, verification, and commits for the main agent."
+      "decision": "Keep subagents read-only and reserve edits, checkpoint writes, verification, and commits for the main agent.",
+      "reason": "The repository AGENTS instructions explicitly restrict subagents to read-only investigation; this takes precedence over the loop-goal phase-worker default."
     },
     {
-      "decision": "Repair AppUninstaller as a best-effort scanner rather than changing the default application roots.",
-      "reason": "Both subagent investigation and main-thread checks confirmed /Applications exists and contains apps; the brittle path is per-item filesystem errors, symlink app children, and wrapper apps with nested real bundles."
-    },
-    {
-      "decision": "Use TDD for the repair.",
-      "reason": "This is a bug fix and the repo already has focused AppUninstaller tests where the real filesystem edge cases can be reproduced."
-    },
-    {
-      "decision": "Keep the public AppUninstaller.scan signature unchanged.",
-      "reason": "Call sites already use try, and the fix only changes internal scanning to be best-effort rather than changing the public contract."
+      "decision": "Commit after each completed phase with .loopgoal/state.json updated first.",
+      "reason": "This preserves recoverable history in the exact checkpoint-before-commit order required by loop-goal."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-08T14:10:07Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift build -c release --product CleanMac && bash -n script/build_and_run.sh script/build_dmg.sh script/verify_opensource.sh && git diff --check && ./script/build_and_run.sh --verify",
+  "updated_at": "2026-07-11T07:31:18Z"
 }
