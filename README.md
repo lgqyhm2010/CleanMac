@@ -40,7 +40,7 @@ What makes it different: it can hand the deletion list to a **local AI CLI you a
 - 🧹 **Smart scan** — caches, logs, temporary files, Trash, developer junk (Xcode derived data), downloads, and unclassified “other” files.
 - 📦 **Duplicate finder** — groups files by SHA-256 content hash and keeps the newest copy.
 - 🐘 **Large files** — surfaces files over a configurable threshold (default 500 MB).
-- 🗑️ **App uninstaller** — removes an app *and* its leftover support files (Preferences, Caches, Application Support) keyed to the bundle ID.
+- 🗑️ **App uninstaller** — moves selected app bundles to the Trash while leaving user support data untouched to prevent accidental data loss.
 - 🤖 **AI Review (local)** — ask an installed AI CLI to classify candidates into *safe to delete*, *risky*, and *needs review*.
 - 🛡️ **Safety first** — 20+ safety rules and three protection tiers block system, Mail/Messages/Safari, and Keychain data from deletion.
 - 🌍 **11 languages** — fully localized UI that follows your system language or a manual override.

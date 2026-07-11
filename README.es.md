@@ -40,7 +40,7 @@ Lo que la hace diferente: puede entregar la lista de eliminación a una **CLI de
 - 🧹 **Análisis inteligente** — cachés, registros, archivos temporales, Papelera, restos de desarrollo (datos derivados de Xcode), descargas y archivos «otros» sin clasificar.
 - 📦 **Buscador de duplicados** — agrupa los archivos por hash de contenido SHA-256 y conserva la copia más reciente.
 - 🐘 **Archivos grandes** — muestra los archivos que superan un umbral configurable (500 MB por defecto).
-- 🗑️ **Desinstalador de aplicaciones** — elimina una aplicación *y* sus archivos de soporte residuales (Preferences, Caches, Application Support) asociados al ID del paquete.
+- 🗑️ **Desinstalador de aplicaciones** — mueve las apps seleccionadas a la Papelera; para evitar pérdidas accidentales, no modifica los datos de soporte del usuario.
 - 🤖 **Revisión con IA (local)** — pide a una CLI de IA instalada que clasifique los candidatos en *seguros de eliminar*, *arriesgados* y *requieren revisión*.
 - 🛡️ **La seguridad primero** — más de 20 reglas de seguridad y tres niveles de protección impiden la eliminación de datos del sistema, de Mail/Mensajes/Safari y del Llavero.
 - 🌍 **11 idiomas** — interfaz totalmente localizada que sigue el idioma de tu sistema o una anulación manual.

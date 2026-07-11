@@ -276,15 +276,14 @@ public struct DuplicateFileGroup: Identifiable, Hashable, Codable, Sendable {
 }
 
 public struct AppUninstallPlan: Identifiable, Hashable, Codable, Sendable {
-    public var id: String { bundleIdentifier }
+    public var id: String { appCandidate.id }
 
     public let appName: String
     public let bundleIdentifier: String
     public let appCandidate: CleaningCandidate
-    public let supportCandidates: [CleaningCandidate]
 
     public var allCandidates: [CleaningCandidate] {
-        [appCandidate] + supportCandidates
+        [appCandidate]
     }
 
     public var movableCandidates: [CleaningCandidate] {
@@ -302,13 +301,11 @@ public struct AppUninstallPlan: Identifiable, Hashable, Codable, Sendable {
     public init(
         appName: String,
         bundleIdentifier: String,
-        appCandidate: CleaningCandidate,
-        supportCandidates: [CleaningCandidate]
+        appCandidate: CleaningCandidate
     ) {
         self.appName = appName
         self.bundleIdentifier = bundleIdentifier
         self.appCandidate = appCandidate
-        self.supportCandidates = supportCandidates
     }
 }
 

@@ -40,7 +40,7 @@ Ce qui la distingue : elle peut confier la liste de suppression à une **CLI d'I
 - 🧹 **Analyse intelligente** — caches, journaux, fichiers temporaires, Corbeille, déchets de développement (données dérivées de Xcode), téléchargements et fichiers « autres » non classés.
 - 📦 **Détecteur de doublons** — regroupe les fichiers par empreinte de contenu SHA-256 et conserve la copie la plus récente.
 - 🐘 **Fichiers volumineux** — fait remonter les fichiers dépassant un seuil configurable (500 Mo par défaut).
-- 🗑️ **Désinstalleur d'applications** — supprime une application *et* ses fichiers de support résiduels (Preferences, Caches, Application Support) associés à l'identifiant de bundle.
+- 🗑️ **Désinstalleur d'applications** — déplace les apps sélectionnées vers la Corbeille ; les données de support utilisateur restent intactes pour éviter toute perte accidentelle.
 - 🤖 **Revue IA (locale)** — demandez à une CLI d'IA installée de classer les candidats en *suppression sûre*, *risqué* et *à examiner*.
 - 🛡️ **La sécurité avant tout** — plus de 20 règles de sécurité et trois niveaux de protection empêchent la suppression des données système, de Mail/Messages/Safari et du Trousseau.
 - 🌍 **11 langues** — interface entièrement localisée qui suit la langue de votre système ou un choix manuel.

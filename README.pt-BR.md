@@ -40,7 +40,7 @@ O que o torna diferente: ele pode entregar a lista de exclusão para uma **CLI d
 - 🧹 **Varredura inteligente** — caches, logs, arquivos temporários, Lixo, entulho de desenvolvedor (dados derivados do Xcode), downloads e arquivos “outros” não classificados.
 - 📦 **Localizador de duplicatas** — agrupa arquivos por hash de conteúdo SHA-256 e mantém a cópia mais recente.
 - 🐘 **Arquivos grandes** — revela arquivos acima de um limite configurável (padrão de 500 MB).
-- 🗑️ **Desinstalador de apps** — remove um app *e* seus arquivos de suporte residuais (Preferences, Caches, Application Support) associados ao bundle ID.
+- 🗑️ **Desinstalador de apps** — move os apps selecionados para o Lixo; para evitar perda acidental, os dados de suporte do usuário não são alterados.
 - 🤖 **Revisão por IA (local)** — peça a uma CLI de IA instalada para classificar os candidatos em *seguro para excluir*, *arriscado* e *precisa de revisão*.
 - 🛡️ **Segurança em primeiro lugar** — mais de 20 regras de segurança e três níveis de proteção impedem que dados do sistema, do Mail/Mensagens/Safari e do Keychain sejam excluídos.
 - 🌍 **11 idiomas** — interface totalmente localizada que segue o idioma do seu sistema ou uma substituição manual.

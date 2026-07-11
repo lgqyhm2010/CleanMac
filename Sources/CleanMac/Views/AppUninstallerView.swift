@@ -182,7 +182,7 @@ private struct UninstallPlanRow: View {
                     .font(.caption)
                     .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)
-                Text("\(L10n.candidateCount(plan.supportCandidates.count, language: language)) | \(Formatters.bytes(plan.movableReclaimableBytes))")
+                Text(Formatters.bytes(plan.movableReclaimableBytes))
                     .font(.caption)
                     .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)

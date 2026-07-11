@@ -321,15 +321,7 @@ final class CleaningStore: ObservableObject {
                     !failedURLs.contains($0.url) && !skippedURLs.contains($0.url)
                 }.map(\.id))
                 candidates.removeAll { cleanedIDs.contains($0.id) }
-                uninstallPlans = uninstallPlans.map { plan in
-                    AppUninstallPlan(
-                        appName: plan.appName,
-                        bundleIdentifier: plan.bundleIdentifier,
-                        appCandidate: plan.appCandidate,
-                        supportCandidates: plan.supportCandidates.filter { !cleanedIDs.contains($0.id) }
-                    )
-                }
-                .filter { !cleanedIDs.contains($0.appCandidate.id) }
+                uninstallPlans.removeAll { cleanedIDs.contains($0.appCandidate.id) }
                 await refreshReportAfterCandidateChanges()
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
