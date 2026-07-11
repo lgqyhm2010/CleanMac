@@ -2,8 +2,8 @@
   "mode": "goal",
   "objective": "Fix every validated CleanMac project-review finding across uninstall safety, scan identity, AI review, release engineering, state management, localization, accessibility, and product navigation.",
   "exit_condition": "The goal is complete when every validated P1 and P2 finding from the 2026-07-11 project review is either fixed with regression coverage or deliberately removed from the product surface, all focused and full tests pass, the production app builds in release mode with arm64 and x86_64 support and version metadata, release workflows keep PR jobs read-only and secret-free and fail closed on signing/notarization failures, runtime launch verification passes, git diff --check passes, .loopgoal/state.json is marked done, and all intended changes are committed on codex/project-review-20260711.",
-  "status": "in_progress",
-  "iteration": 5,
+  "status": "done",
+  "iteration": 6,
   "phases": [
     {"name": "Initialize full-review repair checkpoint", "status": "done"},
     {"name": "Harden AppUninstaller planning and execution", "status": "done"},
@@ -12,11 +12,11 @@
     {"name": "Make release packaging and CI fail closed", "status": "done"},
     {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "done"},
     {"name": "Run full release and runtime verification", "status": "done"},
-    {"name": "Finalize checkpoint and commits", "status": "in_progress"}
+    {"name": "Finalize checkpoint and commits", "status": "done"}
   ],
   "current": {
-    "focus": "All validated P1 and P2 findings are repaired. Scan, application scan, cleanup, and AI review now share one tokenized mutually exclusive foreground-operation state, and stale completion tokens cannot overwrite newer work. Overview status copy reflects ready, scanning, results, and failure states instead of claiming Healthy before a scan. Safety-rule names and explanations render through localized resources in all 11 languages. Result checkboxes remain independently focusable and localized. The exact full verification passed with 147 XCTest tests, 14 Swift Testing tests, a universal x86_64+arm64 preview app and valid DMG, script and diff checks, and GUI launch verification.",
-    "next_action": "Commit the completed P2 phase, rerun the exact verification from the committed tree, audit the original finding list and clean worktree, then mark the loop goal done.",
+    "focus": "Goal complete. Every validated 2026-07-11 project-review finding has a committed repair and regression coverage on codex/project-review-20260711. Final committed-tree verification passed: 147 XCTest tests, 14 Swift Testing tests, universal x86_64+arm64 app verification, valid DMG checksum, script syntax, git diff, and GUI launch. The ten-stage release failure-injection harness and the open-source release self-check also passed, and the original finding-pattern audit returned no stale implementations.",
+    "next_action": "",
     "blockers": ""
   },
   "decisions": [
@@ -78,5 +78,5 @@
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_dmg.sh --unsigned && script/verify_release.sh dist/CleanMac.app && hdiutil verify dist/CleanMac.dmg && bash -n script/build_and_run.sh script/build_dmg.sh script/verify_release.sh script/verify_opensource.sh Tests/ReleaseScriptTests.sh && git diff --check && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-11T11:22:10Z"
+  "updated_at": "2026-07-11T11:24:38Z"
 }
