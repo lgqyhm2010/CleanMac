@@ -134,6 +134,51 @@ public struct SafetyEvaluation: Equatable, Sendable {
     }
 }
 
+public struct FileSystemIdentity: Hashable, Codable, Sendable {
+    public let deviceID: UInt64
+    public let fileID: UInt64
+
+    public init(deviceID: UInt64, fileID: UInt64) {
+        self.deviceID = deviceID
+        self.fileID = fileID
+    }
+}
+
+public enum FileSnapshotKind: String, Codable, Hashable, Sendable {
+    case regularFile
+    case directory
+    case symbolicLink
+    case other
+}
+
+/// The immutable filesystem facts captured when an item is offered for cleanup.
+/// `TrashCleaner` compares this snapshot with a fresh `lstat` immediately before
+/// moving the path so a replacement or modified item fails closed.
+public struct FileSnapshot: Hashable, Codable, Sendable {
+    public let identity: FileSystemIdentity
+    public let linkCount: UInt64
+    public let kind: FileSnapshotKind
+    public let byteCount: Int64
+    public let modifiedAtNanoseconds: Int64
+    public let statusChangedAtNanoseconds: Int64
+
+    public init(
+        identity: FileSystemIdentity,
+        linkCount: UInt64,
+        kind: FileSnapshotKind,
+        byteCount: Int64,
+        modifiedAtNanoseconds: Int64,
+        statusChangedAtNanoseconds: Int64
+    ) {
+        self.identity = identity
+        self.linkCount = linkCount
+        self.kind = kind
+        self.byteCount = byteCount
+        self.modifiedAtNanoseconds = modifiedAtNanoseconds
+        self.statusChangedAtNanoseconds = statusChangedAtNanoseconds
+    }
+}
+
 public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
     public var id: String { url.standardizedFileURL.path }
 
@@ -147,6 +192,7 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
     public let protection: DeletionProtection
     public let ruleMatches: [SafetyRuleMatch]
     public let userVisibleRules: [String]
+    public let scanSnapshot: FileSnapshot?
 
     public init(
         url: URL,
@@ -158,7 +204,8 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
         isDirectory: Bool,
         protection: DeletionProtection = .requiresReview,
         ruleMatches: [SafetyRuleMatch] = [],
-        userVisibleRules: [String] = []
+        userVisibleRules: [String] = [],
+        scanSnapshot: FileSnapshot? = nil
     ) {
         self.url = url
         self.sizeBytes = sizeBytes
@@ -170,6 +217,7 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
         self.protection = protection
         self.ruleMatches = ruleMatches
         self.userVisibleRules = userVisibleRules
+        self.scanSnapshot = scanSnapshot
     }
 }
 
@@ -408,6 +456,16 @@ public struct CleanupResult: Equatable, Sendable {
     }
 }
 
+public struct CleanupRequest: Equatable, Sendable {
+    public let candidate: CleaningCandidate
+    public let expectedContentHash: String?
+
+    public init(candidate: CleaningCandidate, expectedContentHash: String? = nil) {
+        self.candidate = candidate
+        self.expectedContentHash = expectedContentHash
+    }
+}
+
 public struct CleanupFailure: Equatable, Sendable {
     public let url: URL
     public let message: String
@@ -419,12 +477,22 @@ public struct CleanupFailure: Equatable, Sendable {
 }
 
 public struct CleanupSkippedItem: Equatable, Sendable {
+    public enum Reason: String, Equatable, Sendable {
+        case protected
+        case snapshotUnavailable
+        case unsupportedFileType
+        case changedSinceScan
+        case contentChanged
+    }
+
     public let url: URL
     public let message: String
+    public let reason: Reason
 
-    public init(url: URL, message: String) {
+    public init(url: URL, message: String, reason: Reason) {
         self.url = url
         self.message = message
+        self.reason = reason
     }
 }
 

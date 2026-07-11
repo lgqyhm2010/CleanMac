@@ -302,6 +302,18 @@ final class CleaningStore: ObservableObject {
         let targets = selectedCandidates
         guard !targets.isEmpty else { return }
         guard !isCleaning else { return }
+        let duplicateHashesByCandidateID = duplicateGroups.reduce(into: [CleaningCandidate.ID: String]()) {
+            partialResult, group in
+            for candidate in group.candidates {
+                partialResult[candidate.id] = group.contentHash
+            }
+        }
+        let requests = targets.map {
+            CleanupRequest(
+                candidate: $0,
+                expectedContentHash: duplicateHashesByCandidateID[$0.id]
+            )
+        }
 
         isCleaning = true
         errorMessage = nil
@@ -310,7 +322,7 @@ final class CleaningStore: ObservableObject {
         Task {
             do {
                 let result = try await Task.detached(priority: .userInitiated) {
-                    try TrashCleaner().clean(targets)
+                    try TrashCleaner().clean(requests)
                 }
                 .value
                 cleanupResult = result

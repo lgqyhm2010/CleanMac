@@ -3,11 +3,11 @@
   "objective": "Fix every validated CleanMac project-review finding across uninstall safety, scan identity, AI review, release engineering, state management, localization, accessibility, and product navigation.",
   "exit_condition": "The goal is complete when every validated P1 and P2 finding from the 2026-07-11 project review is either fixed with regression coverage or deliberately removed from the product surface, all focused and full tests pass, the production app builds in release mode with arm64 and x86_64 support and version metadata, release workflows keep PR jobs read-only and secret-free and fail closed on signing/notarization failures, runtime launch verification passes, git diff --check passes, .loopgoal/state.json is marked done, and all intended changes are committed on codex/project-review-20260711.",
   "status": "in_progress",
-  "iteration": 1,
+  "iteration": 2,
   "phases": [
     {"name": "Initialize full-review repair checkpoint", "status": "done"},
     {"name": "Harden AppUninstaller planning and execution", "status": "done"},
-    {"name": "Fix scan identity, duplicate safety, and cleanup revalidation", "status": "todo"},
+    {"name": "Fix scan identity, duplicate safety, and cleanup revalidation", "status": "done"},
     {"name": "Make AI review complete, bounded, isolated, and honest", "status": "todo"},
     {"name": "Make release packaging and CI fail closed", "status": "todo"},
     {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "todo"},
@@ -15,8 +15,8 @@
     {"name": "Finalize checkpoint and commits", "status": "todo"}
   ],
   "current": {
-    "focus": "AppUninstaller safety phase complete. Automatic support-file cleanup was removed from the model, service, UI, and all localized READMEs. Invalid bundle identifiers and symlink app bundles are rejected, overlapping app roots are deduplicated, and plan identity is the standardized app path. Five new/changed regressions failed before implementation and all 10 focused tests then passed; the full suite passed with 116 XCTest tests plus 12 Swift Testing tests.",
-    "next_action": "Commit the completed AppUninstaller phase, then reconcile state and start scan identity, duplicate safety, and cleanup revalidation with a fresh read-only subagent.",
+    "focus": "Scan identity phase complete. Scanner roots and physical files are deduplicated; lstat snapshots carry device/inode/link-count/type/size/nanosecond timestamps; duplicate analysis excludes hard links and stale snapshots; Trash revalidates metadata and duplicate hashes; safe categories are limited to trusted macOS roots. Focused regressions were red before implementation, then the full suite passed with 124 XCTest tests plus 12 Swift Testing tests, release build, script syntax, diff checks, and runtime launch verification.",
+    "next_action": "Commit the completed scan-identity phase, reconcile checkpoint and worktree, then start AI review completeness, timeout/cancellation, process isolation, prompt minimization, and privacy-copy fixes with a fresh read-only subagent.",
     "blockers": ""
   },
   "decisions": [
@@ -43,8 +43,16 @@
     {
       "decision": "Reject symlink application bundles and identify plans by the standardized app path.",
       "reason": "Moving a symlink does not uninstall its target, and multiple installations may legitimately share one bundle identifier but still require distinct, stable UI identities."
+    },
+    {
+      "decision": "Attach an lstat-based scan snapshot to every production cleanup candidate, deduplicate scanner and duplicate-finder input by physical identity, exclude hard-linked aliases from reclaimable duplicate groups, and revalidate snapshot plus duplicate content hash immediately before Trash.",
+      "reason": "Canonical paths alone cannot distinguish replacements or shared inodes; device/inode/type/link-count/size/high-resolution timestamps plus content hash make stale or ambiguous cleanup requests fail closed."
+    },
+    {
+      "decision": "Classify usually-safe cleanup categories only under injected canonical macOS roots, not from arbitrary path components or filename extensions.",
+      "reason": "A user document directory named Caches or Logs and a personal .log/.tmp file are not rebuildable merely because their names resemble cleanup locations."
     }
   ],
   "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift build -c release --product CleanMac && bash -n script/build_and_run.sh script/build_dmg.sh script/verify_opensource.sh && git diff --check && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-11T07:44:20Z"
+  "updated_at": "2026-07-11T08:05:38Z"
 }

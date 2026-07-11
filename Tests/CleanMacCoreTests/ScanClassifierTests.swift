@@ -3,7 +3,10 @@ import XCTest
 
 final class ScanClassifierTests: XCTestCase {
     func testClassifiesCommonCleanupLocationsWithRiskHints() {
-        let classifier = ScanClassifier(largeFileThresholdBytes: 100)
+        let classifier = ScanClassifier(
+            largeFileThresholdBytes: 100,
+            homeDirectory: URL(filePath: "/Users/me", directoryHint: .isDirectory)
+        )
 
         let cache = classifier.classify(
             url: URL(filePath: "/Users/me/Library/Caches/com.example/blob.cache"),
@@ -40,7 +43,10 @@ final class ScanClassifierTests: XCTestCase {
     }
 
     func testDoesNotTreatUserFoldersNamedTrashOrTmpAsSafeToDelete() {
-        let classifier = ScanClassifier(largeFileThresholdBytes: 100)
+        let classifier = ScanClassifier(
+            largeFileThresholdBytes: 100,
+            homeDirectory: URL(filePath: "/Users/me", directoryHint: .isDirectory)
+        )
 
         let userTrash = classifier.classify(
             url: URL(filePath: "/Users/me/Documents/trash/keepsake.txt"),
@@ -60,7 +66,10 @@ final class ScanClassifierTests: XCTestCase {
     }
 
     func testStillClassifiesRealTrashAndTempLocations() {
-        let classifier = ScanClassifier(largeFileThresholdBytes: 100)
+        let classifier = ScanClassifier(
+            largeFileThresholdBytes: 100,
+            homeDirectory: URL(filePath: "/Users/me", directoryHint: .isDirectory)
+        )
 
         let realTrash = classifier.classify(
             url: URL(filePath: "/Users/me/.Trash/old-installer.dmg"),
@@ -77,5 +86,29 @@ final class ScanClassifierTests: XCTestCase {
         )
         XCTAssertEqual(realTemp.category, .temporary)
         XCTAssertEqual(realTemp.risk, .usuallySafe)
+    }
+
+    func testCleanupNamesAndExtensionsOutsideStandardRootsStayReviewOnly() {
+        let classifier = ScanClassifier(
+            largeFileThresholdBytes: 100,
+            homeDirectory: URL(filePath: "/Users/me", directoryHint: .isDirectory)
+        )
+        let arbitraryPaths = [
+            "/Users/me/Documents/Caches/keepsake.bin",
+            "/Users/me/Documents/Logs/journal.txt",
+            "/Users/me/Documents/Downloads/archive.zip",
+            "/Users/me/Documents/journal.log",
+            "/Users/me/Documents/contract.tmp"
+        ]
+
+        for path in arbitraryPaths {
+            let classification = classifier.classify(
+                url: URL(filePath: path),
+                sizeBytes: 42,
+                isDirectory: false
+            )
+            XCTAssertEqual(classification.category, .other, path)
+            XCTAssertEqual(classification.protection, .requiresReview, path)
+        }
     }
 }

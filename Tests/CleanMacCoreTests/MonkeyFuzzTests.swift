@@ -37,7 +37,18 @@ final class MonkeyFuzzTests: XCTestCase {
                         isDirectory: Bool.random(using: &generator),
                         protection: protection,
                         ruleMatches: [],
-                        userVisibleRules: protection == .blocked ? ["Protected by fuzz"] : []
+                        userVisibleRules: protection == .blocked ? ["Protected by fuzz"] : [],
+                        scanSnapshot: FileSnapshot(
+                            identity: FileSystemIdentity(
+                                deviceID: 1,
+                                fileID: UInt64(iteration * 100 + index + 1)
+                            ),
+                            linkCount: 1,
+                            kind: .regularFile,
+                            byteCount: size,
+                            modifiedAtNanoseconds: 1,
+                            statusChangedAtNanoseconds: 1
+                        )
                     )
                 )
                 if Bool.random(using: &generator) {
@@ -46,7 +57,10 @@ final class MonkeyFuzzTests: XCTestCase {
             }
 
             let trasher = FuzzTrasher(failURLs: failURLs)
-            let result = try TrashCleaner(trasher: trasher).clean(candidates)
+            let result = try TrashCleaner(
+                trasher: trasher,
+                snapshotReader: FuzzSnapshotReader(candidates: candidates)
+            ).clean(candidates)
 
             let blocked = candidates.filter { $0.protection == .blocked }
             let movable = candidates.filter { $0.protection != .blocked }
@@ -272,6 +286,20 @@ private final class FuzzTrasher: FileTrashing {
             throw FuzzError.simulatedTrashFailure
         }
         trashed.append(url)
+    }
+}
+
+private struct FuzzSnapshotReader: FileSnapshotReading {
+    private let snapshots: [URL: FileSnapshot]
+
+    init(candidates: [CleaningCandidate]) {
+        snapshots = Dictionary(uniqueKeysWithValues: candidates.compactMap { candidate in
+            candidate.scanSnapshot.map { (candidate.url, $0) }
+        })
+    }
+
+    func snapshot(at url: URL) -> FileSnapshot? {
+        snapshots[url]
     }
 }
 

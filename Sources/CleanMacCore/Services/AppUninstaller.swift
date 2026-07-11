@@ -3,13 +3,16 @@ import Foundation
 public struct AppUninstaller {
     private let fileManager: FileManager
     private let safetyRuleEngine: SafetyRuleEngine
+    private let snapshotReader: any FileSnapshotReading
 
     public init(
         fileManager: FileManager = .default,
-        safetyRuleEngine: SafetyRuleEngine = SafetyRuleEngine()
+        safetyRuleEngine: SafetyRuleEngine = SafetyRuleEngine(),
+        snapshotReader: any FileSnapshotReading = SystemFileSnapshotReader()
     ) {
         self.fileManager = fileManager
         self.safetyRuleEngine = safetyRuleEngine
+        self.snapshotReader = snapshotReader
     }
 
     public func scan(appRoots: [URL], userLibrary _: URL) throws -> [AppUninstallPlan] {
@@ -78,12 +81,14 @@ public struct AppUninstaller {
             return nil
         }
 
-        let appCandidate = makeCandidate(
+        guard let appCandidate = makeCandidate(
             url: appBundle,
             category: .application,
             reasons: ["Application bundle for \(metadata.bundleIdentifier)"],
             isDirectory: true
-        )
+        ) else {
+            return nil
+        }
 
         return AppUninstallPlan(
             appName: metadata.appName,
@@ -132,8 +137,12 @@ public struct AppUninstaller {
         category: CandidateCategory,
         reasons: [String],
         isDirectory: Bool
-    ) -> CleaningCandidate {
+    ) -> CleaningCandidate? {
         let stableURL = stableCandidateURL(url)
+        guard let snapshot = snapshotReader.snapshot(at: stableURL),
+              snapshot.kind == .directory else {
+            return nil
+        }
         let values = try? stableURL.resourceValues(forKeys: [.contentModificationDateKey])
         let sizeBytes = itemSize(stableURL)
         let safety = safetyRuleEngine.evaluate(
@@ -154,7 +163,8 @@ public struct AppUninstaller {
             isDirectory: isDirectory,
             protection: safety.protection,
             ruleMatches: safety.ruleMatches,
-            userVisibleRules: safety.userVisibleRules
+            userVisibleRules: safety.userVisibleRules,
+            scanSnapshot: snapshot
         )
     }
 

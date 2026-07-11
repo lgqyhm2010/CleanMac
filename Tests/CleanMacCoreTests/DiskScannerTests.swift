@@ -9,7 +9,10 @@ final class DiskScannerTests: XCTestCase {
         try writeFile(root.appending(path: "tiny.txt"), byteCount: 2)
         try writeFile(root.appending(path: ".hidden-cache"), byteCount: 99)
 
-        let scanner = DiskScanner(classifier: ScanClassifier(largeFileThresholdBytes: 100))
+        let scanner = DiskScanner(classifier: ScanClassifier(
+            largeFileThresholdBytes: 100,
+            homeDirectory: root
+        ))
         let report = try scanner.scan(
             roots: [root],
             options: ScanOptions(minimumFileSizeBytes: 5, includeHiddenFiles: false)
@@ -27,7 +30,10 @@ final class DiskScannerTests: XCTestCase {
         let root = try makeTemporaryDirectory()
         try writeFile(root.appending(path: "movie.mov"), byteCount: 101)
 
-        let scanner = DiskScanner(classifier: ScanClassifier(largeFileThresholdBytes: 100))
+        let scanner = DiskScanner(classifier: ScanClassifier(
+            largeFileThresholdBytes: 100,
+            temporaryDirectory: URL(filePath: "/private/empty", directoryHint: .isDirectory)
+        ))
         let report = try scanner.scan(
             roots: [root],
             options: ScanOptions(minimumFileSizeBytes: 1, includeHiddenFiles: false)
@@ -66,6 +72,43 @@ final class DiskScannerTests: XCTestCase {
         XCTAssertEqual(package?.sizeBytes, 120)
         XCTAssertFalse(report.candidates.contains { $0.url.lastPathComponent == "bin" })
         XCTAssertFalse(report.candidates.contains { $0.url.lastPathComponent == "data.bin" })
+    }
+
+    func testOverlappingRootsReportEachPhysicalFileOnlyOnce() throws {
+        let root = try makeTemporaryDirectory()
+        let child = root.appending(path: "nested", directoryHint: .isDirectory)
+        try writeFile(child.appending(path: "only.txt"), contents: "same")
+
+        let report = try DiskScanner(classifier: ScanClassifier(
+            largeFileThresholdBytes: 100,
+            homeDirectory: root
+        )).scan(
+            roots: [root, child, root],
+            options: ScanOptions(minimumFileSizeBytes: 1, includeHiddenFiles: false)
+        )
+
+        XCTAssertEqual(report.candidates.map(\.url.lastPathComponent), ["only.txt"])
+        XCTAssertEqual(report.totalBytes, 4)
+        XCTAssertEqual(report.scannedFileCount, 1)
+        XCTAssertTrue(report.duplicateGroups.isEmpty)
+    }
+
+    func testHardLinksAreOnePhysicalCandidateAndNeverReclaimableDuplicates() throws {
+        let root = try makeTemporaryDirectory()
+        let original = root.appending(path: "original.txt")
+        try writeFile(original, contents: "same")
+        let hardLink = root.appending(path: "hard-link.txt")
+        try FileManager.default.linkItem(at: original, to: hardLink)
+
+        let report = try DiskScanner().scan(
+            roots: [root],
+            options: ScanOptions(minimumFileSizeBytes: 1, includeHiddenFiles: false)
+        )
+
+        XCTAssertEqual(report.candidates.count, 1)
+        XCTAssertEqual(report.totalBytes, 4)
+        XCTAssertTrue(report.duplicateGroups.isEmpty)
+        XCTAssertEqual(report.duplicateReclaimableBytes, 0)
     }
 
     private func makeTemporaryDirectory() throws -> URL {
