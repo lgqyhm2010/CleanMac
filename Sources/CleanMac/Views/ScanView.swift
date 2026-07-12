@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct ScanView: View {
-    @ObservedObject var store: CleaningStore
+    @Bindable var store: CleaningStore
     var language: ResolvedLanguage
     var openResults: () -> Void = {}
     var openAIReview: () -> Void = {}
@@ -224,7 +224,7 @@ private struct DashboardPrivacyBadge: View {
 }
 
 private struct DiskOverviewDashboardCard: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
 
     private var segments: [DiskSegment] {
@@ -433,7 +433,7 @@ private struct SegmentLegend: View {
 }
 
 private struct DashboardMetricRow: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
     var openResults: () -> Void
 
@@ -466,7 +466,7 @@ private struct DashboardMetricRow: View {
 }
 
 private struct DashboardScanCTA: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
 
     var body: some View {
@@ -602,7 +602,7 @@ private struct TrustBadgeItem: View {
 }
 
 private struct OverviewFeatureGrid: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
     var fullDiskAccessGuide: SystemPermissionGuide
     var openResults: () -> Void
@@ -702,7 +702,7 @@ private struct OverviewActionCard: View {
 }
 
 private struct StatusText: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
 
     var body: some View {

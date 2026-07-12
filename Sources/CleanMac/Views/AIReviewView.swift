@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct AIReviewView: View {
-    @ObservedObject var store: CleaningStore
+    @Bindable var store: CleaningStore
     var language: ResolvedLanguage
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 

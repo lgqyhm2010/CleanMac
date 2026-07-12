@@ -1,5 +1,6 @@
 import CleanMacCore
 import Foundation
+import Observation
 
 enum ForegroundOperation: Equatable {
     case scanningFiles
@@ -33,37 +34,38 @@ struct ForegroundOperationState {
     }
 }
 
+@Observable
 @MainActor
-final class CleaningStore: ObservableObject {
-    @Published var roots: [URL] = DefaultScanRoots.urls {
+final class CleaningStore {
+    var roots: [URL] = DefaultScanRoots.urls {
         didSet { refreshVolumeSnapshot() }
     }
-    @Published var appRoots: [URL] = DefaultApplicationRoots.urls
-    @Published var candidates: [CleaningCandidate] = []
-    @Published var selection = CleaningSelection()
-    @Published var selectedCandidateID: CleaningCandidate.ID?
-    @Published var lastReport: ScanReport?
-    @Published var uninstallPlans: [AppUninstallPlan] = []
-    @Published var cleanupResult: CleanupResult?
-    @Published var aiQuestion: String
-    @Published var aiOutput = ""
-    @Published var aiReviewSummary: AIReviewSummary?
-    @Published var status: CleaningStatus = .ready
-    @Published var errorMessage: CleaningErrorMessage?
-    @Published private(set) var foregroundOperationState = ForegroundOperationState()
-    @Published var includeHiddenFiles = false
-    @Published var minimumSizeMegabytes = 1.0
-    @Published var largeFileThresholdMegabytes = 500.0
-    @Published var volumeSnapshot: StorageVolumeSnapshot?
-    @Published var detectedAITools: [DetectedAITool] = []
-    @Published var selectedAIToolID: String?
-    @Published var selectedModelIDsByTool: [String: String]
+    var appRoots: [URL] = DefaultApplicationRoots.urls
+    var candidates: [CleaningCandidate] = []
+    var selection = CleaningSelection()
+    var selectedCandidateID: CleaningCandidate.ID?
+    var lastReport: ScanReport?
+    var uninstallPlans: [AppUninstallPlan] = []
+    var cleanupResult: CleanupResult?
+    var aiQuestion: String
+    var aiOutput = ""
+    var aiReviewSummary: AIReviewSummary?
+    var status: CleaningStatus = .ready
+    var errorMessage: CleaningErrorMessage?
+    private(set) var foregroundOperationState = ForegroundOperationState()
+    var includeHiddenFiles = false
+    var minimumSizeMegabytes = 1.0
+    var largeFileThresholdMegabytes = 500.0
+    var volumeSnapshot: StorageVolumeSnapshot?
+    var detectedAITools: [DetectedAITool] = []
+    var selectedAIToolID: String?
+    var selectedModelIDsByTool: [String: String]
     /// Non-nil only while a file scan is running; carries the scanned-file count.
-    @Published private(set) var scanProgressCount: Int?
+    private(set) var scanProgressCount: Int?
 
-    private let aiToolDetector: AIToolDetector
-    private var aiReviewTask: Task<Void, Never>?
-    private var scanTask: Task<Void, Never>?
+    @ObservationIgnored private let aiToolDetector: AIToolDetector
+    @ObservationIgnored private var aiReviewTask: Task<Void, Never>?
+    @ObservationIgnored private var scanTask: Task<Void, Never>?
     private static let aiToolPreferenceKey = "aiSelectedToolID"
     private static let aiModelPreferenceKey = "aiModelPreferenceByTool"
 

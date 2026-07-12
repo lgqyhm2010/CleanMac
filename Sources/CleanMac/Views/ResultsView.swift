@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct ResultsView: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
     @State private var confirmTrash = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -161,7 +161,7 @@ private enum CandidateTableLayout {
 }
 
 private struct CandidatePaperTable: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
 
     var body: some View {

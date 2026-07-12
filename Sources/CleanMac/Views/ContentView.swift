@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var store: CleaningStore
+    @State private var store: CleaningStore
     @State private var selection: SidebarSection = .diskOverview
     private let languageOverride: ResolvedLanguage?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -16,7 +16,7 @@ struct ContentView: View {
         self.languageOverride = languageOverride
         let preference = AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey))
         let initialLanguage = languageOverride ?? preference.resolved()
-        _store = StateObject(wrappedValue: store ?? CleaningStore(language: initialLanguage))
+        _store = State(initialValue: store ?? CleaningStore(language: initialLanguage))
         _selection = State(initialValue: initialSelection)
     }
 

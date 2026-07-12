@@ -3,7 +3,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @Binding var selection: SidebarSection
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
 
     @State private var hoveredSection: SidebarSection?

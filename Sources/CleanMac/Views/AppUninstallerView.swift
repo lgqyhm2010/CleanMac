@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct AppUninstallerView: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
     var openResults: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
