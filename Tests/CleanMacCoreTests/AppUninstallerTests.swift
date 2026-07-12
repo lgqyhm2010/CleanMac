@@ -2,7 +2,7 @@ import XCTest
 @testable import CleanMacCore
 
 final class AppUninstallerTests: XCTestCase {
-    func testBuildsPlanForAppBundleAndKnownSupportFiles() throws {
+    func testBuildsPlanForAppBundleWithoutClaimingSupportFiles() throws {
         let sandbox = try makeTemporaryDirectory()
         let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
         let library = sandbox.appending(path: "Library", directoryHint: .isDirectory)
@@ -17,12 +17,7 @@ final class AppUninstallerTests: XCTestCase {
         XCTAssertEqual(plans[0].appName, "Demo")
         XCTAssertEqual(plans[0].bundleIdentifier, "com.example.demo")
         XCTAssertEqual(plans[0].appCandidate.url.path, app.path)
-        XCTAssertEqual(plans[0].supportCandidates.count, 3)
-        XCTAssertEqual(plans[0].supportCandidates.map(\.url.lastPathComponent).sorted(), [
-            "cache.bin",
-            "com.example.demo.plist",
-            "data.db"
-        ])
+        XCTAssertEqual(plans[0].allCandidates.map(\.url.path), [app.path])
         XCTAssertTrue(plans[0].allCandidates.allSatisfy { $0.protection == .requiresReview })
         XCTAssertTrue(plans[0].allCandidates.allSatisfy { !$0.userVisibleRules.isEmpty })
     }
@@ -39,10 +34,7 @@ final class AppUninstallerTests: XCTestCase {
         let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: library)
 
         XCTAssertEqual(plans.count, 1)
-        XCTAssertTrue(
-            plans[0].supportCandidates.isEmpty,
-            "Must not claim a shared folder matched only by generic display name"
-        )
+        XCTAssertEqual(plans[0].allCandidates.count, 1)
     }
 
     func testAppBundleSizeIncludesHiddenFiles() throws {
@@ -72,7 +64,7 @@ final class AppUninstallerTests: XCTestCase {
         XCTAssertTrue(plans.isEmpty)
     }
 
-    func testFindsSymlinkedApplicationBundlesInApplicationRoot() throws {
+    func testIgnoresSymlinkedApplicationBundlesInApplicationRoot() throws {
         let sandbox = try makeTemporaryDirectory()
         let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
         let targets = sandbox.appending(path: "SystemApps", directoryHint: .isDirectory)
@@ -83,9 +75,37 @@ final class AppUninstallerTests: XCTestCase {
 
         let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
 
-        XCTAssertEqual(plans.map(\.bundleIdentifier), ["com.apple.Safari"])
-        guard let plan = plans.first else { return }
-        XCTAssertEqual(plan.appCandidate.url.path, symlink.path)
+        XCTAssertTrue(plans.isEmpty)
+    }
+
+    func testRejectsBundleIdentifiersContainingPathTraversal() throws {
+        let sandbox = try makeTemporaryDirectory()
+        let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
+        let library = sandbox.appending(path: "Library", directoryHint: .isDirectory)
+        try makeAppBundle(apps.appending(path: "Traversal.app"), bundleIdentifier: "../../Documents")
+        try writeFile(sandbox.appending(path: "Documents/private.txt"), contents: "private")
+
+        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: library)
+
+        XCTAssertTrue(plans.isEmpty)
+    }
+
+    func testSameBundleIdentifierAtDifferentPathsProducesUniquePlans() throws {
+        let sandbox = try makeTemporaryDirectory()
+        let systemApps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
+        let userApps = sandbox.appending(path: "User Applications", directoryHint: .isDirectory)
+        try makeAppBundle(systemApps.appending(path: "Demo.app"), bundleIdentifier: "com.example.demo")
+        try makeAppBundle(userApps.appending(path: "Demo Beta.app"), bundleIdentifier: "com.example.demo")
+
+        let plans = try AppUninstaller().scan(
+            appRoots: [systemApps, userApps],
+            userLibrary: sandbox.appending(path: "Library")
+        )
+
+        XCTAssertEqual(plans.count, 2)
+        XCTAssertEqual(Set(plans.map(\.id)).count, 2)
+        XCTAssertEqual(Set(plans.map(\.bundleIdentifier)), ["com.example.demo"])
+        XCTAssertTrue(plans.allSatisfy { $0.allCandidates.count == 1 })
     }
 
     func testSearchesNestedAppWhenOuterWrapperHasNoBundleIdentifier() throws {
@@ -115,22 +135,19 @@ final class AppUninstallerTests: XCTestCase {
         XCTAssertEqual(plans.map(\.bundleIdentifier), ["com.example.good"])
     }
 
-    func testPlanSelectsOnlyMovableUninstallCandidates() throws {
+    func testPlanContainsOnlyTheApplicationBundle() throws {
         let app = candidate(path: "/Applications/Demo.app", category: .application, protection: .requiresReview)
-        let support = candidate(path: "/Users/me/Library/Caches/com.example.demo", category: .applicationSupport, protection: .requiresReview)
-        let blocked = candidate(path: "/System/Library/com.example.demo", category: .applicationSupport, protection: .blocked)
 
         let plan = AppUninstallPlan(
             appName: "Demo",
             bundleIdentifier: "com.example.demo",
-            appCandidate: app,
-            supportCandidates: [support, blocked]
+            appCandidate: app
         )
 
-        XCTAssertEqual(plan.allCandidates.map(\.url.path), [app.url.path, support.url.path, blocked.url.path])
-        XCTAssertEqual(plan.movableCandidates.map(\.url.path), [app.url.path, support.url.path])
-        XCTAssertEqual(plan.reclaimableBytes, app.sizeBytes + support.sizeBytes + blocked.sizeBytes)
-        XCTAssertEqual(plan.movableReclaimableBytes, app.sizeBytes + support.sizeBytes)
+        XCTAssertEqual(plan.allCandidates.map(\.url.path), [app.url.path])
+        XCTAssertEqual(plan.movableCandidates.map(\.url.path), [app.url.path])
+        XCTAssertEqual(plan.reclaimableBytes, app.sizeBytes)
+        XCTAssertEqual(plan.movableReclaimableBytes, app.sizeBytes)
     }
 
     private func makeTemporaryDirectory() throws -> URL {

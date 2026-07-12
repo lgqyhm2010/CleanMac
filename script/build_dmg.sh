@@ -1,71 +1,89 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# build_dmg.sh — Build CleanMac.app and package it into a distributable .dmg.
-#
-# The DMG is SIGNED and NOTARIZED when Developer ID credentials are available,
-# and DEGRADES GRACEFULLY (ad-hoc signature) otherwise so it always produces an
-# artifact. No secrets are ever hard-coded — everything comes from the keychain
-# or environment variables.
-#
-# Optional environment variables:
-#   CODESIGN_IDENTITY   Signing identity, e.g. "Developer ID Application: Name (TEAMID)".
-#                       Auto-detected from the keychain when unset. Set to "-" to
-#                       force an ad-hoc signature.
-#   NOTARY_PROFILE      A notarytool keychain profile created once with:
-#                         xcrun notarytool store-credentials <profile> \
-#                           --apple-id you@example.com --team-id TEAMID \
-#                           --password <app-specific-password>
-#   APPLE_ID / APPLE_TEAM_ID / APPLE_APP_PASSWORD
-#                       Notarization credentials for CI (used instead of a profile).
-#   SKIP_NOTARIZE=1     Build and sign, but skip notarization.
-#
-# See docs/RELEASING.md for the one-time Developer ID / notarization setup.
+# Build a universal release DMG. The default --release mode fails closed unless
+# Developer ID signing and notarization are fully configured. --unsigned is an
+# explicit, non-distributable preview path for local and pull-request testing.
 
+MODE="${1:---release}"
 APP_NAME="CleanMac"
 VOL_NAME="CleanMac"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
 DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
-ENTITLEMENTS="$ROOT_DIR/script/$APP_NAME.entitlements"   # optional
+ENTITLEMENTS="$ROOT_DIR/script/$APP_NAME.entitlements"
 
-log()  { printf '\033[1;34m[build_dmg]\033[0m %s\n' "$*"; }
-warn() { printf '\033[1;33m[build_dmg] warning:\033[0m %s\n' "$*" >&2; }
+log() {
+  printf '\033[1;34m[build_dmg]\033[0m %s\n' "$*"
+}
 
-# 1. Build the .app bundle (reuses build_and_run.sh's bundle assembly).
-log "Building $APP_NAME.app…"
-"$ROOT_DIR/script/build_and_run.sh" bundle >/dev/null
-[ -d "$APP_BUNDLE" ] || { echo "error: $APP_BUNDLE was not produced" >&2; exit 1; }
+fail() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
 
-# 2. Resolve a signing identity.
-if [ -z "${CODESIGN_IDENTITY:-}" ]; then
-  DEVID="$(security find-identity -v -p codesigning 2>/dev/null \
-    | grep "Developer ID Application" | head -1 | sed -E 's/.*"(.*)"$/\1/' || true)"
-  CODESIGN_IDENTITY="${DEVID:--}"   # fall back to ad-hoc ("-")
+require_environment() {
+  local name="$1"
+  [ -n "${!name:-}" ] || fail "$name is required for a distributable release"
+}
+
+case "$MODE" in
+  --release|release) UNSIGNED=0 ;;
+  --unsigned|unsigned) UNSIGNED=1 ;;
+  *)
+    echo "usage: $0 [--release|--unsigned]" >&2
+    exit 2
+    ;;
+esac
+
+if [ "$UNSIGNED" = "1" ]; then
+  VERSION="${CLEANMAC_VERSION:-0.0.0}"
+  BUILD_NUMBER="${CLEANMAC_BUILD_NUMBER:-0}"
+  CODESIGN_IDENTITY="-"
+  log "Building an unsigned preview; this artifact is not for distribution."
+else
+  require_environment CLEANMAC_VERSION
+  require_environment CLEANMAC_BUILD_NUMBER
+  VERSION="$CLEANMAC_VERSION"
+  BUILD_NUMBER="$CLEANMAC_BUILD_NUMBER"
+
+  if [ -z "${CODESIGN_IDENTITY:-}" ]; then
+    CODESIGN_IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null \
+      | sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' \
+      | head -1)"
+  fi
+  case "$CODESIGN_IDENTITY" in
+    "Developer ID Application:"*) ;;
+    *) fail "a Developer ID Application signing identity is required" ;;
+  esac
+
+  if [ -z "${NOTARY_PROFILE:-}" ]; then
+    require_environment APPLE_ID
+    require_environment APPLE_TEAM_ID
+    require_environment APPLE_APP_PASSWORD
+  fi
 fi
 
+log "Building universal $APP_NAME.app ($VERSION, build $BUILD_NUMBER)…"
+BUILD_CONFIGURATION=release \
+BUILD_UNIVERSAL=1 \
+CLEANMAC_VERSION="$VERSION" \
+CLEANMAC_BUILD_NUMBER="$BUILD_NUMBER" \
+  "$ROOT_DIR/script/build_and_run.sh" bundle >/dev/null
+[ -d "$APP_BUNDLE" ] || fail "$APP_BUNDLE was not produced"
+"$ROOT_DIR/script/verify_release.sh" "$APP_BUNDLE"
+
 SIGN_ARGS=(--force --deep --sign "$CODESIGN_IDENTITY")
-DISTRIBUTABLE=0
-if [ "$CODESIGN_IDENTITY" = "-" ]; then
-  warn "No Developer ID Application certificate found — using an AD-HOC signature."
-  warn "This DMG is fine for local testing but is NOT distributable or notarizable."
-else
-  case "$CODESIGN_IDENTITY" in
-    "Developer ID Application"*) DISTRIBUTABLE=1 ;;
-    *) warn "Signing with a non-Developer-ID identity ($CODESIGN_IDENTITY); notarization will be skipped." ;;
-  esac
-  # Hardened runtime + secure timestamp are required for notarization.
+if [ "$UNSIGNED" = "0" ]; then
   SIGN_ARGS+=(--options runtime --timestamp)
   [ -f "$ENTITLEMENTS" ] && SIGN_ARGS+=(--entitlements "$ENTITLEMENTS")
 fi
 
-# 3. Sign the app.
 log "Signing app with identity: $CODESIGN_IDENTITY"
 codesign "${SIGN_ARGS[@]}" "$APP_BUNDLE"
-codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE" || warn "codesign verify reported issues"
+codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE"
 
-# 4. Build the DMG (staging dir with an Applications drag-target).
 log "Packaging DMG…"
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
@@ -79,39 +97,38 @@ hdiutil create \
   -format UDZO \
   -ov \
   "$DMG_PATH" >/dev/null
-log "Created $DMG_PATH"
 
-# 5. Sign the DMG itself (only meaningful with a real identity).
-if [ "$CODESIGN_IDENTITY" != "-" ]; then
-  codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"
+if [ "$UNSIGNED" = "1" ]; then
+  log "Created unsigned preview: $DMG_PATH"
+  exit 0
 fi
 
-# 6. Notarize + staple when possible.
-notarize() {
-  if [ -n "${NOTARY_PROFILE:-}" ]; then
-    xcrun notarytool submit "$DMG_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
-  elif [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ] && [ -n "${APPLE_APP_PASSWORD:-}" ]; then
-    xcrun notarytool submit "$DMG_PATH" \
-      --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
-  else
-    return 2
-  fi
-}
+log "Signing DMG…"
+codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"
+codesign --verify --verbose=2 "$DMG_PATH"
 
-if [ "${SKIP_NOTARIZE:-0}" = "1" ]; then
-  warn "SKIP_NOTARIZE=1 — skipping notarization."
-elif [ "$DISTRIBUTABLE" != "1" ]; then
-  warn "Not notarizing: no Developer ID Application identity in use."
+log "Submitting DMG for notarization…"
+if [ -n "${NOTARY_PROFILE:-}" ]; then
+  NOTARY_RESULT="$(xcrun notarytool submit "$DMG_PATH" \
+    --keychain-profile "$NOTARY_PROFILE" \
+    --wait \
+    --output-format json)"
 else
-  log "Submitting for notarization (this can take a few minutes)…"
-  if notarize; then
-    log "Stapling notarization ticket…"
-    xcrun stapler staple "$DMG_PATH"
-    xcrun stapler validate "$DMG_PATH" && log "Notarized and stapled."
-  else
-    warn "No notarization credentials (set NOTARY_PROFILE, or APPLE_ID/APPLE_TEAM_ID/APPLE_APP_PASSWORD)."
-    warn "DMG is signed but NOT notarized. See docs/RELEASING.md."
-  fi
+  NOTARY_RESULT="$(xcrun notarytool submit "$DMG_PATH" \
+    --apple-id "$APPLE_ID" \
+    --team-id "$APPLE_TEAM_ID" \
+    --password "$APPLE_APP_PASSWORD" \
+    --wait \
+    --output-format json)"
 fi
+printf '%s\n' "$NOTARY_RESULT"
+NOTARY_STATUS="$(printf '%s' "$NOTARY_RESULT" | plutil -extract status raw -o - -)"
+[ "$NOTARY_STATUS" = "Accepted" ] \
+  || fail "notarization did not finish as Accepted (status: $NOTARY_STATUS)"
 
-log "Done: $DMG_PATH"
+log "Stapling and validating notarization ticket…"
+xcrun stapler staple "$DMG_PATH"
+xcrun stapler validate "$DMG_PATH"
+spctl --assess --type open --context context:primary-signature --verbose=4 "$DMG_PATH"
+
+log "Created signed, notarized release: $DMG_PATH"

@@ -11,6 +11,8 @@
 "clear" = "مسح";
 "clearSelection" = "مسح التحديد";
 "aiTool" = "أداة الذكاء الاصطناعي";
+"aiPrivacyDisclosure" = "يرسل CleanMac سؤالك كما كتبته مع بيانات وصفية منقحة لما يصل إلى 80 عنصرا محددا إلى أداة AI CLI المثبتة. قد تتصل الأداة بمزودها؛ لا يتم تضمين محتوى الملفات أو المسارات الكاملة المجمعة تلقائيا.";
+"aiSelectionLimitMessage" = "تدعم مراجعة AI ما يصل إلى 80 عنصرا محددا في المرة الواحدة.";
 "duplicateGroup" = "مجموعة مكررة";
 "duplicates" = "التكرارات";
 "english" = "الإنجليزية";
@@ -43,7 +45,7 @@
 "noReview" = "لا توجد مراجعة";
 "potential" = "محتمل";
 "permissions" = "الأذونات";
-"privateByDesign" = "خصوصية حسب التصميم";
+"privateByDesign" = "خيارات خصوصية واضحة";
 "protection" = "الحماية";
 "question" = "سؤال";
 "quitCleanMac" = "إنهاء CleanMac";
@@ -65,9 +67,9 @@
 "size" = "الحجم";
 "spanish" = "الإسبانية";
 "status" = "الحالة";
-"trustLocalAI" = "ذكاء اصطناعي محلي";
+"trustInstalledAICLI" = "أداة AI CLI المثبتة";
 "trustMoveToTrash" = "نقل إلى المهملات";
-"trustNoCloudUpload" = "لا رفع إلى السحابة";
+"trustAIProviderNetwork" = "قد تستخدم أداة AI CLI السحابة";
 "trustNoTelemetry" = "بلا قياس عن بعد";
 "openSettings" = "فتح الإعدادات";
 "arabic" = "العربية";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "تحليل المساحة";
 "sidebarAnalyzeSpaceSubtitle" = "خريطة المساحة";
 "sidebarAIReviewTitle" = "مراجعة AI";
-"sidebarAIReviewSubtitle" = "وكيل محلي";
+"sidebarAIReviewSubtitle" = "أداة CLI مثبتة";
 "sidebarSettingsTitle" = "الإعدادات";
 "sidebarSettingsSubtitle" = "اللغة والمزيد";
 "sidebarGroupOverview" = "نظرة عامة";
 "sidebarGroupProTools" = "أدوات احترافية";
-"sidebarGroupAILocal" = "AI محلي";
+"sidebarGroupAILocal" = "AI CLI";
 "sidebarGroupSystem" = "النظام";
 
 "category.cache" = "ذاكرات التخزين المؤقت";
@@ -191,3 +193,14 @@
 "error.noAIToolDetected" = "لم يتم العثور على أداة AI CLI. ثبّت codex أو claude أو gemini.";
 
 "defaultAIQuestion" = "يرجى تحديد ما إذا كانت هذه الملفات مناسبة للنقل إلى سلة المهملات، واذكر أي شيء يجب أن أؤكده يدويا.";
+
+"selectItem" = "تحديد العنصر";
+"deselectItem" = "إلغاء تحديد العنصر";
+"safetyRule.allowed" = "هذا العنصر في موقع تنظيف معروف؛ راجعه ثم انقله إلى سلة المهملات أولاً.";
+"safetyRule.requiresReview" = "قد يحتوي هذا العنصر على بيانات شخصية أو مهمة؛ راجعه قبل نقله.";
+"safetyRule.blocked" = "تحمي قواعد الأمان هذا العنصر من التنظيف.";
+"safetyRuleName.systemRoot" = "جذر النظام";
+"safetyRuleName.appData" = "بيانات التطبيق";
+"safetyRuleName.sourceCode" = "الشفرة المصدرية";
+"safetyRuleName.cloudStorage" = "التخزين السحابي";
+"safetyRuleName.unknownDirectory" = "مجلد غير معروف";

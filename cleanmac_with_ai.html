@@ -548,7 +548,7 @@ html[data-theme="dark"] .cleanmac-brand{
           <span style="font-size:11px;font-weight:500;color:#7DC4A8">6.4 GB</span>
         </div>
 
-        <!-- AI ANALYSIS — shown only when local agent detected -->
+        <!-- AI ANALYSIS — shown only when an installed AI CLI is detected -->
         <div id="nav-ai-wrap" style="display:none">
           <div id="sect-ai" style="font-size:9px;font-weight:500;color:#5050A0;letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin:10px 0 6px">AI · Local</div>
           <div class="nav-item" id="nav-ai" style="--c:#C4A8F2" onclick="goTo('ai')">
@@ -561,7 +561,7 @@ html[data-theme="dark"] .cleanmac-brand{
             </svg>
             <div style="flex:1">
               <div id="lbl-ai" style="font-size:12px;font-weight:500;color:#DDD0FF">AI Analysis</div>
-              <div id="nav-ai-agent-name" style="font-size:10px;color:#7070C0">Local agent</div>
+              <div id="nav-ai-agent-name" style="font-size:10px;color:#7070C0">Installed AI CLI</div>
             </div>
             <span style="font-size:9px;padding:2px 5px;border-radius:4px;background:#3A2860;color:#C4A8F2;border:1px solid #5A3090;font-weight:600">NEW</span>
           </div>
@@ -862,7 +862,7 @@ html[data-theme="dark"] .cleanmac-brand{
           </svg>
           <div>
             <div style="font-size:18px;font-weight:500;color:#0A1A40">AI Analysis ✦</div>
-            <div id="ai-header-sub" style="font-size:12px;color:#7A5AB8;margin-top:2px">Powered by your local agent</div>
+            <div id="ai-header-sub" style="font-size:12px;color:#7A5AB8;margin-top:2px">Uses your installed AI CLI</div>
           </div>
           <div style="margin-left:auto">
             <div id="ai-agent-badge" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px 4px 8px 4px;border:2px solid #1E1A2E;background:#EAE0FF;box-shadow:2px 2px 0 #1E1A2E">
@@ -913,7 +913,7 @@ html[data-theme="dark"] .cleanmac-brand{
           <div class="card" style="overflow:hidden">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
               <div style="width:14px;height:14px;border-radius:50%;border:2px solid #9E70E8;border-top-color:transparent;animation:spin .7s linear infinite;flex-shrink:0"></div>
-              <span id="ai-progress-msg" style="font-size:13px;color:#0A1A40;font-weight:500">Connecting to local agent...</span>
+              <span id="ai-progress-msg" style="font-size:13px;color:#0A1A40;font-weight:500">Running installed AI CLI...</span>
               <span id="ai-progress-pct" style="font-size:12px;color:#8AAAC8;margin-left:auto">0%</span>
             </div>
             <div style="height:10px;border-radius:5px;border:2px solid #1E1A2E;background:#F0F0F8;overflow:hidden">
@@ -1348,7 +1348,7 @@ function cleanNow(){
 
 // ===== AI ANALYSIS =====
 
-// Simulated local agent registry — in real app this would shell out to `which claude`, etc.
+// Simulated installed-CLI registry — in real app this would shell out to `which claude`, etc.
 var knownAgents=[
   {id:'claude',label:'claude code',cmd:'claude',desc:'Anthropic · Claude Code CLI'},
   {id:'codex',label:'openai codex',cmd:'codex',desc:'OpenAI · Codex CLI'},

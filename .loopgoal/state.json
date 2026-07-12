@@ -1,47 +1,82 @@
 {
   "mode": "goal",
-  "objective": "Switch CleanMac to the latest remote main branch and fix the issue where the app cannot scan installed applications.",
-  "exit_condition": "The goal is complete when local main is fast-forwarded to the latest origin/main, the application scanning path can discover installed apps from /Applications and user Applications directories without being blocked by app bundle handling or permissions assumptions, focused tests cover the regression, swift test passes, ./script/build_and_run.sh --verify passes, .loopgoal/state.json records the final state, and the intended changes are committed.",
+  "objective": "Fix every validated CleanMac project-review finding across uninstall safety, scan identity, AI review, release engineering, state management, localization, accessibility, and product navigation.",
+  "exit_condition": "The goal is complete when every validated P1 and P2 finding from the 2026-07-11 project review is either fixed with regression coverage or deliberately removed from the product surface, all focused and full tests pass, the production app builds in release mode with arm64 and x86_64 support and version metadata, release workflows keep PR jobs read-only and secret-free and fail closed on signing/notarization failures, runtime launch verification passes, git diff --check passes, .loopgoal/state.json is marked done, and all intended changes are committed on codex/project-review-20260711.",
   "status": "done",
-  "iteration": 0,
+  "iteration": 6,
   "phases": [
-    {"name": "Initialize checkpoint on latest main", "status": "done"},
-    {"name": "Read-only investigation of app scanning paths and tests", "status": "done"},
-    {"name": "Implement application scan repair", "status": "done"},
-    {"name": "Verify app scan repair and runtime launch", "status": "done"},
-    {"name": "Finalize checkpoint and commit", "status": "done"}
+    {"name": "Initialize full-review repair checkpoint", "status": "done"},
+    {"name": "Harden AppUninstaller planning and execution", "status": "done"},
+    {"name": "Fix scan identity, duplicate safety, and cleanup revalidation", "status": "done"},
+    {"name": "Make AI review complete, bounded, isolated, and honest", "status": "done"},
+    {"name": "Make release packaging and CI fail closed", "status": "done"},
+    {"name": "Fix operation state, failure UX, localization, accessibility, and navigation", "status": "done"},
+    {"name": "Run full release and runtime verification", "status": "done"},
+    {"name": "Finalize checkpoint and commits", "status": "done"}
   ],
   "current": {
-    "focus": "GOAL complete. Local main was fast-forwarded to origin/main e1554c2 before work began. AppUninstaller now scans applications best-effort: unreadable directories/items are skipped instead of failing the whole scan, symlink .app entries discovered in application roots are included, wrapper-style outer .app bundles without valid metadata are searched for nested real app bundles, and support/size enumeration tolerates unreadable children. Focused red tests failed before implementation, then passed. Full verification passed: git diff --check, env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test with 114 XCTest tests and 12 Swift Testing tests, and ./script/build_and_run.sh --verify. Process evidence showed dist/CleanMac.app/Contents/MacOS/CleanMac running after launch verification.",
-    "next_action": "Stop scheduling; the exit condition is met.",
+    "focus": "Goal complete. Every validated 2026-07-11 project-review finding has a committed repair and regression coverage on codex/project-review-20260711. Final committed-tree verification passed: 147 XCTest tests, 14 Swift Testing tests, universal x86_64+arm64 app verification, valid DMG checksum, script syntax, git diff, and GUI launch. The ten-stage release failure-injection harness and the open-source release self-check also passed, and the original finding-pattern audit returned no stale implementations.",
+    "next_action": "",
     "blockers": ""
   },
   "decisions": [
     {
-      "decision": "Treat this request as GOAL mode.",
-      "reason": "The user asked for a result-driven fix with a clear completion condition rather than a recurring loop."
+      "decision": "Treat the request as GOAL mode and include every validated project-review finding.",
+      "reason": "The user explicitly invoked loop-goal and asked to finish all identified problems, not only the top findings."
     },
     {
-      "decision": "Initialize the checkpoint after switching to latest main.",
-      "reason": "The previous checkpoint belonged to a completed image asset task on another branch; the user explicitly asked to work from the latest remote main for this repair."
+      "decision": "Use fail-closed behavior for deletion and release operations.",
+      "reason": "CleanMac presents itself as a safety-first cleaner; ambiguous ownership, stale file identity, signing failure, and incomplete AI coverage must block the operation rather than degrade silently."
     },
     {
-      "decision": "Use subagents only for read-only investigation.",
-      "reason": "The user-provided AGENTS instructions allow parallel subagent investigation but reserve edits, verification, and commits for the main agent."
+      "decision": "Keep subagents read-only and reserve edits, checkpoint writes, verification, and commits for the main agent.",
+      "reason": "The repository AGENTS instructions explicitly restrict subagents to read-only investigation; this takes precedence over the loop-goal phase-worker default."
     },
     {
-      "decision": "Repair AppUninstaller as a best-effort scanner rather than changing the default application roots.",
-      "reason": "Both subagent investigation and main-thread checks confirmed /Applications exists and contains apps; the brittle path is per-item filesystem errors, symlink app children, and wrapper apps with nested real bundles."
+      "decision": "Commit after each completed phase with .loopgoal/state.json updated first.",
+      "reason": "This preserves recoverable history in the exact checkpoint-before-commit order required by loop-goal."
     },
     {
-      "decision": "Use TDD for the repair.",
-      "reason": "This is a bug fix and the repo already has focused AppUninstaller tests where the real filesystem edge cases can be reproduced."
+      "decision": "Remove automatic app-support cleanup from the uninstall product surface instead of trying to infer ownership from CFBundleIdentifier.",
+      "reason": "A bundle identifier from Info.plist cannot prove ownership of user data; removing support cleanup eliminates path traversal, bundle-ID impersonation, shared-data deletion, and partial-plan data loss while preserving safe Move-to-Trash app removal."
     },
     {
-      "decision": "Keep the public AppUninstaller.scan signature unchanged.",
-      "reason": "Call sites already use try, and the fix only changes internal scanning to be best-effort rather than changing the public contract."
+      "decision": "Reject symlink application bundles and identify plans by the standardized app path.",
+      "reason": "Moving a symlink does not uninstall its target, and multiple installations may legitimately share one bundle identifier but still require distinct, stable UI identities."
+    },
+    {
+      "decision": "Attach an lstat-based scan snapshot to every production cleanup candidate, deduplicate scanner and duplicate-finder input by physical identity, exclude hard-linked aliases from reclaimable duplicate groups, and revalidate snapshot plus duplicate content hash immediately before Trash.",
+      "reason": "Canonical paths alone cannot distinguish replacements or shared inodes; device/inode/type/link-count/size/high-resolution timestamps plus content hash make stale or ambiguous cleanup requests fail closed."
+    },
+    {
+      "decision": "Classify usually-safe cleanup categories only under injected canonical macOS roots, not from arbitrary path components or filename extensions.",
+      "reason": "A user document directory named Caches or Logs and a personal .log/.tmp file are not rebuildable merely because their names resemble cleanup locations."
+    },
+    {
+      "decision": "Limit one AI review to 80 selected candidates with an explicit user-visible refusal above the limit, send only anonymous bounded metadata, and require every anonymous item ID to appear exactly once in structured output.",
+      "reason": "This removes silent truncation, raw-path and candidate-text disclosure, prompt injection through filenames, and partial model answers while keeping prompt size predictable."
+    },
+    {
+      "decision": "Run AI CLIs from a unique empty temporary directory with an explicit environment allowlist, a 120-second process timeout, and task-cancellation termination; disclose that the installed CLI may contact its provider.",
+      "reason": "The CLI needs selected provider credentials and PATH but not unrelated process secrets or the user's home as ambient project context, and remote-backed CLIs make no-cloud claims inaccurate."
+    },
+    {
+      "decision": "Keep local and pull-request DMGs behind an explicit --unsigned preview mode, while the default release path requires a version, build number, Developer ID Application identity, notarization credentials, successful stapling, and Gatekeeper assessment.",
+      "reason": "A deliberately labeled preview artifact is useful for testing, but a production release must never be published after missing credentials or a failed signing, notarization, validation, or architecture check."
+    },
+    {
+      "decision": "Build the production app independently for arm64 and x86_64, combine it with lipo, verify its plist and resources before packaging, and test every external release gate with injected command and status failures.",
+      "reason": "A host-only SwiftPM build cannot substantiate Intel support, static workflow assertions cannot prove fail-closed shell behavior, and source artwork should remain in the repository without entering the shipped resource bundle."
+    },
+    {
+      "decision": "Represent every foreground action with one tokenized operation state and require the matching token before applying or finishing asynchronous work.",
+      "reason": "Separate booleans allow scans, cleanup, and AI review to overlap and let stale tasks overwrite newer status and results; a single token establishes both mutual exclusion and completion ownership."
+    },
+    {
+      "decision": "Keep safety rule IDs stable in the engine and localize their presentation at the UI boundary, including localized accessibility actions.",
+      "reason": "Safety classification must remain language-independent while every supported language receives truthful rule and control descriptions without hardcoded English in the engine or result rows."
     }
   ],
-  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_and_run.sh --verify",
-  "updated_at": "2026-07-08T14:10:07Z"
+  "verify_cmd": "env CLANG_MODULE_CACHE_PATH=/tmp/cleanmac-clang-cache swift test && ./script/build_dmg.sh --unsigned && script/verify_release.sh dist/CleanMac.app && hdiutil verify dist/CleanMac.dmg && bash -n script/build_and_run.sh script/build_dmg.sh script/verify_release.sh script/verify_opensource.sh Tests/ReleaseScriptTests.sh && git diff --check && ./script/build_and_run.sh --verify",
+  "updated_at": "2026-07-11T11:24:38Z"
 }

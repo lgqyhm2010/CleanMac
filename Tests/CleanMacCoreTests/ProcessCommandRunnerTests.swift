@@ -19,6 +19,22 @@ final class ProcessCommandRunnerTests: XCTestCase {
         XCTAssertEqual(result.standardOutput.utf8.count, 200_000)
     }
 
+    func testKeepsDrainingButBoundsCapturedOutput() async throws {
+        let command = AICommand(
+            executable: "/bin/sh",
+            arguments: ["-c", "yes ABCDEFGH | head -c 200000"],
+            maximumCapturedOutputBytes: 1_024
+        )
+
+        let result = try await withTimeout(seconds: 30) {
+            try await ProcessCommandRunner().run(command: command, standardInput: "")
+        }
+
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertEqual(result.standardOutput.utf8.count, 1_024)
+        XCTAssertTrue(result.standardOutputWasTruncated)
+    }
+
     func testReportsNonZeroExitWhenChildIgnoresStdinAndExitsEarly() async throws {
         // The child never reads stdin and exits immediately. Writing a large prompt to a
         // closed pipe must surface as a normal non-zero exit, not crash the app via SIGPIPE.
@@ -79,6 +95,41 @@ final class ProcessCommandRunnerTests: XCTestCase {
 
         XCTAssertEqual(result.exitCode, 0)
         XCTAssertEqual(result.standardOutput, "from-parent")
+    }
+
+    func testTerminatesACommandAtItsConfiguredTimeout() async {
+        let command = AICommand(
+            executable: "/bin/sh",
+            arguments: ["-c", "trap '' TERM; exec /bin/sleep 30"],
+            timeoutSeconds: 0.1
+        )
+
+        let startedAt = Date()
+        do {
+            _ = try await ProcessCommandRunner().run(command: command, standardInput: "")
+            XCTFail("expected timeout")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.localizedCaseInsensitiveContains("timed out"))
+        }
+        XCTAssertLessThan(Date().timeIntervalSince(startedAt), 3)
+    }
+
+    func testCancellingTheTaskTerminatesTheChildProcess() async {
+        let command = AICommand(executable: "/bin/sleep", arguments: ["30"])
+        let task = Task {
+            try await ProcessCommandRunner().run(command: command, standardInput: "")
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        let startedAt = Date()
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("expected cancellation")
+        } catch {
+            XCTAssertTrue(error is CancellationError)
+        }
+        XCTAssertLessThan(Date().timeIntervalSince(startedAt), 3)
     }
 
     private struct TimeoutError: Error {}

@@ -288,21 +288,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMenuSettingsItem = settingsItem
         statusMenuQuitItem = quitItem
 
-        Publishers.CombineLatest4(store.$status, store.$candidates, store.$isScanning, store.$isScanningApplications)
+        Publishers.CombineLatest3(store.$status, store.$candidates, store.$foregroundOperationState)
             .receive(on: RunLoop.main)
-            .sink { [weak self] status, candidates, isScanning, isScanningApplications in
+            .sink { [weak self] status, candidates, operationState in
                 Task { @MainActor [weak self] in
+                    let isScanning = operationState.operation == .scanningFiles || operationState.operation == .scanningApplications
                     self?.updateStatusItem(
                         status: status,
                         candidateCount: candidates.count,
-                        isScanning: isScanning || isScanningApplications
+                        isScanning: isScanning,
+                        isBusy: operationState.operation != nil
                     )
                 }
             }
             .store(in: &statusCancellables)
     }
 
-    private func updateStatusItem(status: CleaningStatus, candidateCount: Int, isScanning: Bool) {
+    private func updateStatusItem(status: CleaningStatus, candidateCount: Int, isScanning: Bool, isBusy: Bool) {
         let title = MenuBarMonitorSummary.title(
             status: status,
             candidateCount: candidateCount,
@@ -311,7 +313,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         statusItem?.button?.title = title
         statusMenuStatusItem?.title = title
-        statusMenuScanItem?.isEnabled = !isScanning
+        statusMenuScanItem?.isEnabled = !isBusy
     }
 
     @objc

@@ -6,7 +6,7 @@
 
 **A native, private, AI-assisted disk cleaner for macOS.**
 
-Scan for caches, logs, duplicates, large files and unused apps — review them with a local AI CLI — and move them safely to the Trash. No account, no telemetry, no network.
+Scan for caches, logs, duplicates, large files and unused apps — review redacted metadata with an AI CLI you installed — and move them safely to the Trash. CleanMac has no account or telemetry; the AI CLI may use its provider's network service.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B-black.svg)](#requirements)
@@ -33,22 +33,22 @@ Scan for caches, logs, duplicates, large files and unused apps — review them w
 
 CleanMac is a native macOS app (SwiftUI) that reclaims disk space **safely**. It scans your Mac for cleanup candidates — caches, logs, temporary files, duplicates, oversized files, leftover app data — assigns each a risk level, and lets you review everything before anything is touched. Files go to the **Trash**, never straight to permanent deletion.
 
-What makes it different: it can hand the deletion list to a **local AI CLI you already have installed** (Claude Code, Codex, or Gemini CLI) for a second opinion on what is safe to remove. The AI runs on your machine; nothing is uploaded.
+What makes it different: it can hand **bounded, redacted metadata** for selected items to an AI CLI you already installed (Claude Code, Codex, or Gemini CLI) for a second opinion. Your question is sent as written; CleanMac does not add file contents or full paths, and the CLI may contact its configured provider.
 
 ## Features
 
 - 🧹 **Smart scan** — caches, logs, temporary files, Trash, developer junk (Xcode derived data), downloads, and unclassified “other” files.
 - 📦 **Duplicate finder** — groups files by SHA-256 content hash and keeps the newest copy.
 - 🐘 **Large files** — surfaces files over a configurable threshold (default 500 MB).
-- 🗑️ **App uninstaller** — removes an app *and* its leftover support files (Preferences, Caches, Application Support) keyed to the bundle ID.
+- 🗑️ **App uninstaller** — moves selected app bundles to the Trash while leaving user support data untouched to prevent accidental data loss.
 - 🤖 **AI Review (local)** — ask an installed AI CLI to classify candidates into *safe to delete*, *risky*, and *needs review*.
 - 🛡️ **Safety first** — 20+ safety rules and three protection tiers block system, Mail/Messages/Safari, and Keychain data from deletion.
 - 🌍 **11 languages** — fully localized UI that follows your system language or a manual override.
-- 🔒 **Private by design** — no network calls, no telemetry, no account.
+- 🔒 **Explicit privacy boundary** — no CleanMac telemetry or account; AI handoff is redacted and disclosed.
 
 ## AI Review (Local)
 
-CleanMac detects supported command-line AI tools on your `PATH` (including common Homebrew, npm, asdf and volta locations) and lets you pick one to review a batch of cleanup candidates. The app builds a structured JSON prompt (path, size, modified date, category, risk, and the safety rules that apply), runs the CLI **from your home directory**, and parses the reply back into color-coded groups.
+CleanMac detects supported command-line AI tools on your `PATH` (including common Homebrew, npm, asdf and volta locations) and lets you pick one to review up to 80 cleanup candidates. The app sends your question plus structured anonymous metadata (item ID, size, modified date, category, risk and rule IDs), runs the CLI from a unique empty temporary directory with a 120-second timeout, and accepts the reply only when every item is classified exactly once.
 
 | Tool | Binary | Models you can pick |
 |------|--------|---------------------|
@@ -60,7 +60,7 @@ The candidate list and your prompt are passed to the CLI via stdin/arguments as 
 
 ## Privacy & Safety
 
-- **No network.** CleanMac makes no network calls. AI review happens locally through CLIs you installed yourself.
+- **AI network disclosure.** CleanMac does not implement telemetry, but an installed AI CLI may contact its configured provider. AI review sends your question as written plus anonymous IDs and bounded metadata, never file contents or automatically collected full paths.
 - **Trash, not `rm`.** Everything is moved via `FileManager.trashItem(at:)`, so you can restore it.
 - **Protection tiers.** `allowed` (caches/logs/temp) → `requiresReview` (source code, cloud storage, downloads, dev data) → `blocked` (system root, app data, Mail/Messages/Safari, browser data, Keychain).
 - **Full Disk Access** is optional but recommended so scans can see protected Library locations. CleanMac guides you through granting it in System Settings.
@@ -72,11 +72,9 @@ The candidate list and your prompt are passed to the CLI via stdin/arguments as 
 1. Grab the latest **`CleanMac.dmg`** from the [Releases page](https://github.com/lgqyhm2010/CleanMac/releases/latest).
 2. Open the DMG and drag **CleanMac** into **Applications**.
 
-> **First launch:** If macOS says the app can’t be verified (Gatekeeper) on a build that isn’t notarized yet, right-click the app → **Open**, or run:
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/CleanMac.app
-> ```
-> Officially notarized releases open with a normal double-click.
+> Official downloads are signed and notarized. If Gatekeeper cannot verify one,
+> do not disable quarantine; delete it and download the asset again from the
+> official Releases page.
 
 ### Requirements
 
@@ -103,23 +101,32 @@ swift test
 
 ## Packaging a DMG
 
-A single script builds the app and packages a distributable, drag-to-install DMG:
+A single script builds a universal app and packages a drag-to-install DMG:
 
 ```bash
-./script/build_dmg.sh          # -> dist/CleanMac.dmg
+# Local, explicitly non-distributable preview
+./script/build_dmg.sh --unsigned
+
+# Distributable release; requires Developer ID and notarization credentials
+CLEANMAC_VERSION=1.0.0 CLEANMAC_BUILD_NUMBER=1 \
+  NOTARY_PROFILE=CleanMacNotary ./script/build_dmg.sh --release
 ```
 
-The script **signs and notarizes** when Developer ID credentials are available and **degrades gracefully** (ad-hoc signature) otherwise, so it always produces a DMG. Configure signing via environment variables — no secrets are ever hard-coded:
+Formal releases fail closed: a missing credential, invalid version, architecture,
+signing, notarization, stapling, or Gatekeeper check stops the build. Configure
+release metadata and signing via environment variables; secrets are never
+hard-coded:
 
 | Variable | Purpose |
 |----------|---------|
 | `CODESIGN_IDENTITY` | Signing identity, e.g. `Developer ID Application: Name (TEAMID)`. Auto-detected if unset. |
+| `CLEANMAC_VERSION` / `CLEANMAC_BUILD_NUMBER` | Release version and numeric build number. |
 | `NOTARY_PROFILE` | A `notarytool` keychain profile name (see [`docs/RELEASING.md`](docs/RELEASING.md)). |
 | `APPLE_ID` / `APPLE_TEAM_ID` / `APPLE_APP_PASSWORD` | Alternative notarization credentials (used by CI). |
 
-> Real “download-and-open” distribution requires a paid **Apple Developer ID Application** certificate. See [`docs/RELEASING.md`](docs/RELEASING.md) for the one-time setup. Without it, the DMG is still built but is not notarized.
+> `--unsigned` is only for local/PR validation and is never published as a release. See [`docs/RELEASING.md`](docs/RELEASING.md) for setup.
 
-Every push to `main` and every tag automatically rebuilds and publishes the DMG via GitHub Actions ([`.github/workflows/release-dmg.yml`](.github/workflows/release-dmg.yml)).
+Pull requests and pushes to `main` build a read-only unsigned preview. Only a `v*` tag can publish, after the signed and notarized release passes every check ([workflow](.github/workflows/release-dmg.yml)).
 
 ## Localization
 

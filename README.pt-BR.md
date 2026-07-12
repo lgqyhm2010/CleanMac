@@ -6,7 +6,7 @@
 
 **Um limpador de disco nativo, privado e assistido por IA para macOS.**
 
-Faça a varredura de caches, logs, duplicatas, arquivos grandes e apps não utilizados — revise-os com uma CLI de IA local — e mova-os com segurança para o Lixo. Sem conta, sem telemetria, sem rede.
+Faça a varredura de caches, logs, duplicatas, arquivos grandes e apps não utilizados, revise metadados omitidos com uma CLI de IA instalada e mova-os com segurança para o Lixo. O CleanMac não exige conta nem inclui telemetria; a CLI de IA pode usar o serviço de rede do provedor.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B-black.svg)](#requisitos)
@@ -33,22 +33,22 @@ Faça a varredura de caches, logs, duplicatas, arquivos grandes e apps não util
 
 O CleanMac é um app nativo do macOS (SwiftUI) que recupera espaço em disco **com segurança**. Ele varre o seu Mac em busca de candidatos à limpeza — caches, logs, arquivos temporários, duplicatas, arquivos gigantes, dados residuais de apps —, atribui um nível de risco a cada um e permite que você revise tudo antes que qualquer coisa seja tocada. Os arquivos vão para o **Lixo**, nunca direto para a exclusão permanente.
 
-O que o torna diferente: ele pode entregar a lista de exclusão para uma **CLI de IA local que você já tem instalada** (Claude Code, Codex ou Gemini CLI) em busca de uma segunda opinião sobre o que é seguro remover. A IA roda na sua máquina; nada é enviado.
+O que o torna diferente: ele pode entregar **metadados omitidos e limitados** dos itens selecionados a uma CLI de IA instalada (Claude Code, Codex ou Gemini CLI) para obter uma segunda opinião. Sua pergunta é enviada como foi digitada; o CleanMac não adiciona conteúdo de arquivos nem caminhos completos, e a CLI pode contatar o provedor configurado.
 
 ## Recursos
 
 - 🧹 **Varredura inteligente** — caches, logs, arquivos temporários, Lixo, entulho de desenvolvedor (dados derivados do Xcode), downloads e arquivos “outros” não classificados.
 - 📦 **Localizador de duplicatas** — agrupa arquivos por hash de conteúdo SHA-256 e mantém a cópia mais recente.
 - 🐘 **Arquivos grandes** — revela arquivos acima de um limite configurável (padrão de 500 MB).
-- 🗑️ **Desinstalador de apps** — remove um app *e* seus arquivos de suporte residuais (Preferences, Caches, Application Support) associados ao bundle ID.
+- 🗑️ **Desinstalador de apps** — move os apps selecionados para o Lixo; para evitar perda acidental, os dados de suporte do usuário não são alterados.
 - 🤖 **Revisão por IA (local)** — peça a uma CLI de IA instalada para classificar os candidatos em *seguro para excluir*, *arriscado* e *precisa de revisão*.
 - 🛡️ **Segurança em primeiro lugar** — mais de 20 regras de segurança e três níveis de proteção impedem que dados do sistema, do Mail/Mensagens/Safari e do Keychain sejam excluídos.
 - 🌍 **11 idiomas** — interface totalmente localizada que segue o idioma do seu sistema ou uma substituição manual.
-- 🔒 **Privado por design** — sem chamadas de rede, sem telemetria, sem conta.
+- 🔒 **Limite de privacidade explícito** — sem telemetria ou conta do CleanMac; a entrega à IA é omitida e informada claramente.
 
 ## Revisão por IA (Local)
 
-O CleanMac detecta ferramentas de IA de linha de comando compatíveis no seu `PATH` (incluindo os locais comuns de Homebrew, npm, asdf e volta) e permite que você escolha uma para revisar um lote de candidatos à limpeza. O app monta um prompt JSON estruturado (caminho, tamanho, data de modificação, categoria, risco e as regras de segurança aplicáveis), executa a CLI **a partir do seu diretório home** e analisa a resposta convertendo-a de volta em grupos com código de cores.
+O CleanMac detecta ferramentas de IA compatíveis no seu `PATH` e permite revisar até 80 candidatos. Ele envia sua pergunta e metadados anônimos estruturados (ID, tamanho, data, categoria, risco e IDs de regras), executa a CLI em um diretório temporário vazio e exclusivo com limite de 120 segundos e só aceita a resposta se cada item for classificado exatamente uma vez.
 
 | Ferramenta | Binário | Modelos que você pode escolher |
 |------|--------|---------------------|
@@ -60,7 +60,7 @@ A lista de candidatos e o seu prompt são passados para a CLI via stdin/argument
 
 ## Privacidade e Segurança
 
-- **Sem rede.** O CleanMac não faz chamadas de rede. A revisão por IA acontece localmente por meio de CLIs que você mesmo instalou.
+- **Aviso de rede da IA.** O CleanMac não inclui telemetria, mas uma CLI de IA instalada pode contatar o provedor. A revisão envia sua pergunta como digitada, IDs anônimos e metadados limitados; nunca o conteúdo dos arquivos ou caminhos completos coletados automaticamente.
 - **Lixo, não `rm`.** Tudo é movido via `FileManager.trashItem(at:)`, então você pode restaurar.
 - **Níveis de proteção.** `allowed` (caches/logs/temp) → `requiresReview` (código-fonte, armazenamento em nuvem, downloads, dados de desenvolvimento) → `blocked` (raiz do sistema, dados de apps, Mail/Mensagens/Safari, dados de navegadores, Keychain).
 - **Full Disk Access** é opcional, mas recomendado para que as varreduras possam ver os locais protegidos da Library. O CleanMac orienta você a concedê-lo nas Ajustes do Sistema.
@@ -72,11 +72,7 @@ A lista de candidatos e o seu prompt são passados para a CLI via stdin/argument
 1. Baixe o **`CleanMac.dmg`** mais recente na [página de Releases](https://github.com/lgqyhm2010/CleanMac/releases/latest).
 2. Abra o DMG e arraste o **CleanMac** para **Aplicativos**.
 
-> **Primeira execução:** se o macOS disser que o app não pode ser verificado (Gatekeeper) em um build que ainda não foi notarizado, clique com o botão direito no app → **Abrir**, ou execute:
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/CleanMac.app
-> ```
-> Releases oficialmente notarizados abrem com um clique duplo normal.
+> Downloads oficiais são assinados e notarizados. Se o Gatekeeper não conseguir verificar um deles, não desative a quarentena; apague-o e baixe-o novamente na página oficial de Releases.
 
 ### Requisitos
 
@@ -106,20 +102,26 @@ swift test
 Um único script compila o app e empacota um DMG distribuível, do tipo arrastar-para-instalar:
 
 ```bash
-./script/build_dmg.sh          # -> dist/CleanMac.dmg
+# Prévia local, não distribuível
+./script/build_dmg.sh --unsigned
+
+# Release formal; requer Developer ID e credenciais de notarização
+CLEANMAC_VERSION=1.0.0 CLEANMAC_BUILD_NUMBER=1 \
+  NOTARY_PROFILE=CleanMacNotary ./script/build_dmg.sh --release
 ```
 
-O script **assina e notariza** quando as credenciais do Developer ID estão disponíveis e **degrada de forma controlada** (assinatura ad-hoc) caso contrário, então sempre produz um DMG. Configure a assinatura por meio de variáveis de ambiente — nenhum segredo é fixado no código:
+Releases formais falham de forma fechada: qualquer erro de credencial, versão, arquitetura, assinatura, notarização, stapling ou Gatekeeper interrompe o build. A configuração usa variáveis de ambiente e nenhum segredo é fixado no código:
 
 | Variável | Finalidade |
 |----------|---------|
 | `CODESIGN_IDENTITY` | Identidade de assinatura, por exemplo, `Developer ID Application: Name (TEAMID)`. Detectada automaticamente se não for definida. |
+| `CLEANMAC_VERSION` / `CLEANMAC_BUILD_NUMBER` | Versão do release e número de build numérico. |
 | `NOTARY_PROFILE` | Um nome de perfil de keychain do `notarytool` (veja [`docs/RELEASING.md`](docs/RELEASING.md)). |
 | `APPLE_ID` / `APPLE_TEAM_ID` / `APPLE_APP_PASSWORD` | Credenciais de notarização alternativas (usadas pela CI). |
 
-> A distribuição real de “baixar e abrir” exige um certificado pago **Apple Developer ID Application**. Veja [`docs/RELEASING.md`](docs/RELEASING.md) para a configuração inicial única. Sem ele, o DMG ainda é gerado, mas não é notarizado.
+> `--unsigned` serve apenas para validação local/PR e nunca é publicado como release. Veja [`docs/RELEASING.md`](docs/RELEASING.md).
 
-Cada push para a `main` e cada tag reconstrói e publica automaticamente o DMG via GitHub Actions ([`.github/workflows/release-dmg.yml`](.github/workflows/release-dmg.yml)).
+PRs e pushes para `main` só criam uma prévia sem assinatura e de leitura. Apenas uma tag `v*` publica após todas as verificações ([workflow](.github/workflows/release-dmg.yml)).
 
 ## Localização
 

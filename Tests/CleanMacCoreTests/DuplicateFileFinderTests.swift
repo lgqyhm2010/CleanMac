@@ -79,6 +79,20 @@ final class DuplicateFileFinderTests: XCTestCase {
         XCTAssertEqual(group.reclaimableBytes, 20)
     }
 
+    func testHardLinksAreNotReportedAsReclaimableDuplicates() throws {
+        let root = try makeTemporaryDirectory()
+        let original = try writeFile(root.appending(path: "original.txt"), contents: "same")
+        let hardLink = root.appending(path: "hard-link.txt")
+        try FileManager.default.linkItem(at: original, to: hardLink)
+
+        let groups = try DuplicateFileFinder().findDuplicates(in: [
+            candidate(url: original, size: 4),
+            candidate(url: hardLink, size: 4)
+        ])
+
+        XCTAssertTrue(groups.isEmpty)
+    }
+
     private func makeTemporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appending(path: UUID().uuidString, directoryHint: .isDirectory)
@@ -132,7 +146,8 @@ final class DuplicateFileFinderTests: XCTestCase {
             isDirectory: isDirectory,
             protection: protection,
             ruleMatches: [],
-            userVisibleRules: []
+            userVisibleRules: [],
+            scanSnapshot: FileSnapshot.capture(at: url)
         )
     }
 }

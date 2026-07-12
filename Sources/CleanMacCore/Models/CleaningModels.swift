@@ -101,9 +101,20 @@ public struct SafetyRuleMatch: Identifiable, Hashable, Codable, Sendable {
     public var id: String { ruleID }
 
     public let ruleID: String
-    public let name: String
-    public let explanation: String
     public let protection: DeletionProtection
+
+    public var name: String {
+        L10n.safetyRuleName(ruleID, language: .english)
+    }
+
+    public var explanation: String {
+        L10n.safetyRuleExplanation(protection, language: .english)
+    }
+
+    public init(ruleID: String, protection: DeletionProtection) {
+        self.ruleID = ruleID
+        self.protection = protection
+    }
 
     public init(
         ruleID: String,
@@ -111,10 +122,7 @@ public struct SafetyRuleMatch: Identifiable, Hashable, Codable, Sendable {
         explanation: String,
         protection: DeletionProtection
     ) {
-        self.ruleID = ruleID
-        self.name = name
-        self.explanation = explanation
-        self.protection = protection
+        self.init(ruleID: ruleID, protection: protection)
     }
 }
 
@@ -134,6 +142,51 @@ public struct SafetyEvaluation: Equatable, Sendable {
     }
 }
 
+public struct FileSystemIdentity: Hashable, Codable, Sendable {
+    public let deviceID: UInt64
+    public let fileID: UInt64
+
+    public init(deviceID: UInt64, fileID: UInt64) {
+        self.deviceID = deviceID
+        self.fileID = fileID
+    }
+}
+
+public enum FileSnapshotKind: String, Codable, Hashable, Sendable {
+    case regularFile
+    case directory
+    case symbolicLink
+    case other
+}
+
+/// The immutable filesystem facts captured when an item is offered for cleanup.
+/// `TrashCleaner` compares this snapshot with a fresh `lstat` immediately before
+/// moving the path so a replacement or modified item fails closed.
+public struct FileSnapshot: Hashable, Codable, Sendable {
+    public let identity: FileSystemIdentity
+    public let linkCount: UInt64
+    public let kind: FileSnapshotKind
+    public let byteCount: Int64
+    public let modifiedAtNanoseconds: Int64
+    public let statusChangedAtNanoseconds: Int64
+
+    public init(
+        identity: FileSystemIdentity,
+        linkCount: UInt64,
+        kind: FileSnapshotKind,
+        byteCount: Int64,
+        modifiedAtNanoseconds: Int64,
+        statusChangedAtNanoseconds: Int64
+    ) {
+        self.identity = identity
+        self.linkCount = linkCount
+        self.kind = kind
+        self.byteCount = byteCount
+        self.modifiedAtNanoseconds = modifiedAtNanoseconds
+        self.statusChangedAtNanoseconds = statusChangedAtNanoseconds
+    }
+}
+
 public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
     public var id: String { url.standardizedFileURL.path }
 
@@ -147,6 +200,7 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
     public let protection: DeletionProtection
     public let ruleMatches: [SafetyRuleMatch]
     public let userVisibleRules: [String]
+    public let scanSnapshot: FileSnapshot?
 
     public init(
         url: URL,
@@ -158,7 +212,8 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
         isDirectory: Bool,
         protection: DeletionProtection = .requiresReview,
         ruleMatches: [SafetyRuleMatch] = [],
-        userVisibleRules: [String] = []
+        userVisibleRules: [String] = [],
+        scanSnapshot: FileSnapshot? = nil
     ) {
         self.url = url
         self.sizeBytes = sizeBytes
@@ -170,6 +225,7 @@ public struct CleaningCandidate: Identifiable, Hashable, Codable, Sendable {
         self.protection = protection
         self.ruleMatches = ruleMatches
         self.userVisibleRules = userVisibleRules
+        self.scanSnapshot = scanSnapshot
     }
 }
 
@@ -276,15 +332,14 @@ public struct DuplicateFileGroup: Identifiable, Hashable, Codable, Sendable {
 }
 
 public struct AppUninstallPlan: Identifiable, Hashable, Codable, Sendable {
-    public var id: String { bundleIdentifier }
+    public var id: String { appCandidate.id }
 
     public let appName: String
     public let bundleIdentifier: String
     public let appCandidate: CleaningCandidate
-    public let supportCandidates: [CleaningCandidate]
 
     public var allCandidates: [CleaningCandidate] {
-        [appCandidate] + supportCandidates
+        [appCandidate]
     }
 
     public var movableCandidates: [CleaningCandidate] {
@@ -302,13 +357,11 @@ public struct AppUninstallPlan: Identifiable, Hashable, Codable, Sendable {
     public init(
         appName: String,
         bundleIdentifier: String,
-        appCandidate: CleaningCandidate,
-        supportCandidates: [CleaningCandidate]
+        appCandidate: CleaningCandidate
     ) {
         self.appName = appName
         self.bundleIdentifier = bundleIdentifier
         self.appCandidate = appCandidate
-        self.supportCandidates = supportCandidates
     }
 }
 
@@ -411,6 +464,16 @@ public struct CleanupResult: Equatable, Sendable {
     }
 }
 
+public struct CleanupRequest: Equatable, Sendable {
+    public let candidate: CleaningCandidate
+    public let expectedContentHash: String?
+
+    public init(candidate: CleaningCandidate, expectedContentHash: String? = nil) {
+        self.candidate = candidate
+        self.expectedContentHash = expectedContentHash
+    }
+}
+
 public struct CleanupFailure: Equatable, Sendable {
     public let url: URL
     public let message: String
@@ -422,12 +485,22 @@ public struct CleanupFailure: Equatable, Sendable {
 }
 
 public struct CleanupSkippedItem: Equatable, Sendable {
+    public enum Reason: String, Equatable, Sendable {
+        case protected
+        case snapshotUnavailable
+        case unsupportedFileType
+        case changedSinceScan
+        case contentChanged
+    }
+
     public let url: URL
     public let message: String
+    public let reason: Reason
 
-    public init(url: URL, message: String) {
+    public init(url: URL, message: String, reason: Reason) {
         self.url = url
         self.message = message
+        self.reason = reason
     }
 }
 
@@ -440,12 +513,26 @@ public struct AICommand: Equatable, Sendable {
     /// Working directory for the spawned process. `nil` inherits the parent's cwd —
     /// which is "/" for a Finder-launched app, never the right context for a CLI.
     public var workingDirectory: String?
+    /// Hard wall-clock limit enforced by `ProcessCommandRunner`.
+    public var timeoutSeconds: TimeInterval
+    /// Maximum bytes retained from each output stream. The runner keeps draining
+    /// excess data to avoid deadlock but records only a bounded tail.
+    public var maximumCapturedOutputBytes: Int
 
-    public init(executable: String, arguments: [String] = [], environment: [String: String]? = nil, workingDirectory: String? = nil) {
+    public init(
+        executable: String,
+        arguments: [String] = [],
+        environment: [String: String]? = nil,
+        workingDirectory: String? = nil,
+        timeoutSeconds: TimeInterval = 120,
+        maximumCapturedOutputBytes: Int = 1_024 * 1_024
+    ) {
         self.executable = executable
         self.arguments = arguments
         self.environment = environment
         self.workingDirectory = workingDirectory
+        self.timeoutSeconds = timeoutSeconds
+        self.maximumCapturedOutputBytes = maximumCapturedOutputBytes
     }
 }
 
@@ -453,20 +540,34 @@ public struct CommandResult: Equatable, Sendable {
     public let exitCode: Int32
     public let standardOutput: String
     public let standardError: String
+    public let standardOutputWasTruncated: Bool
+    public let standardErrorWasTruncated: Bool
 
-    public init(exitCode: Int32, standardOutput: String, standardError: String) {
+    public init(
+        exitCode: Int32,
+        standardOutput: String,
+        standardError: String,
+        standardOutputWasTruncated: Bool = false,
+        standardErrorWasTruncated: Bool = false
+    ) {
         self.exitCode = exitCode
         self.standardOutput = standardOutput
         self.standardError = standardError
+        self.standardOutputWasTruncated = standardOutputWasTruncated
+        self.standardErrorWasTruncated = standardErrorWasTruncated
     }
 }
 
 public struct AIReview: Equatable, Sendable {
     public let output: String
     public let reviewedAt: Date
+    /// Local-only mapping used to turn anonymous model item IDs back into the paths
+    /// already visible in CleanMac. The paths are never included in the CLI prompt.
+    public let itemPathsByID: [String: String]
 
-    public init(output: String, reviewedAt: Date) {
+    public init(output: String, reviewedAt: Date, itemPathsByID: [String: String] = [:]) {
         self.output = output
         self.reviewedAt = reviewedAt
+        self.itemPathsByID = itemPathsByID
     }
 }

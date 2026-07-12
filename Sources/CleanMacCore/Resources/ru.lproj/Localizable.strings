@@ -11,6 +11,8 @@
 "clear" = "Очистить";
 "clearSelection" = "Снять выбор";
 "aiTool" = "Инструмент ИИ";
+"aiPrivacyDisclosure" = "CleanMac передает установленному AI CLI ваш вопрос без изменений и обезличенные метаданные не более чем 80 выбранных объектов. CLI может обращаться к своему провайдеру; содержимое файлов и автоматически собранные полные пути не передаются.";
+"aiSelectionLimitMessage" = "За одну проверку AI можно выбрать не более 80 объектов.";
 "duplicateGroup" = "Группа дубликатов";
 "duplicates" = "Дубликаты";
 "english" = "Английский";
@@ -43,7 +45,7 @@
 "noReview" = "Нет проверки";
 "potential" = "Потенциал";
 "permissions" = "Разрешения";
-"privateByDesign" = "Приватность по умолчанию";
+"privateByDesign" = "Явный выбор конфиденциальности";
 "protection" = "Защита";
 "question" = "Вопрос";
 "quitCleanMac" = "Выйти из CleanMac";
@@ -65,9 +67,9 @@
 "size" = "Размер";
 "spanish" = "Испанский";
 "status" = "Статус";
-"trustLocalAI" = "Локальный ИИ";
+"trustInstalledAICLI" = "Установленный AI CLI";
 "trustMoveToTrash" = "Переместить в Корзину";
-"trustNoCloudUpload" = "Без облачной загрузки";
+"trustAIProviderNetwork" = "AI CLI может использовать облако";
 "trustNoTelemetry" = "Без телеметрии";
 "openSettings" = "Открыть настройки";
 "arabic" = "Арабский";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "Анализ места";
 "sidebarAnalyzeSpaceSubtitle" = "Карта места";
 "sidebarAIReviewTitle" = "Проверка AI";
-"sidebarAIReviewSubtitle" = "Локальный агент";
+"sidebarAIReviewSubtitle" = "Установленный CLI";
 "sidebarSettingsTitle" = "Настройки";
 "sidebarSettingsSubtitle" = "Язык и другое";
 "sidebarGroupOverview" = "Обзор";
 "sidebarGroupProTools" = "Профи-инструменты";
-"sidebarGroupAILocal" = "Локальный AI";
+"sidebarGroupAILocal" = "AI CLI";
 "sidebarGroupSystem" = "Система";
 
 "category.cache" = "Кэши";
@@ -191,3 +193,14 @@
 "error.noAIToolDetected" = "Инструмент AI CLI не найден. Установите codex, claude или gemini.";
 
 "defaultAIQuestion" = "Определите, подходят ли эти файлы для перемещения в Корзину, и перечислите все, что мне следует подтвердить вручную.";
+
+"selectItem" = "Выбрать объект";
+"deselectItem" = "Снять выбор";
+"safetyRule.allowed" = "Объект находится в распознанном месте очистки; проверьте его и сначала переместите в Корзину.";
+"safetyRule.requiresReview" = "Объект может содержать личные или важные данные; проверьте его перед перемещением.";
+"safetyRule.blocked" = "Правила безопасности защищают этот объект от очистки.";
+"safetyRuleName.systemRoot" = "Системный корень";
+"safetyRuleName.appData" = "Данные приложений";
+"safetyRuleName.sourceCode" = "Исходный код";
+"safetyRuleName.cloudStorage" = "Облачное хранилище";
+"safetyRuleName.unknownDirectory" = "Неизвестная папка";

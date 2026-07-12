@@ -11,6 +11,8 @@
 "clear" = "Limpiar";
 "clearSelection" = "Borrar selección";
 "aiTool" = "Herramienta de IA";
+"aiPrivacyDisclosure" = "CleanMac envía tu pregunta tal como la escribiste junto con metadatos redactados de hasta 80 elementos seleccionados a la CLI de IA instalada. La CLI puede contactar a su proveedor; no se incluyen contenidos de archivos ni rutas completas recopiladas automáticamente.";
+"aiSelectionLimitMessage" = "La revisión de IA admite hasta 80 elementos seleccionados a la vez.";
 "duplicateGroup" = "Grupo duplicado";
 "duplicates" = "Duplicados";
 "english" = "Inglés";
@@ -43,7 +45,7 @@
 "noReview" = "Sin revisión";
 "potential" = "Potencial";
 "permissions" = "Permisos";
-"privateByDesign" = "Privado por diseño";
+"privateByDesign" = "Opciones de privacidad explícitas";
 "protection" = "Protección";
 "question" = "Pregunta";
 "quitCleanMac" = "Salir de CleanMac";
@@ -65,9 +67,9 @@
 "size" = "Tamaño";
 "spanish" = "Español";
 "status" = "Estado";
-"trustLocalAI" = "IA local";
+"trustInstalledAICLI" = "CLI de IA instalada";
 "trustMoveToTrash" = "Mover a la papelera";
-"trustNoCloudUpload" = "Sin carga a la nube";
+"trustAIProviderNetwork" = "La CLI de IA puede usar la nube";
 "trustNoTelemetry" = "Sin telemetría";
 "openSettings" = "Abrir ajustes";
 "arabic" = "Árabe";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "Analizar espacio";
 "sidebarAnalyzeSpaceSubtitle" = "Mapa de espacio";
 "sidebarAIReviewTitle" = "Revisión IA";
-"sidebarAIReviewSubtitle" = "Agente local";
+"sidebarAIReviewSubtitle" = "CLI instalada";
 "sidebarSettingsTitle" = "Ajustes";
 "sidebarSettingsSubtitle" = "Idioma y más";
 "sidebarGroupOverview" = "Resumen";
 "sidebarGroupProTools" = "Herramientas pro";
-"sidebarGroupAILocal" = "IA local";
+"sidebarGroupAILocal" = "CLI de IA";
 "sidebarGroupSystem" = "Sistema";
 
 "category.cache" = "Cachés";
@@ -191,3 +193,14 @@
 "error.noAIToolDetected" = "No se encontró ninguna herramienta de AI CLI. Instala codex, claude o gemini.";
 
 "defaultAIQuestion" = "Decide si estos archivos son adecuados para moverlos a la papelera y enumera cualquier cosa que deba confirmar manualmente.";
+
+"selectItem" = "Seleccionar elemento";
+"deselectItem" = "Deseleccionar elemento";
+"safetyRule.allowed" = "Este elemento está en una ubicación de limpieza reconocida; revísalo y muévelo primero a la papelera.";
+"safetyRule.requiresReview" = "Este elemento puede contener datos personales o importantes; revísalo antes de moverlo.";
+"safetyRule.blocked" = "Las reglas de seguridad protegen este elemento de la limpieza.";
+"safetyRuleName.systemRoot" = "Raíz del sistema";
+"safetyRuleName.appData" = "Datos de aplicaciones";
+"safetyRuleName.sourceCode" = "Código fuente";
+"safetyRuleName.cloudStorage" = "Almacenamiento en la nube";
+"safetyRuleName.unknownDirectory" = "Carpeta desconocida";

@@ -19,8 +19,6 @@ public struct SafetyRuleEngine: Sendable {
         if isSystemRoot(path), category != .application {
             matches.append(rule(
                 id: "system-root",
-                name: "System root",
-                explanation: "System and shared macOS locations are protected from cleanup.",
                 protection: .blocked
             ))
         }
@@ -28,8 +26,6 @@ public struct SafetyRuleEngine: Sendable {
         if isApplicationData(lowerPath), category != .applicationSupport {
             matches.append(rule(
                 id: "app-data",
-                name: "Application data",
-                explanation: "Application support, containers, mail, messages, keychains, and browser data may contain live personal or app data.",
                 protection: .blocked
             ))
         }
@@ -37,8 +33,6 @@ public struct SafetyRuleEngine: Sendable {
         if isSourceCode(lowerPath: lowerPath, lowerExtension: lowerExtension, lowerComponents: lowerComponents) {
             matches.append(rule(
                 id: "source-code",
-                name: "Source code",
-                explanation: "Source projects and code files require manual review before cleanup.",
                 protection: .requiresReview
             ))
         }
@@ -46,8 +40,6 @@ public struct SafetyRuleEngine: Sendable {
         if isCloudStorage(lowerPath: lowerPath, lowerComponents: lowerComponents) {
             matches.append(rule(
                 id: "cloud-storage",
-                name: "Cloud storage",
-                explanation: "Cloud-synced files and placeholders require review so cleanup does not remove synced or offline-only content.",
                 protection: .requiresReview
             ))
         }
@@ -56,64 +48,46 @@ public struct SafetyRuleEngine: Sendable {
         case .cache:
             matches.append(rule(
                 id: "cache",
-                name: "Cache",
-                explanation: "Cache files are usually rebuildable, but still move to Trash first.",
                 protection: .allowed
             ))
         case .logs:
             matches.append(rule(
                 id: "logs",
-                name: "Logs",
-                explanation: "Log files are usually safe cleanup candidates after review.",
                 protection: .allowed
             ))
         case .temporary:
             matches.append(rule(
                 id: "temporary",
-                name: "Temporary",
-                explanation: "Temporary files are usually safe cleanup candidates.",
                 protection: .allowed
             ))
         case .trash:
             matches.append(rule(
                 id: "trash",
-                name: "Trash",
-                explanation: "Items already in Trash can be reviewed as cleanup candidates.",
                 protection: .allowed
             ))
         case .downloads:
             matches.append(rule(
                 id: "downloads",
-                name: "Downloads",
-                explanation: "Downloads may include installers or personal files; review before moving.",
                 protection: .requiresReview
             ))
         case .largeFile:
             matches.append(rule(
                 id: "large-file",
-                name: "Large file",
-                explanation: "Large files can reclaim space but are not automatically safe.",
                 protection: .requiresReview
             ))
         case .application:
             matches.append(rule(
                 id: "app-bundle",
-                name: "Application bundle",
-                explanation: "Applications should be reviewed with their support files before moving to Trash.",
                 protection: .requiresReview
             ))
         case .applicationSupport:
             matches.append(rule(
                 id: "app-uninstall-support",
-                name: "App uninstall support",
-                explanation: "This support item was matched to an application uninstall plan.",
                 protection: .requiresReview
             ))
         case .developer:
             matches.append(rule(
                 id: "developer-cache",
-                name: "Developer data",
-                explanation: "Developer files can include rebuildable caches and important source data; review before moving.",
                 protection: .requiresReview
             ))
         case .other:
@@ -123,8 +97,6 @@ public struct SafetyRuleEngine: Sendable {
         if category == .other, isDirectory {
             matches.append(rule(
                 id: "unknown-directory",
-                name: "Unknown directory",
-                explanation: "Unmatched folders are protected because deleting a directory has a wider blast radius.",
                 protection: .blocked
             ))
         } else if matches.isEmpty {
@@ -134,22 +106,15 @@ public struct SafetyRuleEngine: Sendable {
         return SafetyEvaluation(
             protection: strongestProtection(in: matches),
             ruleMatches: matches,
-            userVisibleRules: matches.map { "\($0.name): \($0.explanation)" }
+            userVisibleRules: matches.map { L10n.safetyRule($0, language: .english) }
         )
     }
 
     private func rule(
         id: String,
-        name: String,
-        explanation: String,
         protection: DeletionProtection
     ) -> SafetyRuleMatch {
-        SafetyRuleMatch(
-            ruleID: id,
-            name: name,
-            explanation: explanation,
-            protection: protection
-        )
+        SafetyRuleMatch(ruleID: id, protection: protection)
     }
 
     private func fallbackRule(for risk: DeletionRisk) -> SafetyRuleMatch {
@@ -157,22 +122,16 @@ public struct SafetyRuleEngine: Sendable {
         case .usuallySafe:
             return rule(
                 id: "risk-usually-safe",
-                name: "Low risk",
-                explanation: "The classifier marked this item as usually safe.",
                 protection: .allowed
             )
         case .reviewRecommended:
             return rule(
                 id: "risk-review",
-                name: "Review recommended",
-                explanation: "No specific cleanup rule matched; review before moving.",
                 protection: .requiresReview
             )
         case .beCareful:
             return rule(
                 id: "risk-careful",
-                name: "Be careful",
-                explanation: "The classifier marked this item as high risk.",
                 protection: .blocked
             )
         }

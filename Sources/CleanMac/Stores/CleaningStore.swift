@@ -2,6 +2,38 @@ import AppKit
 import CleanMacCore
 import Foundation
 
+enum ForegroundOperation: Equatable {
+    case scanningFiles
+    case scanningApplications
+    case cleaning
+    case reviewingWithAI
+}
+
+struct ForegroundOperationState {
+    private(set) var operation: ForegroundOperation?
+    private var token: UUID?
+
+    mutating func begin(_ operation: ForegroundOperation) -> UUID? {
+        guard self.operation == nil else { return nil }
+        let token = UUID()
+        self.operation = operation
+        self.token = token
+        return token
+    }
+
+    func isCurrent(_ token: UUID) -> Bool {
+        self.token == token
+    }
+
+    @discardableResult
+    mutating func finish(_ token: UUID) -> Bool {
+        guard self.token == token else { return false }
+        operation = nil
+        self.token = nil
+        return true
+    }
+}
+
 @MainActor
 final class CleaningStore: ObservableObject {
     @Published var roots: [URL] = DefaultScanRoots.urls {
@@ -19,10 +51,7 @@ final class CleaningStore: ObservableObject {
     @Published var aiReviewSummary: AIReviewSummary?
     @Published var status: CleaningStatus = .ready
     @Published var errorMessage: CleaningErrorMessage?
-    @Published var isScanning = false
-    @Published var isCleaning = false
-    @Published var isReviewingWithAI = false
-    @Published var isScanningApplications = false
+    @Published private(set) var foregroundOperationState = ForegroundOperationState()
     @Published var includeHiddenFiles = false
     @Published var minimumSizeMegabytes = 1.0
     @Published var largeFileThresholdMegabytes = 500.0
@@ -32,8 +61,15 @@ final class CleaningStore: ObservableObject {
     @Published var selectedModelIDsByTool: [String: String]
 
     private let aiToolDetector: AIToolDetector
+    private var aiReviewTask: Task<Void, Never>?
     private static let aiToolPreferenceKey = "aiSelectedToolID"
     private static let aiModelPreferenceKey = "aiModelPreferenceByTool"
+
+    var isScanning: Bool { foregroundOperationState.operation == .scanningFiles }
+    var isCleaning: Bool { foregroundOperationState.operation == .cleaning }
+    var isReviewingWithAI: Bool { foregroundOperationState.operation == .reviewingWithAI }
+    var isScanningApplications: Bool { foregroundOperationState.operation == .scanningApplications }
+    var isBusy: Bool { foregroundOperationState.operation != nil }
 
     init(language: ResolvedLanguage = AppLanguage.system.resolved(), aiToolDetector: AIToolDetector = AIToolDetector()) {
         self.aiToolDetector = aiToolDetector
@@ -76,9 +112,12 @@ final class CleaningStore: ObservableObject {
 
     /// Keeps the raw text (fallback view, copying) and derives the structured
     /// summary from it; nil summary means the UI shows the raw text.
-    func applyAIReviewOutput(_ output: String) {
+    func applyAIReviewOutput(
+        _ output: String,
+        itemPathsByID: [String: String] = [:]
+    ) {
         aiOutput = output
-        aiReviewSummary = AIReviewOutputParser.parse(output)
+        aiReviewSummary = AIReviewOutputParser.parse(output, itemPathsByID: itemPathsByID)
     }
 
     /// Resolves the persisted choice against the tool's presets; unknown or missing
@@ -133,6 +172,10 @@ final class CleaningStore: ObservableObject {
         selection.summary(for: candidates)
     }
 
+    var aiSelectionExceedsLimit: Bool {
+        selectedSummary.selectedCount > AIReviewService.maximumCandidateCount
+    }
+
     var selectedCandidate: CleaningCandidate? {
         guard let selectedCandidateID else { return nil }
         return candidates.first { $0.id == selectedCandidateID }
@@ -178,11 +221,11 @@ final class CleaningStore: ObservableObject {
     }
 
     func scan() {
+        guard !isBusy else { return }
         guard !roots.isEmpty else {
             errorMessage = .addFolderToScan
             return
         }
-        guard !isScanning, !isScanningApplications else { return }
         refreshVolumeSnapshot()
 
         let roots = roots
@@ -192,17 +235,19 @@ final class CleaningStore: ObservableObject {
             largeFileThresholdBytes: Int64(largeFileThresholdMegabytes * 1_024 * 1_024)
         )
 
-        isScanning = true
+        guard let operationToken = beginForegroundOperation(.scanningFiles) else { return }
         errorMessage = nil
         cleanupResult = nil
         status = .scanning
 
         Task {
+            defer { finishForegroundOperation(operationToken) }
             do {
                 let report = try await Task.detached(priority: .userInitiated) {
                     try DiskScanner().scan(roots: roots, options: options)
                 }
                 .value
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 lastReport = report
                 candidates = report.candidates
                 uninstallPlans = []
@@ -210,37 +255,39 @@ final class CleaningStore: ObservableObject {
                 selectedCandidateID = candidates.first?.id
                 status = .candidatesFound(report.candidates.count)
             } catch {
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 errorMessage = .system(error.localizedDescription)
                 status = .scanFailed
             }
-            isScanning = false
         }
     }
 
     func scanApplications() {
+        guard !isBusy else { return }
         guard !appRoots.isEmpty else {
             errorMessage = .addFolderToScan
             return
         }
-        guard !isScanning, !isScanningApplications else { return }
-
         let appRoots = appRoots
         let userLibrary = FileManager.default.homeDirectoryForCurrentUser
             .appending(path: "Library", directoryHint: .isDirectory)
 
-        isScanningApplications = true
+        guard let operationToken = beginForegroundOperation(.scanningApplications) else { return }
         errorMessage = nil
         cleanupResult = nil
         status = .scanning
 
         Task {
+            defer { finishForegroundOperation(operationToken) }
             do {
                 let plans = try await Task.detached(priority: .userInitiated) {
                     try AppUninstaller().scan(appRoots: appRoots, userLibrary: userLibrary)
                 }
                 .value
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 let candidates = plans.flatMap(\.allCandidates)
                 let duplicateGroups = await Self.duplicateGroupsOffMainActor(for: candidates)
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 uninstallPlans = plans
                 self.candidates = candidates
                 lastReport = ScanReport(
@@ -254,10 +301,10 @@ final class CleaningStore: ObservableObject {
                 selectedCandidateID = candidates.first?.id
                 status = .candidatesFound(candidates.count)
             } catch {
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 errorMessage = .system(error.localizedDescription)
                 status = .scanFailed
             }
-            isScanningApplications = false
         }
     }
 
@@ -299,20 +346,34 @@ final class CleaningStore: ObservableObject {
     }
 
     func cleanSelected() {
+        guard !isBusy else { return }
         let targets = selectedCandidates
         guard !targets.isEmpty else { return }
-        guard !isCleaning else { return }
+        let duplicateHashesByCandidateID = duplicateGroups.reduce(into: [CleaningCandidate.ID: String]()) {
+            partialResult, group in
+            for candidate in group.candidates {
+                partialResult[candidate.id] = group.contentHash
+            }
+        }
+        let requests = targets.map {
+            CleanupRequest(
+                candidate: $0,
+                expectedContentHash: duplicateHashesByCandidateID[$0.id]
+            )
+        }
 
-        isCleaning = true
+        guard let operationToken = beginForegroundOperation(.cleaning) else { return }
         errorMessage = nil
         status = .movingToTrash
 
         Task {
+            defer { finishForegroundOperation(operationToken) }
             do {
                 let result = try await Task.detached(priority: .userInitiated) {
-                    try TrashCleaner().clean(targets)
+                    try TrashCleaner().clean(requests)
                 }
                 .value
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 cleanupResult = result
 
                 let failedURLs = Set(result.failures.map(\.url))
@@ -321,16 +382,9 @@ final class CleaningStore: ObservableObject {
                     !failedURLs.contains($0.url) && !skippedURLs.contains($0.url)
                 }.map(\.id))
                 candidates.removeAll { cleanedIDs.contains($0.id) }
-                uninstallPlans = uninstallPlans.map { plan in
-                    AppUninstallPlan(
-                        appName: plan.appName,
-                        bundleIdentifier: plan.bundleIdentifier,
-                        appCandidate: plan.appCandidate,
-                        supportCandidates: plan.supportCandidates.filter { !cleanedIDs.contains($0.id) }
-                    )
-                }
-                .filter { !cleanedIDs.contains($0.appCandidate.id) }
+                uninstallPlans.removeAll { cleanedIDs.contains($0.appCandidate.id) }
                 await refreshReportAfterCandidateChanges()
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
                 status = .movedToTrash(result.cleanedCount)
@@ -340,17 +394,25 @@ final class CleaningStore: ObservableObject {
                     errorMessage = .itemsWereProtected(result.skipped.count)
                 }
             } catch {
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 errorMessage = .system(error.localizedDescription)
                 status = .cleanupFailed
             }
-            isCleaning = false
         }
     }
 
     func askAI() {
+        guard !isBusy else { return }
         let targets = selectedCandidates
         guard !targets.isEmpty else {
             errorMessage = .selectItemForAIReview
+            return
+        }
+        guard targets.count <= AIReviewService.maximumCandidateCount else {
+            errorMessage = .system(AIReviewError.tooManyCandidates(
+                limit: AIReviewService.maximumCandidateCount,
+                actual: targets.count
+            ).localizedDescription)
             return
         }
         refreshDetectedAITools()
@@ -358,9 +420,7 @@ final class CleaningStore: ObservableObject {
             errorMessage = .noAIToolDetected
             return
         }
-        guard !isReviewingWithAI else { return }
-
-        isReviewingWithAI = true
+        guard let operationToken = beginForegroundOperation(.reviewingWithAI) else { return }
         errorMessage = nil
         aiOutput = ""
         aiReviewSummary = nil
@@ -369,18 +429,44 @@ final class CleaningStore: ObservableObject {
         let question = aiQuestion
         let model = selectedModelOption(for: tool.id)
 
-        Task {
+        aiReviewTask = Task {
+            defer {
+                finishForegroundOperation(operationToken)
+                aiReviewTask = nil
+            }
             do {
                 let review = try await AIReviewService(tool: tool)
                     .review(candidates: targets, userQuestion: question, model: model)
-                applyAIReviewOutput(review.output)
+                try Task.checkCancellation()
+                guard isCurrentForegroundOperation(operationToken) else { return }
+                applyAIReviewOutput(review.output, itemPathsByID: review.itemPathsByID)
                 status = .aiReviewFinished
+            } catch is CancellationError {
+                guard isCurrentForegroundOperation(operationToken) else { return }
+                errorMessage = nil
+                status = .ready
             } catch {
+                guard isCurrentForegroundOperation(operationToken) else { return }
                 errorMessage = .system(error.localizedDescription)
                 status = .aiReviewFailed
             }
-            isReviewingWithAI = false
         }
+    }
+
+    func cancelAIReview() {
+        aiReviewTask?.cancel()
+    }
+
+    private func beginForegroundOperation(_ operation: ForegroundOperation) -> UUID? {
+        foregroundOperationState.begin(operation)
+    }
+
+    private func isCurrentForegroundOperation(_ token: UUID) -> Bool {
+        foregroundOperationState.isCurrent(token)
+    }
+
+    private func finishForegroundOperation(_ token: UUID) {
+        foregroundOperationState.finish(token)
     }
 
     private func refreshReportAfterCandidateChanges() async {

@@ -13,7 +13,7 @@ Do not treat every HTML page as a new product surface. Map the visual patterns o
 - Scan: overview/header, disk/folder setup, permission guidance, scan options.
 - Results: cleanup candidate list, safety/risk badges, detail pane, Move to Trash confirmation path.
 - App Uninstaller: application scan and uninstall plan list.
-- AI Review: local AI configuration, progress, and recommendation output.
+- AI Review: installed AI CLI configuration, progress, and recommendation output.
 - Settings/Permission: appearance/language and Full Disk Access guidance.
 
 ## Layout
@@ -94,7 +94,7 @@ Recommended assets:
 - `feature-cleanup-trash`: cleanup/trash or folder icon with green accent.
 - `feature-duplicates`: overlapping documents with yellow accent.
 - `feature-app-uninstall`: app bundle/document icon with pink accent.
-- `feature-ai-review`: local AI headset/sparkle icon with purple accent.
+- `feature-ai-review`: installed AI CLI headset/sparkle icon with purple accent.
 - `feature-permission-shield`: shield/lock for Full Disk Access with amber or green status variants.
 - Optional `feature-space-chart`: bar chart/space analysis motif, only if the existing app needs a decorative overview asset later.
 
@@ -117,7 +117,7 @@ Resource note: the `CleanMac` executable target currently has no resource declar
 - `Sources/CleanMac/Views/ScanView.swift`: overview header, metric tiles, permission guide placement, folder and scan option cards.
 - `Sources/CleanMac/Views/ResultsView.swift`: cleanup list/table styling, risk/protection badges, detail card, action row.
 - `Sources/CleanMac/Views/AppUninstallerView.swift`: application metric cards and uninstall plan rows.
-- `Sources/CleanMac/Views/AIReviewView.swift`: local AI configuration card, progress card, streamed/recommendation output treatment.
+- `Sources/CleanMac/Views/AIReviewView.swift`: installed AI CLI configuration card, progress card, streamed/recommendation output treatment.
 - `Sources/CleanMac/Views/PermissionGuideView.swift`: shield/status card styling.
 - `Sources/CleanMac/Views/SettingsView.swift`: settings cards should match HTML appearance/language card treatment.
 

@@ -103,6 +103,29 @@ struct LocalizationTests {
         }
     }
 
+    @Test("Safety-rule explanations are localized for every supported language")
+    func safetyRuleExplanationsAreLocalizedForEverySupportedLanguage() throws {
+        let ruleIDs = [
+            "system-root", "app-data", "source-code", "cloud-storage", "cache",
+            "logs", "temporary", "trash", "downloads", "large-file", "app-bundle",
+            "app-uninstall-support", "developer-cache", "unknown-directory",
+            "risk-usually-safe", "risk-review", "risk-careful"
+        ]
+
+        for strings in try loadAllLanguageStrings() {
+            #expect(strings["safetyRule.allowed"]?.isEmpty == false)
+            #expect(strings["safetyRule.requiresReview"]?.isEmpty == false)
+            #expect(strings["safetyRule.blocked"]?.isEmpty == false)
+        }
+
+        for language in ResolvedLanguage.allCases where language != .english {
+            for ruleID in ruleIDs {
+                let rule = SafetyRuleMatch(ruleID: ruleID, protection: .requiresReview)
+                #expect(L10n.safetyRule(rule, language: language) != L10n.safetyRule(rule, language: .english))
+            }
+        }
+    }
+
     @Test("HTML prototype exposes every supported language")
     func htmlPrototypeExposesEverySupportedLanguage() throws {
         let htmlURL = packageRoot().appending(path: "cleanmac_with_ai.html")
@@ -128,6 +151,18 @@ struct LocalizationTests {
         #expect(source.contains("Bundle.module"))
         #expect(!source.contains("private static func englishText"))
         #expect(!source.contains("private static func chineseText"))
+    }
+
+    @Test("AI privacy copy discloses provider network use")
+    func aiPrivacyCopyDisclosesProviderNetworkUse() throws {
+        let english = try loadStrings(for: .english)
+        let chinese = try loadStrings(for: .chinese)
+
+        #expect(english["trustAIProviderNetwork"] == "AI CLI may use cloud")
+        #expect(english["aiPrivacyDisclosure"]?.contains("automatically collected full paths") == true)
+        #expect(english["aiPrivacyDisclosure"]?.contains("question as written") == true)
+        #expect(chinese["trustAIProviderNetwork"]?.contains("可能") == true)
+        #expect(chinese["aiPrivacyDisclosure"]?.contains("完整路径") == true)
     }
 
     @Test("Every localized string keeps English format placeholder parity")

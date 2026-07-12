@@ -2,10 +2,26 @@ import CryptoKit
 import Foundation
 
 public struct DuplicateFileFinder: Sendable {
-    public init() {}
+    private let snapshotReader: any FileSnapshotReading
+
+    public init(snapshotReader: any FileSnapshotReading = SystemFileSnapshotReader()) {
+        self.snapshotReader = snapshotReader
+    }
 
     public func findDuplicates(in candidates: [CleaningCandidate]) throws -> [DuplicateFileGroup] {
-        let candidatesBySize = Dictionary(grouping: candidates.filter(isHashableFile), by: \.sizeBytes)
+        var seenPhysicalItems = Set<FileSystemIdentity>()
+        let uniqueCandidates = candidates.filter { candidate in
+            guard isHashableFile(candidate),
+                  let expectedSnapshot = candidate.scanSnapshot,
+                  expectedSnapshot.kind == .regularFile,
+                  expectedSnapshot.linkCount == 1,
+                  expectedSnapshot.byteCount == candidate.sizeBytes,
+                  snapshotReader.snapshot(at: candidate.url) == expectedSnapshot else {
+                return false
+            }
+            return seenPhysicalItems.insert(expectedSnapshot.identity).inserted
+        }
+        let candidatesBySize = Dictionary(grouping: uniqueCandidates, by: \.sizeBytes)
             .filter { sizeBytes, sameSizeCandidates in
                 sizeBytes > 0 && sameSizeCandidates.count > 1
             }
@@ -18,7 +34,11 @@ public struct DuplicateFileFinder: Sendable {
             // file never aborts the entire duplicate scan.
             var candidatesByHash: [String: [CleaningCandidate]] = [:]
             for candidate in sameSizeCandidates {
-                guard let hash = contentHash(for: candidate.url) else { continue }
+                guard let expectedSnapshot = candidate.scanSnapshot,
+                      let hash = contentHash(for: candidate.url),
+                      snapshotReader.snapshot(at: candidate.url) == expectedSnapshot else {
+                    continue
+                }
                 candidatesByHash[hash, default: []].append(candidate)
             }
 
@@ -48,7 +68,7 @@ public struct DuplicateFileFinder: Sendable {
         !candidate.isDirectory && candidate.sizeBytes > 0
     }
 
-    private func contentHash(for url: URL) -> String? {
+    func contentHash(for url: URL) -> String? {
         // Memory-map when safe so two same-size multi-gigabyte files are not both pulled
         // fully into RAM just to be compared.
         guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else {

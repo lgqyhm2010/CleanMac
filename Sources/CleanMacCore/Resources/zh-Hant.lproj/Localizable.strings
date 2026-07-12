@@ -11,6 +11,8 @@
 "clear" = "清除";
 "clearSelection" = "清除選取";
 "aiTool" = "AI 工具";
+"aiPrivacyDisclosure" = "CleanMac 會將你輸入的問題原樣傳送，並附上最多 80 個所選項目的去識別中繼資料。CLI 可能連線至其服務供應商；不會加入檔案內容或自動收集的完整路徑。";
+"aiSelectionLimitMessage" = "每次 AI 審查最多支援 80 個所選項目。";
 "duplicateGroup" = "重複群組";
 "duplicates" = "重複檔案";
 "english" = "英文";
@@ -43,7 +45,7 @@
 "noReview" = "沒有審查結果";
 "potential" = "可清理";
 "permissions" = "權限";
-"privateByDesign" = "隱私優先設計";
+"privateByDesign" = "明確的隱私選擇";
 "protection" = "保護";
 "question" = "問題";
 "quitCleanMac" = "結束 CleanMac";
@@ -65,9 +67,9 @@
 "size" = "大小";
 "spanish" = "西班牙文";
 "status" = "狀態";
-"trustLocalAI" = "本地 AI";
+"trustInstalledAICLI" = "已安裝的 AI CLI";
 "trustMoveToTrash" = "移到垃圾桶";
-"trustNoCloudUpload" = "不雲端上傳";
+"trustAIProviderNetwork" = "AI CLI 可能使用雲端服務";
 "trustNoTelemetry" = "無遙測";
 "openSettings" = "開啟設定";
 "arabic" = "阿拉伯文";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "空間分析";
 "sidebarAnalyzeSpaceSubtitle" = "空間地圖";
 "sidebarAIReviewTitle" = "AI 審查";
-"sidebarAIReviewSubtitle" = "本機代理";
+"sidebarAIReviewSubtitle" = "已安裝的 CLI";
 "sidebarSettingsTitle" = "設定";
 "sidebarSettingsSubtitle" = "語言與更多";
 "sidebarGroupOverview" = "概覽";
 "sidebarGroupProTools" = "專業工具";
-"sidebarGroupAILocal" = "本機 AI";
+"sidebarGroupAILocal" = "AI CLI";
 "sidebarGroupSystem" = "系統";
 
 "category.cache" = "快取";
@@ -191,3 +193,14 @@
 "error.noAIToolDetected" = "未偵測到 AI CLI 工具，請安裝 codex、claude 或 gemini。";
 
 "defaultAIQuestion" = "請判斷這些檔案是否適合移到垃圾桶，並列出需要我手動確認的項目。";
+
+"selectItem" = "選取項目";
+"deselectItem" = "取消選取項目";
+"safetyRule.allowed" = "此項目位於已識別的清理位置；請先檢查，再移到垃圾桶。";
+"safetyRule.requiresReview" = "此項目可能包含個人或重要資料；移動前請先檢查。";
+"safetyRule.blocked" = "安全規則已阻止清理此項目。";
+"safetyRuleName.systemRoot" = "系統目錄";
+"safetyRuleName.appData" = "App 資料";
+"safetyRuleName.sourceCode" = "原始碼";
+"safetyRuleName.cloudStorage" = "雲端儲存空間";
+"safetyRuleName.unknownDirectory" = "未知資料夾";

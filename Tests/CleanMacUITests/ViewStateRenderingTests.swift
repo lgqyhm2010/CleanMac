@@ -173,19 +173,10 @@ final class ViewStateRenderingTests: XCTestCase {
             protection: .requiresReview,
             rules: ["Application bundle: review with support files"]
         )
-        let support = candidate(
-            path: "/Users/me/Library/Caches/com.example.demo",
-            size: 3_000_000,
-            category: .applicationSupport,
-            isDirectory: true,
-            protection: .requiresReview,
-            rules: ["App uninstall support item"]
-        )
         let plan = AppUninstallPlan(
             appName: "Demo",
             bundleIdentifier: "com.example.demo",
-            appCandidate: appCandidate,
-            supportCandidates: [support]
+            appCandidate: appCandidate
         )
         store.uninstallPlans = [plan]
         store.candidates = plan.allCandidates

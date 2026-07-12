@@ -11,6 +11,8 @@
 "clear" = "পরিষ্কার";
 "clearSelection" = "নির্বাচন পরিষ্কার";
 "aiTool" = "AI টুল";
+"aiPrivacyDisclosure" = "CleanMac আপনার লেখা প্রশ্নটি অপরিবর্তিতভাবে, সর্বোচ্চ 80টি নির্বাচিত আইটেমের সংক্ষিপ্ত মেটাডেটাসহ, ইনস্টল করা AI CLI-তে পাঠায়। CLI তার প্রদানকারীর সঙ্গে যোগাযোগ করতে পারে; ফাইলের বিষয়বস্তু ও স্বয়ংক্রিয়ভাবে সংগ্রহ করা পূর্ণ পথ অন্তর্ভুক্ত করা হয় না।";
+"aiSelectionLimitMessage" = "AI পর্যালোচনায় একবারে সর্বোচ্চ 80টি নির্বাচিত আইটেম নেওয়া যায়।";
 "duplicateGroup" = "ডুপ্লিকেট গ্রুপ";
 "duplicates" = "ডুপ্লিকেট";
 "english" = "ইংরেজি";
@@ -43,7 +45,7 @@
 "noReview" = "কোনো পর্যালোচনা নেই";
 "potential" = "সম্ভাব্য";
 "permissions" = "অনুমতি";
-"privateByDesign" = "ডিজাইন থেকেই ব্যক্তিগত";
+"privateByDesign" = "স্পষ্ট গোপনীয়তা পছন্দ";
 "protection" = "সুরক্ষা";
 "question" = "প্রশ্ন";
 "quitCleanMac" = "CleanMac বন্ধ করুন";
@@ -65,9 +67,9 @@
 "size" = "আকার";
 "spanish" = "স্প্যানিশ";
 "status" = "স্থিতি";
-"trustLocalAI" = "স্থানীয় AI";
+"trustInstalledAICLI" = "ইনস্টল করা AI CLI";
 "trustMoveToTrash" = "Trash-এ সরান";
-"trustNoCloudUpload" = "ক্লাউড আপলোড নয়";
+"trustAIProviderNetwork" = "AI CLI ক্লাউড ব্যবহার করতে পারে";
 "trustNoTelemetry" = "কোনো টেলিমেট্রি নয়";
 "openSettings" = "সেটিংস খুলুন";
 "arabic" = "আরবি";
@@ -108,12 +110,12 @@
 "sidebarAnalyzeSpaceTitle" = "স্পেস বিশ্লেষণ";
 "sidebarAnalyzeSpaceSubtitle" = "স্পেস মানচিত্র";
 "sidebarAIReviewTitle" = "AI পর্যালোচনা";
-"sidebarAIReviewSubtitle" = "স্থানীয় এজেন্ট";
+"sidebarAIReviewSubtitle" = "ইনস্টল করা CLI";
 "sidebarSettingsTitle" = "সেটিংস";
 "sidebarSettingsSubtitle" = "ভাষা ও আরও";
 "sidebarGroupOverview" = "সারাংশ";
 "sidebarGroupProTools" = "প্রো টুল";
-"sidebarGroupAILocal" = "স্থানীয় AI";
+"sidebarGroupAILocal" = "AI CLI";
 "sidebarGroupSystem" = "সিস্টেম";
 
 "category.cache" = "ক্যাশ";
@@ -191,3 +193,14 @@
 "error.noAIToolDetected" = "কোনো AI CLI টুল পাওয়া যায়নি। codex, claude বা gemini ইনস্টল করুন।";
 
 "defaultAIQuestion" = "এই ফাইলগুলো ট্র্যাশে সরানো উপযুক্ত কি না দয়া করে নির্ধারণ করুন, এবং আমাকে ম্যানুয়ালি নিশ্চিত করতে হবে এমন কিছু থাকলে তালিকা করুন।";
+
+"selectItem" = "আইটেম নির্বাচন করুন";
+"deselectItem" = "আইটেমের নির্বাচন সরান";
+"safetyRule.allowed" = "আইটেমটি স্বীকৃত পরিষ্কার স্থানে আছে; পর্যালোচনা করে প্রথমে ট্র্যাশে সরান।";
+"safetyRule.requiresReview" = "আইটেমটিতে ব্যক্তিগত বা গুরুত্বপূর্ণ তথ্য থাকতে পারে; সরানোর আগে পর্যালোচনা করুন।";
+"safetyRule.blocked" = "নিরাপত্তা নিয়ম এই আইটেমটিকে পরিষ্কার করা থেকে রক্ষা করে।";
+"safetyRuleName.systemRoot" = "সিস্টেম রুট";
+"safetyRuleName.appData" = "অ্যাপ্লিকেশন ডেটা";
+"safetyRuleName.sourceCode" = "সোর্স কোড";
+"safetyRuleName.cloudStorage" = "ক্লাউড স্টোরেজ";
+"safetyRuleName.unknownDirectory" = "অজানা ফোল্ডার";

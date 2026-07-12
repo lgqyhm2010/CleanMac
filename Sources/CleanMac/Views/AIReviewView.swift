@@ -20,15 +20,29 @@ struct AIReviewView: View {
                     isActive: store.isReviewingWithAI
                 ) {
                     Button {
-                        store.askAI()
+                        if store.isReviewingWithAI {
+                            store.cancelAIReview()
+                        } else {
+                            store.askAI()
+                        }
                     } label: {
                         Label(
-                            store.isReviewingWithAI ? L10n.text(.reviewing, language: language) : L10n.text(.askAI, language: language),
-                            systemImage: "sparkles"
+                            store.isReviewingWithAI ? L10n.text(.cancel, language: language) : L10n.text(.askAI, language: language),
+                            systemImage: store.isReviewingWithAI ? "xmark.circle" : "sparkles"
                         )
                     }
                     .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.sectionTint(.aiReview), prominent: true))
-                    .disabled(store.selectedSummary.selectedCount == 0 || store.isReviewingWithAI || store.selectedAIToolID == nil)
+                    .disabled(!store.isReviewingWithAI && (store.isBusy ||
+                        store.selectedSummary.selectedCount == 0
+                            || store.aiSelectionExceedsLimit
+                            || store.selectedAIToolID == nil
+                    ))
+                }
+
+                if store.aiSelectionExceedsLimit {
+                    Text(L10n.text(.aiSelectionLimitMessage, language: language))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(CleanMacTheme.danger)
                 }
 
                 // The empty-tool state is already shown inline in the panel below, so don't
@@ -51,6 +65,11 @@ struct AIReviewView: View {
                             symbolName: "terminal",
                             tint: CleanMacTheme.sectionTint(.aiReview)
                         )
+
+                        Text(L10n.text(.aiPrivacyDisclosure, language: language))
+                            .font(.caption)
+                            .foregroundStyle(CleanMacTheme.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         if store.detectedAITools.isEmpty {
                             Text(L10n.error(.noAIToolDetected, language: language))

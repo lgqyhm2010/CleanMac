@@ -3,29 +3,40 @@ import Foundation
 public struct AppUninstaller {
     private let fileManager: FileManager
     private let safetyRuleEngine: SafetyRuleEngine
+    private let snapshotReader: any FileSnapshotReading
 
     public init(
         fileManager: FileManager = .default,
-        safetyRuleEngine: SafetyRuleEngine = SafetyRuleEngine()
+        safetyRuleEngine: SafetyRuleEngine = SafetyRuleEngine(),
+        snapshotReader: any FileSnapshotReading = SystemFileSnapshotReader()
     ) {
         self.fileManager = fileManager
         self.safetyRuleEngine = safetyRuleEngine
+        self.snapshotReader = snapshotReader
     }
 
-    public func scan(appRoots: [URL], userLibrary: URL) throws -> [AppUninstallPlan] {
-        let appBundles = appRoots.flatMap(findAppBundles(in:))
+    public func scan(appRoots: [URL], userLibrary _: URL) throws -> [AppUninstallPlan] {
+        var seenPaths = Set<String>()
+        let appBundles = appRoots
+            .flatMap(findAppBundles(in:))
+            .filter { seenPaths.insert($0.standardizedFileURL.path).inserted }
         let plans = appBundles.compactMap { appBundle in
-            makePlan(appBundle: appBundle, userLibrary: userLibrary)
+            makePlan(appBundle: appBundle)
         }
         return plans.sorted {
-            $0.appName.localizedStandardCompare($1.appName) == .orderedAscending
+            let nameOrder = $0.appName.localizedStandardCompare($1.appName)
+            if nameOrder == .orderedSame {
+                return $0.appCandidate.url.path.localizedStandardCompare($1.appCandidate.url.path) == .orderedAscending
+            }
+            return nameOrder == .orderedAscending
         }
     }
 
     private func findAppBundles(in root: URL) -> [URL] {
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: root.path, isDirectory: &isDirectory),
-              isDirectory.boolValue else {
+              isDirectory.boolValue,
+              !isSymbolicLink(root) else {
             return []
         }
 
@@ -46,7 +57,8 @@ public struct AppUninstaller {
             let child = root.appending(path: rawChild.lastPathComponent, directoryHint: .checkFileSystem)
             var childIsDirectory: ObjCBool = false
             guard fileManager.fileExists(atPath: child.path, isDirectory: &childIsDirectory),
-                  childIsDirectory.boolValue else {
+                  childIsDirectory.boolValue,
+                  !isSymbolicLink(child) else {
                 continue
             }
 
@@ -64,38 +76,24 @@ public struct AppUninstaller {
         return appBundles
     }
 
-    private func makePlan(appBundle: URL, userLibrary: URL) -> AppUninstallPlan? {
+    private func makePlan(appBundle: URL) -> AppUninstallPlan? {
         guard let metadata = appMetadata(appBundle: appBundle) else {
             return nil
         }
 
-        let appCandidate = makeCandidate(
+        guard let appCandidate = makeCandidate(
             url: appBundle,
             category: .application,
             reasons: ["Application bundle for \(metadata.bundleIdentifier)"],
             isDirectory: true
-        )
-
-        let supportCandidates = supportURLs(
-            bundleIdentifier: metadata.bundleIdentifier,
-            userLibrary: userLibrary
-        )
-        .map {
-            makeCandidate(
-                url: $0,
-                category: .applicationSupport,
-                reasons: ["App uninstall support item for \(metadata.bundleIdentifier)"],
-                isDirectory: isDirectory($0)
-            )
+        ) else {
+            return nil
         }
 
         return AppUninstallPlan(
             appName: metadata.appName,
             bundleIdentifier: metadata.bundleIdentifier,
-            appCandidate: appCandidate,
-            supportCandidates: supportCandidates.sorted {
-                $0.url.path.localizedStandardCompare($1.url.path) == .orderedAscending
-            }
+            appCandidate: appCandidate
         )
     }
 
@@ -103,8 +101,8 @@ public struct AppUninstaller {
         let infoURL = appBundle.appending(path: "Contents/Info.plist")
         guard let data = try? Data(contentsOf: infoURL),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
-              let bundleIdentifier = plist["CFBundleIdentifier"] as? String,
-              !bundleIdentifier.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty else {
+              let rawBundleIdentifier = plist["CFBundleIdentifier"] as? String,
+              let bundleIdentifier = validatedBundleIdentifier(rawBundleIdentifier) else {
             return nil
         }
 
@@ -115,52 +113,23 @@ public struct AppUninstaller {
         return AppMetadata(appName: appName, bundleIdentifier: bundleIdentifier)
     }
 
-    private func supportURLs(bundleIdentifier: String, userLibrary: URL) -> [URL] {
-        // Match support data only by the reverse-DNS bundle identifier. The display name
-        // is frequently a generic vendor name (e.g. "Google") shared by many apps, so
-        // matching `Application Support/<appName>` would claim folders that belong to
-        // unrelated apps.
-        let directMatches = [
-            userLibrary.appending(path: "Application Support/\(bundleIdentifier)"),
-            userLibrary.appending(path: "Caches/\(bundleIdentifier)"),
-            userLibrary.appending(path: "Preferences/\(bundleIdentifier).plist"),
-            userLibrary.appending(path: "Saved Application State/\(bundleIdentifier).savedState"),
-            userLibrary.appending(path: "Logs/\(bundleIdentifier)"),
-            userLibrary.appending(path: "Containers/\(bundleIdentifier)"),
-            userLibrary.appending(path: "Group Containers/\(bundleIdentifier)")
-        ]
+    private func validatedBundleIdentifier(_ rawValue: String) -> String? {
+        let value = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty, value.count <= 255 else { return nil }
 
-        var matches: [URL] = []
-        for url in directMatches where fileManager.fileExists(atPath: url.path) {
-            matches.append(contentsOf: leafURLs(for: url))
-        }
+        let allowedCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: ".-"))
+        guard value.unicodeScalars.allSatisfy(allowedCharacters.contains) else { return nil }
 
-        return Array(Set(matches.map { $0.standardizedFileURL })).sorted {
-            $0.path.localizedStandardCompare($1.path) == .orderedAscending
-        }
+        let components = value.split(separator: ".", omittingEmptySubsequences: false)
+        guard components.count >= 2, components.allSatisfy({ !$0.isEmpty }) else { return nil }
+        return value
     }
 
-    private func leafURLs(for url: URL) -> [URL] {
-        guard isDirectory(url) else { return [url] }
-
-        guard let enumerator = fileManager.enumerator(
-            at: url,
-            includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey],
-            options: [.skipsHiddenFiles],
-            errorHandler: { _, _ in true }
-        ) else {
-            return [url]
+    private func isSymbolicLink(_ url: URL) -> Bool {
+        guard let values = try? url.resourceValues(forKeys: [.isSymbolicLinkKey]) else {
+            return true
         }
-
-        var leafURLs: [URL] = []
-        for case let child as URL in enumerator {
-            if let values = try? child.resourceValues(forKeys: [.isDirectoryKey, .isRegularFileKey]),
-               values.isRegularFile == true {
-                leafURLs.append(child)
-            }
-        }
-
-        return leafURLs.isEmpty ? [url] : leafURLs
+        return values.isSymbolicLink == true
     }
 
     private func makeCandidate(
@@ -168,8 +137,12 @@ public struct AppUninstaller {
         category: CandidateCategory,
         reasons: [String],
         isDirectory: Bool
-    ) -> CleaningCandidate {
+    ) -> CleaningCandidate? {
         let stableURL = stableCandidateURL(url)
+        guard let snapshot = snapshotReader.snapshot(at: stableURL),
+              snapshot.kind == .directory else {
+            return nil
+        }
         let values = try? stableURL.resourceValues(forKeys: [.contentModificationDateKey])
         let sizeBytes = itemSize(stableURL)
         let safety = safetyRuleEngine.evaluate(
@@ -190,7 +163,8 @@ public struct AppUninstaller {
             isDirectory: isDirectory,
             protection: safety.protection,
             ruleMatches: safety.ruleMatches,
-            userVisibleRules: safety.userVisibleRules
+            userVisibleRules: safety.userVisibleRules,
+            scanSnapshot: snapshot
         )
     }
 
