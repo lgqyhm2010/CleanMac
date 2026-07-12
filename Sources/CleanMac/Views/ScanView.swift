@@ -9,11 +9,9 @@ struct ScanView: View {
     var openSettings: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Probing full disk access touches the file system, so it must not run
-    // during body evaluation. Start from a status-free placeholder and let
-    // `.task` refresh the cached guide off the main actor.
-    @State private var fullDiskAccessGuide = SystemPermissionGuide.fullDiskAccess(
-        probe: PermissionProbe(protectedLocations: [])
-    )
+    // during body evaluation. Seed from the shared cache (placeholder on the
+    // very first visit) and let `.task` refresh it off the main actor.
+    @State private var fullDiskAccessGuide = FullDiskAccessGuideCache.lastKnownOrPlaceholder
 
     var body: some View {
         CleanMacPage(accent: CleanMacTheme.accent) {
@@ -78,7 +76,9 @@ struct ScanView: View {
                         GridRow {
                             Text(L10n.text(.minimumSize, language: language))
                             Slider(value: $store.minimumSizeMegabytes, in: 0...200, step: 1)
-                            Text(Formatters.bytes(Int64(store.minimumSizeMegabytes * 1_024 * 1_024)))
+                            // The label must echo the slider's own unit and step:
+                            // ByteCountFormatter is decimal (500 -> "524.3 MB").
+                            Text("\(Int(store.minimumSizeMegabytes)) MB")
                                 .foregroundStyle(CleanMacTheme.secondaryText)
                                 .monospacedDigit()
                         }
@@ -86,7 +86,7 @@ struct ScanView: View {
                         GridRow {
                             Text(L10n.text(.largeFile, language: language))
                             Slider(value: $store.largeFileThresholdMegabytes, in: 50...5_000, step: 50)
-                            Text(Formatters.bytes(Int64(store.largeFileThresholdMegabytes * 1_024 * 1_024)))
+                            Text("\(Int(store.largeFileThresholdMegabytes)) MB")
                                 .foregroundStyle(CleanMacTheme.secondaryText)
                                 .monospacedDigit()
                         }
@@ -147,14 +147,8 @@ struct ScanView: View {
             }
         }
         .task {
-            fullDiskAccessGuide = await Self.probeFullDiskAccessOffMainActor()
+            fullDiskAccessGuide = await FullDiskAccessGuideCache.refresh()
         }
-    }
-
-    nonisolated private static func probeFullDiskAccessOffMainActor() async -> SystemPermissionGuide {
-        await Task.detached(priority: .utility) {
-            SystemPermissionGuide.fullDiskAccess()
-        }.value
     }
 }
 

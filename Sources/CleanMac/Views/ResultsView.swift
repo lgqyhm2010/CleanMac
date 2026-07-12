@@ -179,8 +179,10 @@ private struct CandidatePaperTable: View {
 
                     ScrollView {
                         LazyVStack(spacing: 8) {
-                            ForEach(store.candidates.indices, id: \.self) { index in
-                                let candidate = store.candidates[index]
+                            // Identity must follow the candidate, not its position:
+                            // mid-list removals otherwise animate the wrong rows and
+                            // leak per-row hover state onto whatever slides up.
+                            ForEach(Array(store.candidates.enumerated()), id: \.element.id) { index, candidate in
                                 CandidatePaperRow(
                                     candidate: candidate,
                                     isAlternate: index.isMultiple(of: 2),

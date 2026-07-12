@@ -310,7 +310,8 @@ final class CleaningStore {
                 try Task.checkCancellation()
                 guard isCurrentForegroundOperation(operationToken) else { return }
                 let candidates = plans.flatMap(\.allCandidates)
-                let duplicateGroups = await Self.duplicateGroupsOffMainActor(for: candidates)
+                let duplicateGroups = try await Self.duplicateGroupsOffMainActor(for: candidates)
+                try Task.checkCancellation()
                 guard isCurrentForegroundOperation(operationToken) else { return }
                 uninstallPlans = plans
                 self.candidates = candidates
@@ -501,7 +502,9 @@ final class CleaningStore {
     private func refreshReportAfterCandidateChanges() async {
         guard let lastReport else { return }
         let candidates = candidates
-        let duplicateGroups = await Self.duplicateGroupsOffMainActor(for: candidates)
+        // Cleanup has no cancel affordance and the report refresh is best-effort:
+        // a failed re-hash degrades to "no duplicate groups", as before.
+        let duplicateGroups = (try? await Self.duplicateGroupsOffMainActor(for: candidates)) ?? []
         self.lastReport = ScanReport(
             candidates: candidates,
             duplicateGroups: duplicateGroups,
@@ -518,10 +521,17 @@ final class CleaningStore {
         )
     }
 
-    nonisolated private static func duplicateGroupsOffMainActor(for candidates: [CleaningCandidate]) async -> [DuplicateFileGroup] {
-        await Task.detached(priority: .userInitiated) {
-            (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []
-        }.value
+    /// Hashing can dominate a scan's wall-clock time, so the detached worker must be
+    /// cancellation-bridged like the scan workers: cancelling the caller cancels it.
+    nonisolated private static func duplicateGroupsOffMainActor(for candidates: [CleaningCandidate]) async throws -> [DuplicateFileGroup] {
+        let worker = Task.detached(priority: .userInitiated) {
+            try DuplicateFileFinder().findDuplicates(in: candidates)
+        }
+        return try await withTaskCancellationHandler {
+            try await worker.value
+        } onCancel: {
+            worker.cancel()
+        }
     }
 }
 

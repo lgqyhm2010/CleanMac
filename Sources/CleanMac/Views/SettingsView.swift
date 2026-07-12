@@ -4,11 +4,9 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
     // Probing full disk access touches the file system, so it must not run
-    // during body evaluation. Start from a status-free placeholder and let
-    // `.task` refresh the cached guide off the main actor.
-    @State private var fullDiskAccessGuide = SystemPermissionGuide.fullDiskAccess(
-        probe: PermissionProbe(protectedLocations: [])
-    )
+    // during body evaluation. Seed from the shared cache (placeholder on the
+    // very first visit) and let `.task` refresh it off the main actor.
+    @State private var fullDiskAccessGuide = FullDiskAccessGuideCache.lastKnownOrPlaceholder
 
     var body: some View {
         CleanMacPage(accent: CleanMacTheme.purple) {
@@ -34,14 +32,8 @@ struct SettingsView: View {
         .buttonStyle(CleanMacRaisedButtonStyle())
         .foregroundStyle(CleanMacTheme.ink)
         .task {
-            fullDiskAccessGuide = await Self.probeFullDiskAccessOffMainActor()
+            fullDiskAccessGuide = await FullDiskAccessGuideCache.refresh()
         }
-    }
-
-    nonisolated private static func probeFullDiskAccessOffMainActor() async -> SystemPermissionGuide {
-        await Task.detached(priority: .utility) {
-            SystemPermissionGuide.fullDiskAccess()
-        }.value
     }
 
     @ViewBuilder

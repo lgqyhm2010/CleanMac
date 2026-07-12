@@ -34,6 +34,9 @@ public struct DuplicateFileFinder: Sendable {
             // true duplicates) pay for the whole-file hash.
             var candidatesByPrefix: [String: [CleaningCandidate]] = [:]
             for candidate in sameSizeCandidates {
+                // Hashing runs inside the scan's cancellable worker; honour a pending
+                // cancel between file reads so the Cancel button never appears frozen.
+                try Task.checkCancellation()
                 guard let prefixHash = contentHash(for: candidate.url, upTo: Self.prefixHashByteCount) else {
                     continue
                 }
@@ -46,6 +49,7 @@ public struct DuplicateFileFinder: Sendable {
             var candidatesByHash: [String: [CleaningCandidate]] = [:]
             for (prefixHash, samePrefixCandidates) in candidatesByPrefix where samePrefixCandidates.count > 1 {
                 for candidate in samePrefixCandidates {
+                    try Task.checkCancellation()
                     // At or below the prefix window the prefix already digests the whole
                     // file, so the second read would recompute the same hash.
                     let wholeFileHash = sizeBytes <= Self.prefixHashByteCount

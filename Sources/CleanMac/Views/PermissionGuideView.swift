@@ -1,6 +1,28 @@
 import CleanMacCore
 import SwiftUI
 
+/// Last full-disk-access probe shared across screens so revisits render the known
+/// status immediately instead of flashing the empty-probe "unavailable" placeholder.
+@MainActor
+enum FullDiskAccessGuideCache {
+    private(set) static var lastKnown: SystemPermissionGuide?
+
+    static var lastKnownOrPlaceholder: SystemPermissionGuide {
+        lastKnown ?? SystemPermissionGuide.fullDiskAccess(
+            probe: PermissionProbe(protectedLocations: [])
+        )
+    }
+
+    /// Probes off the main actor (directory reads are file I/O) and caches the result.
+    static func refresh() async -> SystemPermissionGuide {
+        let guide = await Task.detached(priority: .utility) {
+            SystemPermissionGuide.fullDiskAccess()
+        }.value
+        lastKnown = guide
+        return guide
+    }
+}
+
 struct PermissionGuideView: View {
     enum DisplayStyle {
         case compact
