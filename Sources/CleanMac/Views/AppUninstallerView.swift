@@ -111,7 +111,8 @@ struct AppUninstallerView: View {
                         )
                         .frame(minHeight: 180)
                     } else {
-                        VStack(spacing: 0) {
+                        let lastPlanID = store.uninstallPlans.last?.id
+                        LazyVStack(spacing: 0) {
                             ForEach(store.uninstallPlans) { plan in
                                 UninstallPlanRow(
                                     plan: plan,
@@ -123,7 +124,7 @@ struct AppUninstallerView: View {
                                 )
                                 .transition(.cleanMacInsert)
 
-                                if plan.id != store.uninstallPlans.last?.id {
+                                if plan.id != lastPlanID {
                                     Divider()
                                 }
                             }

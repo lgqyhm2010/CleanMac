@@ -35,6 +35,8 @@ enum CleanMacTheme {
     static let purple = Color(hex: 0xA685DF)
     static let pink = Color(hex: 0xEF96B5)
     static let peach = Color(hex: 0xF2A67F)
+    static let salmon = Color(hex: 0xF5B896)
+    static let slate = Color(hex: 0xA8B8D9)
     static let danger = Color(hex: 0xEA6A70)
     static let neutral = Color(hex: 0x706B82)
 
@@ -58,6 +60,23 @@ enum CleanMacTheme {
         case .analyzeSpace: mint
         case .aiReview: purple
         case .settings: neutral
+        }
+    }
+
+    /// Single source of truth for candidate-category colors, shared by the
+    /// results table and the disk-overview segment bar.
+    static func categoryColor(_ category: CandidateCategory) -> Color {
+        switch category {
+        case .cache: accent
+        case .logs: purple
+        case .downloads: amber
+        case .trash: danger
+        case .temporary: peach
+        case .developer: pink
+        case .largeFile: salmon
+        case .application: mint
+        case .applicationSupport: slate
+        case .other: neutral
         }
     }
 
@@ -287,7 +306,7 @@ struct CleanMacAppTitleBar: View {
                     }
                     .buttonStyle(.plain)
 
-                    Button(action: {}) {
+                    Button(action: openHelp) {
                         Label(L10n.text(.help, language: language), systemImage: "questionmark.circle")
                     }
                     .buttonStyle(.plain)
@@ -303,6 +322,11 @@ struct CleanMacAppTitleBar: View {
                 .fill(CleanMacTheme.ink)
                 .frame(height: 1.5)
         }
+    }
+
+    private func openHelp() {
+        guard let url = URL(string: "https://github.com/lgqyhm2010/CleanMac") else { return }
+        NSWorkspace.shared.open(url)
     }
 }
 

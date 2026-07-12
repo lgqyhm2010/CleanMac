@@ -26,20 +26,6 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         L10n.text(subtitleKey, language: language)
     }
 
-    var symbolName: String {
-        switch self {
-        case .diskOverview: "internaldrive"
-        case .speedUp: "speedometer"
-        case .cleanUp: "trash"
-        case .manageSpace: "folder"
-        case .duplicates: "doc.on.doc"
-        case .uninstaller: "app.badge"
-        case .analyzeSpace: "chart.bar"
-        case .aiReview: "sparkles"
-        case .settings: "gearshape"
-        }
-    }
-
     var illustrationAsset: CleanMacIllustrationAsset {
         switch self {
         case .diskOverview: .diskOverview

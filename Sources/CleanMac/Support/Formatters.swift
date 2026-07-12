@@ -2,16 +2,19 @@ import CleanMacCore
 import Foundation
 
 enum Formatters {
-    static func bytes(_ value: Int64) -> String {
+    // Formatters are expensive to create; cache one instance. All callers are
+    // SwiftUI views, so MainActor isolation covers the formatter's mutability.
+    @MainActor
+    private static let byteCountFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         formatter.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
-        return formatter.string(fromByteCount: value)
-    }
+        return formatter
+    }()
 
-    static func date(_ value: Date?) -> String {
-        guard let value else { return "Unknown" }
-        return value.formatted(date: .abbreviated, time: .shortened)
+    @MainActor
+    static func bytes(_ value: Int64) -> String {
+        byteCountFormatter.string(fromByteCount: value)
     }
 
     static func date(_ value: Date?, language: ResolvedLanguage) -> String {

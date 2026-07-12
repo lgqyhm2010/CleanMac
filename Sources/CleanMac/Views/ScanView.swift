@@ -8,6 +8,12 @@ struct ScanView: View {
     var openAIReview: () -> Void = {}
     var openSettings: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // Probing full disk access touches the file system, so it must not run
+    // during body evaluation. Start from a status-free placeholder and let
+    // `.task` refresh the cached guide off the main actor.
+    @State private var fullDiskAccessGuide = SystemPermissionGuide.fullDiskAccess(
+        probe: PermissionProbe(protectedLocations: [])
+    )
 
     var body: some View {
         CleanMacPage(accent: CleanMacTheme.accent) {
@@ -22,6 +28,7 @@ struct ScanView: View {
             OverviewFeatureGrid(
                 store: store,
                 language: language,
+                fullDiskAccessGuide: fullDiskAccessGuide,
                 openResults: openResults,
                 openAIReview: openAIReview,
                 openSettings: openSettings
@@ -30,7 +37,7 @@ struct ScanView: View {
             TrustBadgeStrip(language: language)
 
             PermissionGuideView(
-                guide: .fullDiskAccess(),
+                guide: fullDiskAccessGuide,
                 language: language,
                 displayStyle: .compact
             )
@@ -71,7 +78,7 @@ struct ScanView: View {
                         GridRow {
                             Text(L10n.text(.minimumSize, language: language))
                             Slider(value: $store.minimumSizeMegabytes, in: 0...200, step: 1)
-                            Text("\(Int(store.minimumSizeMegabytes)) MB")
+                            Text(Formatters.bytes(Int64(store.minimumSizeMegabytes * 1_024 * 1_024)))
                                 .foregroundStyle(CleanMacTheme.secondaryText)
                                 .monospacedDigit()
                         }
@@ -79,7 +86,7 @@ struct ScanView: View {
                         GridRow {
                             Text(L10n.text(.largeFile, language: language))
                             Slider(value: $store.largeFileThresholdMegabytes, in: 50...5_000, step: 50)
-                            Text("\(Int(store.largeFileThresholdMegabytes)) MB")
+                            Text(Formatters.bytes(Int64(store.largeFileThresholdMegabytes * 1_024 * 1_024)))
                                 .foregroundStyle(CleanMacTheme.secondaryText)
                                 .monospacedDigit()
                         }
@@ -123,6 +130,15 @@ struct ScanView: View {
                 .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.quick), value: store.isScanning)
             }
         }
+        .task {
+            fullDiskAccessGuide = await Self.probeFullDiskAccessOffMainActor()
+        }
+    }
+
+    nonisolated private static func probeFullDiskAccessOffMainActor() async -> SystemPermissionGuide {
+        await Task.detached(priority: .utility) {
+            SystemPermissionGuide.fullDiskAccess()
+        }.value
     }
 }
 
@@ -167,7 +183,14 @@ private struct DashboardPrivacyBadge: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n.text(.privateByDesign, language: language))
                     .font(.caption.weight(.bold))
-                Text("\(L10n.text(.trustNoTelemetry, language: language)). \(L10n.text(.trustAIProviderNetwork, language: language)).")
+                // Two localized sentences stay separate Text lines so no
+                // language-specific punctuation gets hardcoded between them.
+                Text(L10n.text(.trustNoTelemetry, language: language))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(CleanMacTheme.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
+                Text(L10n.text(.trustAIProviderNetwork, language: language))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(CleanMacTheme.secondaryText)
                     .lineLimit(1)
@@ -181,71 +204,6 @@ private struct DashboardPrivacyBadge: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(CleanMacTheme.mint.opacity(0.85), lineWidth: 1.5)
         }
-    }
-}
-
-private struct DiskOverviewHeader: View {
-    @ObservedObject var store: CleaningStore
-    var language: ResolvedLanguage
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-                CleanMacFeatureImage(asset: .mascot, tint: CleanMacTheme.accent, isActive: store.isScanning)
-                    .frame(width: 46, height: 46)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(volumeName)
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(CleanMacTheme.ink)
-                Text(subtitle)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(CleanMacTheme.accent)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(primaryValue)
-                    .font(.title2.weight(.bold))
-                    .monospacedDigit()
-                Text(store.lastReport == nil ? L10n.text(.used, language: language).lowercased() : L10n.text(.potential, language: language).lowercased())
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(CleanMacTheme.secondaryText)
-            }
-        }
-    }
-
-    private var volumeName: String {
-        store.volumeSnapshot?.name ?? L10n.text(.unknown, language: language)
-    }
-
-    private var primaryValue: String {
-        if let report = store.lastReport {
-            return Formatters.bytes(report.totalBytes)
-        }
-        guard let snapshot = store.volumeSnapshot else { return Formatters.bytes(0) }
-        return Formatters.bytes(snapshot.usedCapacityBytes)
-    }
-
-    private var subtitle: String {
-        if store.isScanning {
-            return L10n.text(.scanning, language: language)
-        }
-
-        if let report = store.lastReport {
-            return "\(L10n.candidateCount(report.candidates.count, language: language)) - \(Formatters.bytes(report.totalBytes))"
-        }
-
-        guard let snapshot = store.volumeSnapshot else {
-            return L10n.text(.unknown, language: language)
-        }
-
-        return L10n.storageFreeOfTotal(
-            availableBytes: snapshot.availableCapacityBytes,
-            totalBytes: snapshot.totalCapacityBytes,
-            language: language
-        )
     }
 }
 
@@ -370,7 +328,7 @@ private struct DiskOverviewDashboardCard: View {
                 .init(
                     label: category.displayName(language: language),
                     bytes: totals[category] ?? 0,
-                    color: color(for: category)
+                    color: CleanMacTheme.categoryColor(category)
                 )
             }
         )
@@ -388,21 +346,6 @@ private struct DiskOverviewDashboardCard: View {
                     weight: CGFloat(input.bytes) / CGFloat(total)
                 )
             }
-    }
-
-    private func color(for category: CandidateCategory) -> Color {
-        switch category {
-        case .cache: CleanMacTheme.peach
-        case .logs: CleanMacTheme.mint
-        case .downloads: CleanMacTheme.purple
-        case .trash: CleanMacTheme.accent
-        case .temporary: CleanMacTheme.amber
-        case .developer: CleanMacTheme.pink
-        case .largeFile: Color(red: 0.96, green: 0.72, blue: 0.59)
-        case .application: CleanMacTheme.accent
-        case .applicationSupport: Color(red: 0.66, green: 0.72, blue: 0.85)
-        case .other: Color(red: 0.93, green: 0.91, blue: 0.86)
-        }
     }
 
     private struct SegmentInput {
@@ -426,14 +369,14 @@ private struct DiskSegmentBar: View {
                     }
             } else {
                 HStack(spacing: 0) {
-                    ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
+                    ForEach(segments) { segment in
                         segment.color
                             .frame(width: max(8, proxy.size.width * segment.weight))
                             .overlay(alignment: .leading) {
                                 Rectangle()
                                     .fill(CleanMacTheme.ink)
                                     .frame(width: 2)
-                                    .opacity(index == 0 ? 0 : 1)
+                                    .opacity(segment.id == segments.first?.id ? 0 : 1)
                             }
                     }
                 }
@@ -575,134 +518,6 @@ private struct ScanTrustChecklistItem: View {
     }
 }
 
-private struct DiskUsageOverviewCard: View {
-    @ObservedObject var store: CleaningStore
-    var language: ResolvedLanguage
-
-    private var segments: [DiskSegment] {
-        if let report = store.lastReport, !report.candidates.isEmpty {
-            return candidateSegments(for: report)
-        }
-
-        guard let snapshot = store.volumeSnapshot else { return [] }
-        return volumeSegments(for: snapshot)
-    }
-
-    var body: some View {
-        CleanMacPanel(tint: CleanMacTheme.accent) {
-            VStack(alignment: .leading, spacing: 12) {
-                if segments.isEmpty {
-                    Text(L10n.text(.unknown, language: language))
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(CleanMacTheme.secondaryText)
-                } else {
-                    GeometryReader { proxy in
-                        HStack(spacing: 0) {
-                            ForEach(Array(segments.enumerated()), id: \.offset) { index, segment in
-                                segment.color
-                                    .frame(width: max(8, proxy.size.width * segment.weight))
-                                    .overlay(alignment: .leading) {
-                                        Rectangle()
-                                            .fill(CleanMacTheme.ink)
-                                            .frame(width: 2)
-                                            .opacity(index == 0 ? 0 : 1)
-                                    }
-                            }
-                        }
-                        .clipShape(Capsule())
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(CleanMacTheme.ink, lineWidth: 2.5)
-                        }
-                        .shadow(color: CleanMacTheme.ink, radius: 0, x: 2, y: 2)
-                    }
-                    .frame(height: 26)
-
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], alignment: .leading, spacing: 7) {
-                        ForEach(segments) { segment in
-                            HStack(spacing: 5) {
-                                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                    .fill(segment.color)
-                                    .frame(width: 9, height: 9)
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                            .strokeBorder(CleanMacTheme.ink, lineWidth: 1.2)
-                                    }
-                                Text(segment.label)
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(CleanMacTheme.secondaryText)
-                                Text(segment.value)
-                                    .font(.caption.weight(.bold))
-                                    .foregroundStyle(CleanMacTheme.ink)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private func volumeSegments(for snapshot: StorageVolumeSnapshot) -> [DiskSegment] {
-        weightedSegments([
-            .init(label: L10n.text(.used, language: language), bytes: snapshot.usedCapacityBytes, color: CleanMacTheme.accent),
-            .init(label: L10n.text(.free, language: language), bytes: snapshot.availableCapacityBytes, color: Color(red: 0.93, green: 0.91, blue: 0.86))
-        ])
-    }
-
-    private func candidateSegments(for report: ScanReport) -> [DiskSegment] {
-        let totals = Dictionary(grouping: report.candidates, by: \.category)
-            .mapValues { candidates in
-                candidates.reduce(0) { $0 + $1.sizeBytes }
-            }
-
-        let orderedCategories = CandidateCategory.allCases.filter { (totals[$0] ?? 0) > 0 }
-        return weightedSegments(
-            orderedCategories.map { category in
-                .init(
-                    label: category.displayName(language: language),
-                    bytes: totals[category] ?? 0,
-                    color: color(for: category)
-                )
-            }
-        )
-    }
-
-    private func weightedSegments(_ inputs: [SegmentInput]) -> [DiskSegment] {
-        let total = max(1, inputs.reduce(0) { $0 + $1.bytes })
-        return inputs
-            .filter { $0.bytes > 0 }
-            .map { input in
-                DiskSegment(
-                    label: input.label,
-                    value: Formatters.bytes(input.bytes),
-                    color: input.color,
-                    weight: CGFloat(input.bytes) / CGFloat(total)
-                )
-            }
-    }
-
-    private func color(for category: CandidateCategory) -> Color {
-        switch category {
-        case .cache: CleanMacTheme.peach
-        case .logs: CleanMacTheme.mint
-        case .downloads: CleanMacTheme.purple
-        case .trash: CleanMacTheme.accent
-        case .temporary: CleanMacTheme.amber
-        case .developer: CleanMacTheme.pink
-        case .largeFile: Color(red: 0.96, green: 0.72, blue: 0.59)
-        case .application: CleanMacTheme.accent
-        case .applicationSupport: Color(red: 0.66, green: 0.72, blue: 0.85)
-        case .other: Color(red: 0.93, green: 0.91, blue: 0.86)
-        }
-    }
-
-    private struct SegmentInput {
-        var label: String
-        var bytes: Int64
-        var color: Color
-    }
-}
-
 private struct DiskSegment: Identifiable {
     var id: String { label }
     var label: String
@@ -773,6 +588,7 @@ private struct TrustBadgeItem: View {
 private struct OverviewFeatureGrid: View {
     @ObservedObject var store: CleaningStore
     var language: ResolvedLanguage
+    var fullDiskAccessGuide: SystemPermissionGuide
     var openResults: () -> Void
     var openAIReview: () -> Void
     var openSettings: () -> Void
@@ -815,8 +631,8 @@ private struct OverviewFeatureGrid: View {
             )
 
             OverviewActionCard(
-                title: L10n.permissionTitle(.fullDiskAccess(), language: language),
-                detail: L10n.permissionStatusName(SystemPermissionGuide.fullDiskAccess().status, language: language),
+                title: L10n.permissionTitle(fullDiskAccessGuide, language: language),
+                detail: L10n.permissionStatusName(fullDiskAccessGuide.status, language: language),
                 asset: .permissionShield,
                 tint: CleanMacTheme.peach,
                 buttonTitle: L10n.text(.openSettings, language: language),
@@ -865,45 +681,6 @@ private struct OverviewActionCard: View {
                 .buttonStyle(CleanMacRaisedButtonStyle(tint: tint, prominent: true))
             }
             .frame(maxWidth: .infinity, minHeight: 116, alignment: .top)
-        }
-    }
-}
-
-private struct SummaryStrip: View {
-    @ObservedObject var store: CleaningStore
-    var language: ResolvedLanguage
-
-    var body: some View {
-        HStack(spacing: 12) {
-            MetricTileView(
-                title: L10n.text(.candidates, language: language),
-                value: "\(store.candidates.count)",
-                symbolName: "doc.on.doc",
-                asset: .diskOverview,
-                tint: CleanMacTheme.accent,
-                isActive: store.isScanning
-            )
-            MetricTileView(
-                title: L10n.text(.potential, language: language),
-                value: Formatters.bytes(store.lastReport?.totalBytes ?? 0),
-                symbolName: "internaldrive",
-                asset: .cleanupTrash,
-                tint: CleanMacTheme.mint
-            )
-            MetricTileView(
-                title: L10n.text(.duplicates, language: language),
-                value: Formatters.bytes(store.duplicateReclaimableBytes),
-                symbolName: "doc.on.doc.fill",
-                asset: .duplicates,
-                tint: CleanMacTheme.amber
-            )
-            MetricTileView(
-                title: L10n.text(.selected, language: language),
-                value: Formatters.bytes(store.selectedSummary.totalBytes),
-                symbolName: "checkmark.circle",
-                asset: .permissionShield,
-                tint: CleanMacTheme.amber
-            )
         }
     }
 }
