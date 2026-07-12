@@ -15,13 +15,13 @@ public struct AppUninstaller {
         self.snapshotReader = snapshotReader
     }
 
-    public func scan(appRoots: [URL], userLibrary _: URL) throws -> [AppUninstallPlan] {
+    public func scan(appRoots: [URL]) throws -> [AppUninstallPlan] {
         var seenPaths = Set<String>()
-        let appBundles = appRoots
+        let appBundles = try appRoots
             .flatMap(findAppBundles(in:))
             .filter { seenPaths.insert($0.standardizedFileURL.path).inserted }
-        let plans = appBundles.compactMap { appBundle in
-            makePlan(appBundle: appBundle)
+        let plans = try appBundles.compactMap { appBundle in
+            try makePlan(appBundle: appBundle)
         }
         return plans.sorted {
             let nameOrder = $0.appName.localizedStandardCompare($1.appName)
@@ -32,7 +32,11 @@ public struct AppUninstaller {
         }
     }
 
-    private func findAppBundles(in root: URL) -> [URL] {
+    private func findAppBundles(in root: URL) throws -> [URL] {
+        // Always called from a detached task; checking on every recursion step keeps
+        // cancellation responsive across large application folders.
+        try Task.checkCancellation()
+
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: root.path, isDirectory: &isDirectory),
               isDirectory.boolValue,
@@ -66,22 +70,22 @@ public struct AppUninstaller {
                 if appMetadata(appBundle: child) != nil {
                     appBundles.append(child)
                 } else {
-                    appBundles.append(contentsOf: findAppBundles(in: child))
+                    appBundles.append(contentsOf: try findAppBundles(in: child))
                 }
             } else {
-                appBundles.append(contentsOf: findAppBundles(in: child))
+                appBundles.append(contentsOf: try findAppBundles(in: child))
             }
         }
 
         return appBundles
     }
 
-    private func makePlan(appBundle: URL) -> AppUninstallPlan? {
+    private func makePlan(appBundle: URL) throws -> AppUninstallPlan? {
         guard let metadata = appMetadata(appBundle: appBundle) else {
             return nil
         }
 
-        guard let appCandidate = makeCandidate(
+        guard let appCandidate = try makeCandidate(
             url: appBundle,
             category: .application,
             reasons: ["Application bundle for \(metadata.bundleIdentifier)"],
@@ -137,14 +141,14 @@ public struct AppUninstaller {
         category: CandidateCategory,
         reasons: [String],
         isDirectory: Bool
-    ) -> CleaningCandidate? {
+    ) throws -> CleaningCandidate? {
         let stableURL = stableCandidateURL(url)
         guard let snapshot = snapshotReader.snapshot(at: stableURL),
               snapshot.kind == .directory else {
             return nil
         }
         let values = try? stableURL.resourceValues(forKeys: [.contentModificationDateKey])
-        let sizeBytes = itemSize(stableURL)
+        let sizeBytes = try itemSize(stableURL)
         let safety = safetyRuleEngine.evaluate(
             url: stableURL,
             category: category,
@@ -176,7 +180,7 @@ public struct AppUninstaller {
         return URL(fileURLWithPath: String(path.dropLast()), isDirectory: false)
     }
 
-    private func itemSize(_ url: URL) -> Int64 {
+    private func itemSize(_ url: URL) throws -> Int64 {
         if isDirectory(url) {
             // Count hidden files too — app bundles and support folders routinely store
             // dot-prefixed databases and resources, so skipping them undercounts the size
@@ -192,6 +196,7 @@ public struct AppUninstaller {
 
             var total: Int64 = 0
             for case let child as URL in enumerator {
+                try Task.checkCancellation()
                 guard let values = try? child.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
                       values.isRegularFile == true else {
                     continue

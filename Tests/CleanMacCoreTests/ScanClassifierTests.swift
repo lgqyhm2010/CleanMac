@@ -42,6 +42,37 @@ final class ScanClassifierTests: XCTestCase {
         XCTAssertEqual(large.risk, .reviewRecommended)
     }
 
+    func testClassifiesKnownLocationsCaseInsensitively() {
+        // APFS is case-insensitive by default, so path casing must not change
+        // how a known cleanup location is classified.
+        let classifier = ScanClassifier(
+            largeFileThresholdBytes: 100,
+            homeDirectory: URL(filePath: "/Users/me", directoryHint: .isDirectory)
+        )
+
+        let cache = classifier.classify(
+            url: URL(filePath: "/users/ME/library/CACHES/com.example/blob.cache"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(cache.category, .cache)
+        XCTAssertEqual(cache.risk, .usuallySafe)
+
+        let log = classifier.classify(
+            url: URL(filePath: "/USERS/me/Library/logs/example.log"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(log.category, .logs)
+
+        let download = classifier.classify(
+            url: URL(filePath: "/Users/me/downloads/installer.dmg"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(download.category, .downloads)
+    }
+
     func testDoesNotTreatUserFoldersNamedTrashOrTmpAsSafeToDelete() {
         let classifier = ScanClassifier(
             largeFileThresholdBytes: 100,

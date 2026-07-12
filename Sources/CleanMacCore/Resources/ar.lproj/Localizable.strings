@@ -172,7 +172,6 @@
 "selectedCount" = "%ld محددة";
 "selectedHeadline" = "%ld محددة";
 "candidatesHeadline" = "%ld عناصر مرشحة";
-"storage.freeOfTotal" = "%@ متاح من إجمالي %@";
 "windowTitle" = "CleanMac - %@";
 
 "status.ready" = "جاهز";

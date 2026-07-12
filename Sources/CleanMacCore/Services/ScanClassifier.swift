@@ -133,9 +133,12 @@ public struct ScanClassifier: Sendable {
         ]
     }
 
+    /// Comparison-only normalization: APFS is case-insensitive by default, so both
+    /// sides are lowercased (matching SafetyRuleEngine). Never use the result for
+    /// user-facing paths or copy.
     private func normalizedPath(_ path: String) -> String {
         var components: [Substring] = []
-        for component in path.split(separator: "/") {
+        for component in path.lowercased().split(separator: "/") {
             switch component {
             case ".":
                 continue

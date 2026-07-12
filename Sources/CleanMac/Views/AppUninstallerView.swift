@@ -59,7 +59,7 @@ struct AppUninstallerView: View {
                             tint: CleanMacTheme.pink
                         )
                         Button {
-                            store.addApplicationFolderWithOpenPanel()
+                            store.addApplicationRoots(FolderOpenPanel.chooseFolders(language: language))
                         } label: {
                             Label(L10n.text(.add, language: language), systemImage: "plus")
                         }
@@ -92,6 +92,16 @@ struct AppUninstallerView: View {
                         }
                         .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.pink, prominent: true))
                         .disabled(store.isBusy || store.appRoots.isEmpty)
+
+                        if store.isScanningApplications {
+                            Button {
+                                store.cancelScan()
+                            } label: {
+                                Label(L10n.text(.cancel, language: language), systemImage: "xmark.circle")
+                            }
+                            .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.danger))
+                            .transition(.opacity)
+                        }
                     }
 
                     if store.isScanningApplications {

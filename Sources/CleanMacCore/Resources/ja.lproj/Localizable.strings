@@ -172,7 +172,6 @@
 "selectedCount" = "%ld 選択済み";
 "selectedHeadline" = "%ld 選択済み";
 "candidatesHeadline" = "%ld 候補";
-"storage.freeOfTotal" = "%@ 空き / 合計 %@";
 "windowTitle" = "CleanMac - %@";
 
 "status.ready" = "準備完了";

@@ -51,7 +51,7 @@ struct ScanView: View {
                             tint: CleanMacTheme.accent
                         )
                         Button {
-                            store.addFolderWithOpenPanel()
+                            store.addRoots(FolderOpenPanel.chooseFolders(language: language))
                         } label: {
                             Label(L10n.text(.add, language: language), systemImage: "plus")
                         }
@@ -111,9 +111,25 @@ struct ScanView: View {
                         .disabled(store.isBusy || store.roots.isEmpty)
 
                         if store.isScanning {
+                            Button {
+                                store.cancelScan()
+                            } label: {
+                                Label(L10n.text(.cancel, language: language), systemImage: "xmark.circle")
+                            }
+                            .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.danger))
+                            .transition(.opacity)
+
                             ProgressView()
                                 .controlSize(.small)
                                 .transition(.opacity)
+
+                            if let scannedFileCount = store.scanProgressCount {
+                                Text("· \(scannedFileCount)")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(CleanMacTheme.secondaryText)
+                                    .monospacedDigit()
+                                    .transition(.opacity)
+                            }
                         }
 
                         Spacer()

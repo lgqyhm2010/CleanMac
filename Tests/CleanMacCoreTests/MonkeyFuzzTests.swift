@@ -151,7 +151,7 @@ final class MonkeyFuzzTests: XCTestCase {
             try FileManager.default.createDirectory(at: library, withIntermediateDirectories: true)
             try populateRandomAppBundles(in: apps, library: library, generator: &generator)
 
-            let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: library)
+            let plans = try AppUninstaller().scan(appRoots: [apps])
             let context = "seed=\(baseSeed) iteration=\(iteration)"
 
             for plan in plans {

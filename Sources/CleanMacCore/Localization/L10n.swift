@@ -332,16 +332,6 @@ public enum L10n {
         format("candidatesHeadline", language: language, count)
     }
 
-    public static func storageFreeOfTotal(
-        availableBytes: Int64,
-        totalBytes: Int64,
-        language: ResolvedLanguage
-    ) -> String {
-        let available = ByteCountFormatter.string(fromByteCount: availableBytes, countStyle: .file)
-        let total = ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
-        return format("storage.freeOfTotal", language: language, available, total)
-    }
-
     public static func windowTitle(_ sectionTitle: String, language: ResolvedLanguage) -> String {
         format("windowTitle", language: language, sectionTitle)
     }

@@ -115,15 +115,6 @@ public struct SafetyRuleMatch: Identifiable, Hashable, Codable, Sendable {
         self.ruleID = ruleID
         self.protection = protection
     }
-
-    public init(
-        ruleID: String,
-        name: String,
-        explanation: String,
-        protection: DeletionProtection
-    ) {
-        self.init(ruleID: ruleID, protection: protection)
-    }
 }
 
 public struct SafetyEvaluation: Equatable, Sendable {

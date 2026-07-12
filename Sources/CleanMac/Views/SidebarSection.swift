@@ -40,10 +40,6 @@ enum SidebarSection: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    var groupTitle: String {
-        groupTitle(language: .english)
-    }
-
     func groupTitle(language: ResolvedLanguage) -> String {
         L10n.text(groupTitleKey, language: language)
     }

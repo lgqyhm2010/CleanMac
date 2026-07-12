@@ -80,7 +80,6 @@ struct LocalizationTests {
             "error.itemsCouldNotBeMoved",
             "error.noAIToolDetected",
             "defaultAIQuestion",
-            "storage.freeOfTotal",
             "windowTitle"
         ])
 
