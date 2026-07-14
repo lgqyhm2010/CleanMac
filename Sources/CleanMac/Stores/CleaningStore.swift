@@ -53,9 +53,16 @@ final class CleaningStore {
     var status: CleaningStatus = .ready
     var errorMessage: CleaningErrorMessage?
     private(set) var foregroundOperationState = ForegroundOperationState()
-    var includeHiddenFiles = false
-    var minimumSizeMegabytes = 1.0
-    var largeFileThresholdMegabytes = 500.0
+    // Scan options are tuned once and reused, so they outlive the session.
+    var includeHiddenFiles = CleaningStore.defaultIncludeHiddenFiles {
+        didSet { UserDefaults.standard.set(includeHiddenFiles, forKey: Self.includeHiddenFilesKey) }
+    }
+    var minimumSizeMegabytes = CleaningStore.defaultMinimumSizeMegabytes {
+        didSet { UserDefaults.standard.set(minimumSizeMegabytes, forKey: Self.minimumSizeKey) }
+    }
+    var largeFileThresholdMegabytes = CleaningStore.defaultLargeFileThresholdMegabytes {
+        didSet { UserDefaults.standard.set(largeFileThresholdMegabytes, forKey: Self.largeFileThresholdKey) }
+    }
     var volumeSnapshot: StorageVolumeSnapshot?
     var detectedAITools: [DetectedAITool] = []
     var selectedAIToolID: String?
@@ -68,6 +75,17 @@ final class CleaningStore {
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     private static let aiToolPreferenceKey = "aiSelectedToolID"
     private static let aiModelPreferenceKey = "aiModelPreferenceByTool"
+    private static let minimumSizeKey = "scanMinimumSizeMegabytes"
+    private static let largeFileThresholdKey = "scanLargeFileThresholdMegabytes"
+    private static let includeHiddenFilesKey = "scanIncludeHiddenFiles"
+
+    static let defaultMinimumSizeMegabytes = 10.0
+    static let defaultLargeFileThresholdMegabytes = 500.0
+    static let defaultIncludeHiddenFiles = false
+    /// The sliders own these bounds; the store reuses them to clamp stored values
+    /// written by an older build (or a hand-edited preference).
+    static let minimumSizeRange = 0.0...200.0
+    static let largeFileThresholdRange = 50.0...5_000.0
 
     var isScanning: Bool { foregroundOperationState.operation == .scanningFiles }
     var isCleaning: Bool { foregroundOperationState.operation == .cleaning }
@@ -79,8 +97,31 @@ final class CleaningStore {
         self.aiToolDetector = aiToolDetector
         aiQuestion = L10n.defaultAIQuestion(language: language)
         selectedModelIDsByTool = UserDefaults.standard.dictionary(forKey: Self.aiModelPreferenceKey) as? [String: String] ?? [:]
+        loadPersistedScanOptions()
         refreshVolumeSnapshot()
         refreshDetectedAITools()
+    }
+
+    /// Presence has to be tested explicitly: `double(forKey:)` returns 0 for a missing
+    /// key, and 0 MB is a value the minimum-size slider can legitimately hold.
+    private func loadPersistedScanOptions() {
+        let defaults = UserDefaults.standard
+
+        // A non-finite value would reach a Slider, which cannot render NaN, so a
+        // corrupt preference falls back to the default instead of being clamped.
+        if let stored = defaults.object(forKey: Self.minimumSizeKey) as? Double, stored.isFinite {
+            minimumSizeMegabytes = Self.clamp(stored, to: Self.minimumSizeRange)
+        }
+        if let stored = defaults.object(forKey: Self.largeFileThresholdKey) as? Double, stored.isFinite {
+            largeFileThresholdMegabytes = Self.clamp(stored, to: Self.largeFileThresholdRange)
+        }
+        if let stored = defaults.object(forKey: Self.includeHiddenFilesKey) as? Bool {
+            includeHiddenFiles = stored
+        }
+    }
+
+    private static func clamp(_ value: Double, to range: ClosedRange<Double>) -> Double {
+        min(max(value, range.lowerBound), range.upperBound)
     }
 
     func refreshDetectedAITools() {
