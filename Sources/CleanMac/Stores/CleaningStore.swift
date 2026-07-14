@@ -536,12 +536,21 @@ final class CleaningStore {
 }
 
 enum DefaultScanRoots {
+    /// Only seed locations `ScanClassifier` recognizes. Roots under `/Library`,
+    /// `~/Library/Application Support`, or `Containers` evaluate to `.blocked` in
+    /// `SafetyRuleEngine`, so seeding them would list items the user can never act on.
     static var urls: [URL] {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let candidates = [
             home.appending(path: "Downloads", directoryHint: .isDirectory),
             home.appending(path: "Library/Caches", directoryHint: .isDirectory),
             home.appending(path: "Library/Logs", directoryHint: .isDirectory),
+            // Seeded per-directory rather than as all of `Library/Developer`: that parent
+            // also holds CoreSimulator, whose ~1M files dominate scan time and cannot be
+            // cleaned file-by-file without breaking the simulators that own them.
+            home.appending(path: "Library/Developer/Xcode/DerivedData", directoryHint: .isDirectory),
+            home.appending(path: "Library/Developer/Xcode/iOS DeviceSupport", directoryHint: .isDirectory),
+            home.appending(path: ".Trash", directoryHint: .isDirectory),
             FileManager.default.temporaryDirectory
         ]
         return candidates.filter { FileManager.default.fileExists(atPath: $0.path) }
