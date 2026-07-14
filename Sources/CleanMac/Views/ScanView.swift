@@ -75,7 +75,7 @@ struct ScanView: View {
                     Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
                         GridRow {
                             Text(L10n.text(.minimumSize, language: language))
-                            Slider(value: $store.minimumSizeMegabytes, in: 0...200, step: 1)
+                            Slider(value: $store.minimumSizeMegabytes, in: CleaningStore.minimumSizeRange, step: 1)
                             // The label must echo the slider's own unit and step:
                             // ByteCountFormatter is decimal (500 -> "524.3 MB").
                             Text("\(Int(store.minimumSizeMegabytes)) MB")
@@ -85,7 +85,7 @@ struct ScanView: View {
 
                         GridRow {
                             Text(L10n.text(.largeFile, language: language))
-                            Slider(value: $store.largeFileThresholdMegabytes, in: 50...5_000, step: 50)
+                            Slider(value: $store.largeFileThresholdMegabytes, in: CleaningStore.largeFileThresholdRange, step: 50)
                             Text("\(Int(store.largeFileThresholdMegabytes)) MB")
                                 .foregroundStyle(CleanMacTheme.secondaryText)
                                 .monospacedDigit()
