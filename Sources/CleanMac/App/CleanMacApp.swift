@@ -1,6 +1,6 @@
 import AppKit
 import CleanMacCore
-import Combine
+import Observation
 import SwiftUI
 
 @main
@@ -46,7 +46,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cleanerSelectAllItem: NSMenuItem?
     private var cleanerClearItem: NSMenuItem?
     private var cleanerAskAIItem: NSMenuItem?
-    private var statusCancellables: Set<AnyCancellable> = []
     private lazy var store = CleaningStore(language: resolvedLanguage)
 
     func installApplicationIcon() {
@@ -288,20 +287,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusMenuSettingsItem = settingsItem
         statusMenuQuitItem = quitItem
 
-        Publishers.CombineLatest3(store.$status, store.$candidates, store.$foregroundOperationState)
-            .receive(on: RunLoop.main)
-            .sink { [weak self] status, candidates, operationState in
-                Task { @MainActor [weak self] in
-                    let isScanning = operationState.operation == .scanningFiles || operationState.operation == .scanningApplications
-                    self?.updateStatusItem(
-                        status: status,
-                        candidateCount: candidates.count,
-                        isScanning: isScanning,
-                        isBusy: operationState.operation != nil
-                    )
-                }
+        observeStoreForStatusItem()
+    }
+
+    /// Self-registering observation loop replacing the former Combine pipeline:
+    /// reading the store properties inside `withObservationTracking` both performs
+    /// the initial status-item update and subscribes to the next change, and the
+    /// `onChange` callback re-registers on the main actor after every mutation.
+    private func observeStoreForStatusItem() {
+        withObservationTracking {
+            let operationState = store.foregroundOperationState
+            let isScanning = operationState.operation == .scanningFiles || operationState.operation == .scanningApplications
+            updateStatusItem(
+                status: store.status,
+                candidateCount: store.candidates.count,
+                isScanning: isScanning,
+                isBusy: operationState.operation != nil
+            )
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                self?.observeStoreForStatusItem()
             }
-            .store(in: &statusCancellables)
+        }
     }
 
     private func updateStatusItem(status: CleaningStatus, candidateCount: Int, isScanning: Bool, isBusy: Bool) {

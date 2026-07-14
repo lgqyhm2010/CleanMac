@@ -172,7 +172,6 @@
 "selectedCount" = "%ld 個已選取";
 "selectedHeadline" = "已選取 %ld 個";
 "candidatesHeadline" = "%ld 個候選項";
-"storage.freeOfTotal" = "%@ 可用，共 %@";
 "windowTitle" = "CleanMac - %@";
 
 "status.ready" = "就緒";

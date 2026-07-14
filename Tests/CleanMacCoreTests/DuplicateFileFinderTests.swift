@@ -79,6 +79,27 @@ final class DuplicateFileFinderTests: XCTestCase {
         XCTAssertEqual(group.reclaimableBytes, 20)
     }
 
+    func testSamePrefixDifferentTailFilesAreNotDuplicates() throws {
+        // Two same-size files whose first 64 KB (the prefix-hash window) are identical
+        // but whose tails differ must survive the prefix prefilter and be separated by
+        // the whole-file hash; true duplicates of the same size must still group.
+        let root = try makeTemporaryDirectory()
+        let sharedPrefix = String(repeating: "a", count: 64 * 1_024)
+        let first = try writeFile(root.appending(path: "a.bin"), contents: sharedPrefix + "tail-one")
+        let second = try writeFile(root.appending(path: "b.bin"), contents: sharedPrefix + "tail-two")
+        let copyOne = try writeFile(root.appending(path: "c.bin"), contents: sharedPrefix + "tail-one")
+        let size = Int64(sharedPrefix.utf8.count + "tail-one".utf8.count)
+
+        let groups = try DuplicateFileFinder().findDuplicates(in: [
+            candidate(url: first, size: size),
+            candidate(url: second, size: size),
+            candidate(url: copyOne, size: size)
+        ])
+
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups[0].candidates.map(\.url.lastPathComponent).sorted(), ["a.bin", "c.bin"])
+    }
+
     func testHardLinksAreNotReportedAsReclaimableDuplicates() throws {
         let root = try makeTemporaryDirectory()
         let original = try writeFile(root.appending(path: "original.txt"), contents: "same")

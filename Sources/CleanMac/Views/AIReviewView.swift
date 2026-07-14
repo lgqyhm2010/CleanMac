@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct AIReviewView: View {
-    @ObservedObject var store: CleaningStore
+    @Bindable var store: CleaningStore
     var language: ResolvedLanguage
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -167,11 +167,16 @@ struct AIReviewView: View {
             )
         } else {
             // Fallback: the CLI's answer did not parse as the requested JSON.
-            TextEditor(text: $store.aiOutput)
-                .font(.system(.body, design: .monospaced))
-                .scrollContentBackground(.hidden)
-                .background(CleanMacTheme.warmPane, in: CleanMacTheme.panelShape)
-                .transition(.opacity)
+            // Shown read-only: the raw output is a result, not user input.
+            ScrollView {
+                Text(store.aiOutput)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .textSelection(.enabled)
+            }
+            .background(CleanMacTheme.warmPane, in: CleanMacTheme.panelShape)
+            .transition(.opacity)
         }
     }
 

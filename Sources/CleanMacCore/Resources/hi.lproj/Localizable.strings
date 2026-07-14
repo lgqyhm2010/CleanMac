@@ -172,7 +172,6 @@
 "selectedCount" = "%ld चयनित";
 "selectedHeadline" = "%ld चयनित";
 "candidatesHeadline" = "%ld उम्मीदवार";
-"storage.freeOfTotal" = "%@ खाली, कुल %@";
 "windowTitle" = "CleanMac - %@";
 
 "status.ready" = "तैयार";

@@ -133,6 +133,11 @@ public struct ScanClassifier: Sendable {
         ]
     }
 
+    /// Comparison-only normalization, deliberately case-preserving: these matches can
+    /// only *lower* effective caution (cache/logs/trash classify as usually-safe), so
+    /// on a case-sensitive volume a distinct `~/library/caches` must NOT match. This
+    /// errs strict, unlike SafetyRuleEngine's lowercased matching, which can only
+    /// raise protection and is therefore safe to keep case-insensitive.
     private func normalizedPath(_ path: String) -> String {
         var components: [Substring] = []
         for component in path.split(separator: "/") {

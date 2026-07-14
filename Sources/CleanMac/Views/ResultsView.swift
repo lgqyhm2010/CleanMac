@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct ResultsView: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
     @State private var confirmTrash = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -148,22 +148,6 @@ struct ResultsView: View {
         return "\(base) · \(L10n.protectedItemCount(protectedCount, language: language))"
     }
 
-    fileprivate static func categoryTint(_ category: CandidateCategory) -> Color {
-        switch category {
-        case .cache, .temporary:
-            CleanMacTheme.accent
-        case .logs, .developer:
-            CleanMacTheme.purple
-        case .downloads, .largeFile:
-            CleanMacTheme.amber
-        case .trash:
-            CleanMacTheme.danger
-        case .application, .applicationSupport:
-            CleanMacTheme.mint
-        case .other:
-            .secondary
-        }
-    }
 }
 
 private enum CandidateTableLayout {
@@ -177,7 +161,7 @@ private enum CandidateTableLayout {
 }
 
 private struct CandidatePaperTable: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
 
     var body: some View {
@@ -195,6 +179,9 @@ private struct CandidatePaperTable: View {
 
                     ScrollView {
                         LazyVStack(spacing: 8) {
+                            // Identity must follow the candidate, not its position:
+                            // mid-list removals otherwise animate the wrong rows and
+                            // leak per-row hover state onto whatever slides up.
                             ForEach(Array(store.candidates.enumerated()), id: \.element.id) { index, candidate in
                                 CandidatePaperRow(
                                     candidate: candidate,
@@ -311,7 +298,7 @@ private struct CandidatePaperRow: View {
     @State private var isHovered = false
 
     private var tint: Color {
-        ResultsView.categoryTint(candidate.category)
+        CleanMacTheme.categoryColor(candidate.category)
     }
 
     private var rowFill: Color {
@@ -386,7 +373,8 @@ private struct CandidatePaperRow: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(candidate.url.lastPathComponent)
         .accessibilityValue(Formatters.bytes(candidate.sizeBytes))
-        .accessibilityAddTraits(isFocused ? [.isSelected] : [])
+        .accessibilityAddTraits(isFocused ? [.isButton, .isSelected] : [.isButton])
+        .accessibilityAction(.default, focusCandidate)
     }
 }
 

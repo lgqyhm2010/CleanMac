@@ -42,6 +42,32 @@ final class ScanClassifierTests: XCTestCase {
         XCTAssertEqual(large.risk, .reviewRecommended)
     }
 
+    func testCaseMismatchedKnownLocationsStayStrictOnCaseSensitiveVolumes() {
+        // Deliberately case-preserving: on a case-sensitive volume a distinct
+        // `/users/ME/library/CACHES` directory must not inherit the usually-safe
+        // cache classification. Falling through to .other errs strict.
+        let classifier = ScanClassifier(
+            largeFileThresholdBytes: 1_024,
+            homeDirectory: URL(filePath: "/Users/me", directoryHint: .isDirectory)
+        )
+
+        let mismatchedCache = classifier.classify(
+            url: URL(filePath: "/users/ME/library/CACHES/com.example/blob.cache"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(mismatchedCache.category, .other)
+        XCTAssertNotEqual(mismatchedCache.risk, .usuallySafe)
+
+        let exactCache = classifier.classify(
+            url: URL(filePath: "/Users/me/Library/Caches/com.example/blob.cache"),
+            sizeBytes: 42,
+            isDirectory: false
+        )
+        XCTAssertEqual(exactCache.category, .cache)
+        XCTAssertEqual(exactCache.risk, .usuallySafe)
+    }
+
     func testDoesNotTreatUserFoldersNamedTrashOrTmpAsSafeToDelete() {
         let classifier = ScanClassifier(
             largeFileThresholdBytes: 100,

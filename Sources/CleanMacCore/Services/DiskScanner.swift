@@ -15,7 +15,11 @@ public final class DiskScanner {
         self.snapshotReader = snapshotReader
     }
 
-    public func scan(roots: [URL], options: ScanOptions = ScanOptions()) throws -> ScanReport {
+    public func scan(
+        roots: [URL],
+        options: ScanOptions = ScanOptions(),
+        onProgress: (@Sendable (Int) -> Void)? = nil
+    ) throws -> ScanReport {
         var candidates: [CleaningCandidate] = []
         var scannedFileCount = 0
         var skippedFileCount = 0
@@ -33,6 +37,13 @@ public final class DiskScanner {
             .isRegularFileKey
         ]
 
+        // Reports roughly every 256 scanned files so UI progress updates stay cheap.
+        func reportProgressIfNeeded() {
+            if scannedFileCount.isMultiple(of: 256) {
+                onProgress?(scannedFileCount)
+            }
+        }
+
         for root in nonOverlappingRoots(roots) {
             guard let enumerator = fileManager.enumerator(
                 at: root,
@@ -48,6 +59,10 @@ public final class DiskScanner {
             }
 
             for case let url as URL in enumerator {
+                // Always called from a detached task; checking each iteration keeps
+                // cancellation latency low without measurable overhead.
+                try Task.checkCancellation()
+
                 let values: URLResourceValues
                 do {
                     values = try url.resourceValues(forKeys: Set(keys))
@@ -76,7 +91,8 @@ public final class DiskScanner {
                         }
 
                         scannedFileCount += 1
-                        let sizeBytes = packageSize(at: url)
+                        reportProgressIfNeeded()
+                        let sizeBytes = try packageSize(at: url)
                         guard sizeBytes >= options.minimumFileSizeBytes else {
                             skippedFileCount += 1
                             continue
@@ -124,6 +140,7 @@ public final class DiskScanner {
                 }
 
                 scannedFileCount += 1
+                reportProgressIfNeeded()
 
                 guard options.includeHiddenFiles || !isHidden(url: url, values: values) else {
                     skippedFileCount += 1
@@ -223,7 +240,7 @@ public final class DiskScanner {
         return packageExtensions.contains(url.pathExtension.lowercased())
     }
 
-    private func packageSize(at url: URL) -> Int64 {
+    private func packageSize(at url: URL) throws -> Int64 {
         guard let enumerator = fileManager.enumerator(
             at: url,
             includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey],
@@ -234,6 +251,7 @@ public final class DiskScanner {
 
         var total: Int64 = 0
         for case let child as URL in enumerator {
+            try Task.checkCancellation()
             guard let values = try? child.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
                   values.isRegularFile == true else {
                 continue

@@ -32,8 +32,9 @@ final class RealDataAndLocalizationTests: XCTestCase {
 
     func testOverviewSourcesDoNotContainFakeCapacityLiterals() throws {
         let scanSource = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
+        let dashboardSource = try sourceFile("Sources/CleanMac/Views/DiskOverviewDashboard.swift")
         let sidebarSource = try sourceFile("Sources/CleanMac/Views/SidebarView.swift")
-        let combinedSource = scanSource + "\n" + sidebarSource
+        let combinedSource = scanSource + "\n" + dashboardSource + "\n" + sidebarSource
 
         let fakeLiterals = [
             "428 GB",
@@ -133,10 +134,13 @@ final class RealDataAndLocalizationTests: XCTestCase {
     }
 
     func testOverviewStatusIsTruthfulBeforeAndAfterScanFailures() throws {
-        let source = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
+        let scanSource = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
+        let dashboardSource = try sourceFile("Sources/CleanMac/Views/DiskOverviewDashboard.swift")
 
-        XCTAssertTrue(source.contains("L10n.status(store.status, language: language)"))
-        XCTAssertFalse(source.contains("store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.healthy, language: language)"))
+        XCTAssertTrue(scanSource.contains("L10n.status(store.status, language: language)"))
+        XCTAssertTrue(dashboardSource.contains("L10n.status(store.status, language: language)"))
+        XCTAssertFalse(scanSource.contains("store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.healthy, language: language)"))
+        XCTAssertFalse(dashboardSource.contains("store.isScanning ? L10n.text(.scanning, language: language) : L10n.text(.healthy, language: language)"))
     }
 
     func testResultCheckboxRemainsAnIndependentAccessibilityElement() throws {
@@ -150,42 +154,47 @@ final class RealDataAndLocalizationTests: XCTestCase {
     func testReimaginedDashboardUsesPaperChromeAndTrustStrip() throws {
         let contentSource = try sourceFile("Sources/CleanMac/Views/ContentView.swift")
         let designSystemSource = try sourceFile("Sources/CleanMac/Views/DesignSystem.swift")
+        let themeSource = try sourceFile("Sources/CleanMac/Views/CleanMacTheme.swift")
+        let motionSource = try sourceFile("Sources/CleanMac/Views/CleanMacMotion.swift")
+        let designCombinedSource = designSystemSource + "\n" + themeSource + "\n" + motionSource
         let sidebarSource = try sourceFile("Sources/CleanMac/Views/SidebarView.swift")
         let scanSource = try sourceFile("Sources/CleanMac/Views/ScanView.swift")
+        let dashboardSource = try sourceFile("Sources/CleanMac/Views/DiskOverviewDashboard.swift")
 
         XCTAssertTrue(contentSource.contains("private let languageOverride: ResolvedLanguage?"))
         XCTAssertTrue(contentSource.contains("languageOverride ?? AppLanguage(storedRawValue: appLanguageRaw).resolved()"))
         XCTAssertTrue(contentSource.contains("CleanMacAppTitleBar("))
         XCTAssertTrue(contentSource.contains("openSettings: { selection = .settings }"))
 
-        XCTAssertTrue(designSystemSource.contains("static let sidebar = paper"))
-        XCTAssertTrue(designSystemSource.contains("static let sidebarText = secondaryText"))
+        XCTAssertTrue(themeSource.contains("static let sidebar = paper"))
+        XCTAssertTrue(themeSource.contains("static let sidebarText = secondaryText"))
         XCTAssertTrue(designSystemSource.contains("Bundle.module.url(forResource: asset.rawValue, withExtension: \"png\")"))
         XCTAssertTrue(designSystemSource.contains("private struct TrafficLightDot"))
         XCTAssertTrue(designSystemSource.contains("CleanMacFeatureImage(asset: .mascot"))
         XCTAssertTrue(designSystemSource.contains("Button(action: openSettings)"))
         XCTAssertTrue(designSystemSource.contains("L10n.text(.help"))
-        XCTAssertFalse(designSystemSource.contains("subdirectory: \"Images\""))
-        XCTAssertFalse(designSystemSource.contains(".blur(radius: 70)"))
-        XCTAssertFalse(designSystemSource.contains(".blur(radius: 80)"))
+        XCTAssertFalse(designCombinedSource.contains("subdirectory: \"Images\""))
+        XCTAssertFalse(designCombinedSource.contains(".blur(radius: 70)"))
+        XCTAssertFalse(designCombinedSource.contains(".blur(radius: 80)"))
 
         XCTAssertTrue(sidebarSource.contains("CleanMacTheme.sidebarSelectedFill"))
         XCTAssertTrue(sidebarSource.contains("CleanMacTheme.sidebarDivider"))
         XCTAssertFalse(sidebarSource.contains("Color.white.opacity(0.12)"))
         XCTAssertFalse(sidebarSource.contains("foregroundStyle(isSelected ? Color.white"))
 
-        XCTAssertTrue(scanSource.contains("private struct TrustBadgeStrip"))
-        XCTAssertTrue(scanSource.contains("private struct DashboardHeaderRow"))
+        XCTAssertTrue(dashboardSource.contains("struct TrustBadgeStrip"))
+        XCTAssertTrue(dashboardSource.contains("struct DashboardHeaderRow"))
         XCTAssertTrue(scanSource.contains("DashboardHeaderRow(language: language)"))
-        XCTAssertTrue(scanSource.contains("private struct DiskOverviewDashboardCard"))
+        XCTAssertTrue(dashboardSource.contains("struct DiskOverviewDashboardCard"))
         XCTAssertTrue(scanSource.contains("DashboardScanCTA("))
         XCTAssertTrue(scanSource.contains("OverviewFeatureGrid("))
-        XCTAssertTrue(scanSource.contains("LazyVGrid(columns: Self.columns"))
+        XCTAssertTrue(dashboardSource.contains("LazyVGrid(columns: Self.columns"))
         XCTAssertFalse(scanSource.contains("DiskOverviewHeader(store: store"))
+        XCTAssertFalse(dashboardSource.contains("DiskOverviewHeader(store: store"))
         XCTAssertTrue(scanSource.contains("TrustBadgeStrip(language: language)"))
-        XCTAssertTrue(scanSource.contains("L10n.text(.trustInstalledAICLI"))
-        XCTAssertTrue(scanSource.contains("L10n.text(.trustNoTelemetry"))
-        XCTAssertTrue(scanSource.contains("L10n.text(.trustAIProviderNetwork"))
+        XCTAssertTrue(dashboardSource.contains("L10n.text(.trustInstalledAICLI"))
+        XCTAssertTrue(dashboardSource.contains("L10n.text(.trustNoTelemetry"))
+        XCTAssertTrue(dashboardSource.contains("L10n.text(.trustAIProviderNetwork"))
     }
 
     func testReimaginedDashboardIllustrationsCannotFallBackToSystemSymbols() throws {

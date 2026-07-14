@@ -172,7 +172,6 @@
 "selectedCount" = "%ld выбрано";
 "selectedHeadline" = "%ld выбрано";
 "candidatesHeadline" = "%ld кандидатов";
-"storage.freeOfTotal" = "%@ свободно из %@ всего";
 "windowTitle" = "CleanMac - %@";
 
 "status.ready" = "Готово";

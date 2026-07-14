@@ -11,7 +11,7 @@ final class AppUninstallerTests: XCTestCase {
         try writeFile(library.appending(path: "Caches/com.example.demo/cache.bin"), contents: "cache")
         try writeFile(library.appending(path: "Preferences/com.example.demo.plist"), contents: "prefs")
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: library)
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         XCTAssertEqual(plans.count, 1)
         XCTAssertEqual(plans[0].appName, "Demo")
@@ -31,7 +31,7 @@ final class AppUninstallerTests: XCTestCase {
         try makeAppBundle(apps.appending(path: "Vendor.app"), bundleIdentifier: "com.vendor.flagship")
         try writeFile(library.appending(path: "Application Support/Vendor/shared-across-apps.db"), contents: "shared")
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: library)
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         XCTAssertEqual(plans.count, 1)
         XCTAssertEqual(plans[0].allCandidates.count, 1)
@@ -44,7 +44,7 @@ final class AppUninstallerTests: XCTestCase {
         // Hidden payload inside the bundle (apps store dot-prefixed databases/resources).
         try writeFile(app.appending(path: "Contents/.hidden-db"), contents: "0123456789") // 10 bytes
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         let plistSize = try app.appending(path: "Contents/Info.plist")
             .resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
@@ -59,7 +59,7 @@ final class AppUninstallerTests: XCTestCase {
         try FileManager.default.createDirectory(at: apps.appending(path: "Folder.app"), withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: apps.appending(path: "PlainFolder"), withIntermediateDirectories: true)
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         XCTAssertTrue(plans.isEmpty)
     }
@@ -73,7 +73,7 @@ final class AppUninstallerTests: XCTestCase {
         try FileManager.default.createDirectory(at: apps, withIntermediateDirectories: true)
         try FileManager.default.createSymbolicLink(at: symlink, withDestinationURL: target)
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         XCTAssertTrue(plans.isEmpty)
     }
@@ -81,11 +81,10 @@ final class AppUninstallerTests: XCTestCase {
     func testRejectsBundleIdentifiersContainingPathTraversal() throws {
         let sandbox = try makeTemporaryDirectory()
         let apps = sandbox.appending(path: "Applications", directoryHint: .isDirectory)
-        let library = sandbox.appending(path: "Library", directoryHint: .isDirectory)
         try makeAppBundle(apps.appending(path: "Traversal.app"), bundleIdentifier: "../../Documents")
         try writeFile(sandbox.appending(path: "Documents/private.txt"), contents: "private")
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: library)
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         XCTAssertTrue(plans.isEmpty)
     }
@@ -97,10 +96,7 @@ final class AppUninstallerTests: XCTestCase {
         try makeAppBundle(systemApps.appending(path: "Demo.app"), bundleIdentifier: "com.example.demo")
         try makeAppBundle(userApps.appending(path: "Demo Beta.app"), bundleIdentifier: "com.example.demo")
 
-        let plans = try AppUninstaller().scan(
-            appRoots: [systemApps, userApps],
-            userLibrary: sandbox.appending(path: "Library")
-        )
+        let plans = try AppUninstaller().scan(appRoots: [systemApps, userApps])
 
         XCTAssertEqual(plans.count, 2)
         XCTAssertEqual(Set(plans.map(\.id)).count, 2)
@@ -114,7 +110,7 @@ final class AppUninstallerTests: XCTestCase {
         let wrapper = apps.appending(path: "Wrapped.app/Wrapper", directoryHint: .isDirectory)
         try makeAppBundle(wrapper.appending(path: "Wrapped.app"), bundleIdentifier: "com.example.wrapped")
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         XCTAssertEqual(plans.map(\.bundleIdentifier), ["com.example.wrapped"])
     }
@@ -130,7 +126,7 @@ final class AppUninstallerTests: XCTestCase {
             try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: unreadable.path)
         }
 
-        let plans = try AppUninstaller().scan(appRoots: [apps], userLibrary: sandbox.appending(path: "Library"))
+        let plans = try AppUninstaller().scan(appRoots: [apps])
 
         XCTAssertEqual(plans.map(\.bundleIdentifier), ["com.example.good"])
     }

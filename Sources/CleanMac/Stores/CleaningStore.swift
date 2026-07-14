@@ -1,6 +1,6 @@
-import AppKit
 import CleanMacCore
 import Foundation
+import Observation
 
 enum ForegroundOperation: Equatable {
     case scanningFiles
@@ -34,34 +34,38 @@ struct ForegroundOperationState {
     }
 }
 
+@Observable
 @MainActor
-final class CleaningStore: ObservableObject {
-    @Published var roots: [URL] = DefaultScanRoots.urls {
+final class CleaningStore {
+    var roots: [URL] = DefaultScanRoots.urls {
         didSet { refreshVolumeSnapshot() }
     }
-    @Published var appRoots: [URL] = DefaultApplicationRoots.urls
-    @Published var candidates: [CleaningCandidate] = []
-    @Published var selection = CleaningSelection()
-    @Published var selectedCandidateID: CleaningCandidate.ID?
-    @Published var lastReport: ScanReport?
-    @Published var uninstallPlans: [AppUninstallPlan] = []
-    @Published var cleanupResult: CleanupResult?
-    @Published var aiQuestion: String
-    @Published var aiOutput = ""
-    @Published var aiReviewSummary: AIReviewSummary?
-    @Published var status: CleaningStatus = .ready
-    @Published var errorMessage: CleaningErrorMessage?
-    @Published private(set) var foregroundOperationState = ForegroundOperationState()
-    @Published var includeHiddenFiles = false
-    @Published var minimumSizeMegabytes = 1.0
-    @Published var largeFileThresholdMegabytes = 500.0
-    @Published var volumeSnapshot: StorageVolumeSnapshot?
-    @Published var detectedAITools: [DetectedAITool] = []
-    @Published var selectedAIToolID: String?
-    @Published var selectedModelIDsByTool: [String: String]
+    var appRoots: [URL] = DefaultApplicationRoots.urls
+    var candidates: [CleaningCandidate] = []
+    var selection = CleaningSelection()
+    var selectedCandidateID: CleaningCandidate.ID?
+    var lastReport: ScanReport?
+    var uninstallPlans: [AppUninstallPlan] = []
+    var cleanupResult: CleanupResult?
+    var aiQuestion: String
+    var aiOutput = ""
+    var aiReviewSummary: AIReviewSummary?
+    var status: CleaningStatus = .ready
+    var errorMessage: CleaningErrorMessage?
+    private(set) var foregroundOperationState = ForegroundOperationState()
+    var includeHiddenFiles = false
+    var minimumSizeMegabytes = 1.0
+    var largeFileThresholdMegabytes = 500.0
+    var volumeSnapshot: StorageVolumeSnapshot?
+    var detectedAITools: [DetectedAITool] = []
+    var selectedAIToolID: String?
+    var selectedModelIDsByTool: [String: String]
+    /// Non-nil only while a file scan is running; carries the scanned-file count.
+    private(set) var scanProgressCount: Int?
 
-    private let aiToolDetector: AIToolDetector
-    private var aiReviewTask: Task<Void, Never>?
+    @ObservationIgnored private let aiToolDetector: AIToolDetector
+    @ObservationIgnored private var aiReviewTask: Task<Void, Never>?
+    @ObservationIgnored private var scanTask: Task<Void, Never>?
     private static let aiToolPreferenceKey = "aiSelectedToolID"
     private static let aiModelPreferenceKey = "aiModelPreferenceByTool"
 
@@ -186,16 +190,9 @@ final class CleaningStore: ObservableObject {
         aiQuestion = L10n.defaultAIQuestion(language: language)
     }
 
-    func addFolderWithOpenPanel() {
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = true
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.canCreateDirectories = false
-        panel.prompt = L10n.text(.add, language: AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey)).resolved())
-
-        guard panel.runModal() == .OK else { return }
-        let additions = panel.urls.filter { !roots.contains($0) }
+    func addRoots(_ urls: [URL]) {
+        let additions = urls.filter { !roots.contains($0) }
+        guard !additions.isEmpty else { return }
         roots.append(contentsOf: additions)
     }
 
@@ -203,16 +200,9 @@ final class CleaningStore: ObservableObject {
         roots.removeAll { $0 == url }
     }
 
-    func addApplicationFolderWithOpenPanel() {
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = true
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.canCreateDirectories = false
-        panel.prompt = L10n.text(.add, language: AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey)).resolved())
-
-        guard panel.runModal() == .OK else { return }
-        let additions = panel.urls.filter { !appRoots.contains($0) }
+    func addApplicationRoots(_ urls: [URL]) {
+        let additions = urls.filter { !appRoots.contains($0) }
+        guard !additions.isEmpty else { return }
         appRoots.append(contentsOf: additions)
     }
 
@@ -239,14 +229,32 @@ final class CleaningStore: ObservableObject {
         errorMessage = nil
         cleanupResult = nil
         status = .scanning
+        scanProgressCount = 0
 
-        Task {
-            defer { finishForegroundOperation(operationToken) }
-            do {
-                let report = try await Task.detached(priority: .userInitiated) {
-                    try DiskScanner().scan(roots: roots, options: options)
+        scanTask = Task {
+            defer {
+                if finishForegroundOperation(operationToken) {
+                    scanProgressCount = nil
                 }
-                .value
+                scanTask = nil
+            }
+            do {
+                // A detached task does not inherit cancellation from this task, so
+                // bridge it explicitly: cancelling `scanTask` cancels the worker too.
+                let worker = Task.detached(priority: .userInitiated) {
+                    try DiskScanner().scan(roots: roots, options: options) { [weak self] scannedFileCount in
+                        Task { @MainActor in
+                            guard let self, self.isCurrentForegroundOperation(operationToken) else { return }
+                            self.scanProgressCount = scannedFileCount
+                        }
+                    }
+                }
+                let report = try await withTaskCancellationHandler {
+                    try await worker.value
+                } onCancel: {
+                    worker.cancel()
+                }
+                try Task.checkCancellation()
                 guard isCurrentForegroundOperation(operationToken) else { return }
                 lastReport = report
                 candidates = report.candidates
@@ -254,12 +262,20 @@ final class CleaningStore: ObservableObject {
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
                 status = .candidatesFound(report.candidates.count)
+            } catch is CancellationError {
+                guard isCurrentForegroundOperation(operationToken) else { return }
+                errorMessage = nil
+                status = .ready
             } catch {
                 guard isCurrentForegroundOperation(operationToken) else { return }
                 errorMessage = .system(error.localizedDescription)
                 status = .scanFailed
             }
         }
+    }
+
+    func cancelScan() {
+        scanTask?.cancel()
     }
 
     func scanApplications() {
@@ -269,24 +285,33 @@ final class CleaningStore: ObservableObject {
             return
         }
         let appRoots = appRoots
-        let userLibrary = FileManager.default.homeDirectoryForCurrentUser
-            .appending(path: "Library", directoryHint: .isDirectory)
 
         guard let operationToken = beginForegroundOperation(.scanningApplications) else { return }
         errorMessage = nil
         cleanupResult = nil
         status = .scanning
 
-        Task {
-            defer { finishForegroundOperation(operationToken) }
+        scanTask = Task {
+            defer {
+                finishForegroundOperation(operationToken)
+                scanTask = nil
+            }
             do {
-                let plans = try await Task.detached(priority: .userInitiated) {
-                    try AppUninstaller().scan(appRoots: appRoots, userLibrary: userLibrary)
+                // Same cancellation bridge as scan(): detached tasks must be cancelled
+                // explicitly when `scanTask` is cancelled.
+                let worker = Task.detached(priority: .userInitiated) {
+                    try AppUninstaller().scan(appRoots: appRoots)
                 }
-                .value
+                let plans = try await withTaskCancellationHandler {
+                    try await worker.value
+                } onCancel: {
+                    worker.cancel()
+                }
+                try Task.checkCancellation()
                 guard isCurrentForegroundOperation(operationToken) else { return }
                 let candidates = plans.flatMap(\.allCandidates)
-                let duplicateGroups = await Self.duplicateGroupsOffMainActor(for: candidates)
+                let duplicateGroups = try await Self.duplicateGroupsOffMainActor(for: candidates)
+                try Task.checkCancellation()
                 guard isCurrentForegroundOperation(operationToken) else { return }
                 uninstallPlans = plans
                 self.candidates = candidates
@@ -300,6 +325,10 @@ final class CleaningStore: ObservableObject {
                 selection.clear()
                 selectedCandidateID = candidates.first?.id
                 status = .candidatesFound(candidates.count)
+            } catch is CancellationError {
+                guard isCurrentForegroundOperation(operationToken) else { return }
+                errorMessage = nil
+                status = .ready
             } catch {
                 guard isCurrentForegroundOperation(operationToken) else { return }
                 errorMessage = .system(error.localizedDescription)
@@ -465,14 +494,17 @@ final class CleaningStore: ObservableObject {
         foregroundOperationState.isCurrent(token)
     }
 
-    private func finishForegroundOperation(_ token: UUID) {
+    @discardableResult
+    private func finishForegroundOperation(_ token: UUID) -> Bool {
         foregroundOperationState.finish(token)
     }
 
     private func refreshReportAfterCandidateChanges() async {
         guard let lastReport else { return }
         let candidates = candidates
-        let duplicateGroups = await Self.duplicateGroupsOffMainActor(for: candidates)
+        // Cleanup has no cancel affordance and the report refresh is best-effort:
+        // a failed re-hash degrades to "no duplicate groups", as before.
+        let duplicateGroups = (try? await Self.duplicateGroupsOffMainActor(for: candidates)) ?? []
         self.lastReport = ScanReport(
             candidates: candidates,
             duplicateGroups: duplicateGroups,
@@ -489,10 +521,17 @@ final class CleaningStore: ObservableObject {
         )
     }
 
-    nonisolated private static func duplicateGroupsOffMainActor(for candidates: [CleaningCandidate]) async -> [DuplicateFileGroup] {
-        await Task.detached(priority: .userInitiated) {
-            (try? DuplicateFileFinder().findDuplicates(in: candidates)) ?? []
-        }.value
+    /// Hashing can dominate a scan's wall-clock time, so the detached worker must be
+    /// cancellation-bridged like the scan workers: cancelling the caller cancels it.
+    nonisolated private static func duplicateGroupsOffMainActor(for candidates: [CleaningCandidate]) async throws -> [DuplicateFileGroup] {
+        let worker = Task.detached(priority: .userInitiated) {
+            try DuplicateFileFinder().findDuplicates(in: candidates)
+        }
+        return try await withTaskCancellationHandler {
+            try await worker.value
+        } onCancel: {
+            worker.cancel()
+        }
     }
 }
 

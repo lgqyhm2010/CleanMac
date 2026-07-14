@@ -2,8 +2,8 @@ import CleanMacCore
 import SwiftUI
 
 struct SidebarView: View {
-    @Binding var selection: SidebarSection?
-    @ObservedObject var store: CleaningStore
+    @Binding var selection: SidebarSection
+    let store: CleaningStore
     var language: ResolvedLanguage
 
     @State private var hoveredSection: SidebarSection?
@@ -76,6 +76,9 @@ struct SidebarView: View {
                 .fill(CleanMacTheme.sidebarBorder)
                 .frame(width: 2)
         }
+        .onChange(of: selection) { _, _ in
+            hoveredSection = nil
+        }
     }
 
     private func sidebarSection(_ section: SidebarSection) -> some View {
@@ -127,7 +130,7 @@ struct SidebarView: View {
             .background(
                 isSelected
                     ? CleanMacTheme.sidebarSelectedFill
-                    : (isHovered ? tint.opacity(0.10) : CleanMacTheme.paper.opacity(0.001)),
+                    : (isHovered ? tint.opacity(0.10) : Color.clear),
                 in: CleanMacTheme.panelShape
             )
             .overlay {
@@ -142,11 +145,6 @@ struct SidebarView: View {
         .buttonStyle(.plain)
         .onHover { isHovering in
             updateHover(isHovering, section: section)
-        }
-        .onChange(of: selection) { _, newValue in
-            if newValue == section {
-                hoveredSection = nil
-            }
         }
     }
 

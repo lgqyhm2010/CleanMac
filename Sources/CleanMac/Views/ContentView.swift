@@ -2,8 +2,8 @@ import CleanMacCore
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var store: CleaningStore
-    @State private var selection: SidebarSection?
+    @State private var store: CleaningStore
+    @State private var selection: SidebarSection = .diskOverview
     private let languageOverride: ResolvedLanguage?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
@@ -16,7 +16,7 @@ struct ContentView: View {
         self.languageOverride = languageOverride
         let preference = AppLanguage(storedRawValue: UserDefaults.standard.string(forKey: AppLanguage.storageKey))
         let initialLanguage = languageOverride ?? preference.resolved()
-        _store = StateObject(wrappedValue: store ?? CleaningStore(language: initialLanguage))
+        _store = State(initialValue: store ?? CleaningStore(language: initialLanguage))
         _selection = State(initialValue: initialSelection)
     }
 
@@ -24,7 +24,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             CleanMacAppTitleBar(
                 title: L10n.windowTitle(
-                    (selection ?? .diskOverview).title(language: resolvedLanguage),
+                    selection.title(language: resolvedLanguage),
                     language: resolvedLanguage
                 ),
                 language: resolvedLanguage,
@@ -35,7 +35,7 @@ struct ContentView: View {
                 SidebarView(selection: $selection, store: store, language: resolvedLanguage)
 
                 Group {
-                    switch (selection ?? .diskOverview).contentTarget {
+                    switch selection.contentTarget {
                     case .scan:
                         ScanView(
                             store: store,
@@ -70,7 +70,7 @@ struct ContentView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
-                .id(selection ?? .diskOverview)
+                .id(selection)
                 .transition(.cleanMacPage)
                 .animation(CleanMacMotion.allowed(reduceMotion, CleanMacMotion.page), value: selection)
             }

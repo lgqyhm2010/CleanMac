@@ -2,7 +2,7 @@ import CleanMacCore
 import SwiftUI
 
 struct AppUninstallerView: View {
-    @ObservedObject var store: CleaningStore
+    let store: CleaningStore
     var language: ResolvedLanguage
     var openResults: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -59,7 +59,7 @@ struct AppUninstallerView: View {
                             tint: CleanMacTheme.pink
                         )
                         Button {
-                            store.addApplicationFolderWithOpenPanel()
+                            store.addApplicationRoots(FolderOpenPanel.chooseFolders(language: language))
                         } label: {
                             Label(L10n.text(.add, language: language), systemImage: "plus")
                         }
@@ -92,6 +92,16 @@ struct AppUninstallerView: View {
                         }
                         .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.pink, prominent: true))
                         .disabled(store.isBusy || store.appRoots.isEmpty)
+
+                        if store.isScanningApplications {
+                            Button {
+                                store.cancelScan()
+                            } label: {
+                                Label(L10n.text(.cancel, language: language), systemImage: "xmark.circle")
+                            }
+                            .buttonStyle(CleanMacRaisedButtonStyle(tint: CleanMacTheme.danger))
+                            .transition(.opacity)
+                        }
                     }
 
                     if store.isScanningApplications {
@@ -111,7 +121,8 @@ struct AppUninstallerView: View {
                         )
                         .frame(minHeight: 180)
                     } else {
-                        VStack(spacing: 0) {
+                        let lastPlanID = store.uninstallPlans.last?.id
+                        LazyVStack(spacing: 0) {
                             ForEach(store.uninstallPlans) { plan in
                                 UninstallPlanRow(
                                     plan: plan,
@@ -123,7 +134,7 @@ struct AppUninstallerView: View {
                                 )
                                 .transition(.cleanMacInsert)
 
-                                if plan.id != store.uninstallPlans.last?.id {
+                                if plan.id != lastPlanID {
                                     Divider()
                                 }
                             }

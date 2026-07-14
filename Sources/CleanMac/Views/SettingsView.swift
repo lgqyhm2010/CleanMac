@@ -3,6 +3,10 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
+    // Probing full disk access touches the file system, so it must not run
+    // during body evaluation. Seed from the shared cache (placeholder on the
+    // very first visit) and let `.task` refresh it off the main actor.
+    @State private var fullDiskAccessGuide = FullDiskAccessGuideCache.lastKnownOrPlaceholder
 
     var body: some View {
         CleanMacPage(accent: CleanMacTheme.purple) {
@@ -27,6 +31,9 @@ struct SettingsView: View {
         .tint(CleanMacTheme.accent)
         .buttonStyle(CleanMacRaisedButtonStyle())
         .foregroundStyle(CleanMacTheme.ink)
+        .task {
+            fullDiskAccessGuide = await FullDiskAccessGuideCache.refresh()
+        }
     }
 
     @ViewBuilder
@@ -71,9 +78,5 @@ struct SettingsView: View {
 
     private var resolvedLanguage: ResolvedLanguage {
         AppLanguage(storedRawValue: appLanguageRaw).resolved()
-    }
-
-    private var fullDiskAccessGuide: SystemPermissionGuide {
-        .fullDiskAccess()
     }
 }
