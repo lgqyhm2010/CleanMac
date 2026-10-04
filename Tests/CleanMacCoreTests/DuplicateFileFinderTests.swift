@@ -1,7 +1,29 @@
+import CryptoKit
 import XCTest
 @testable import CleanMacCore
 
 final class DuplicateFileFinderTests: XCTestCase {
+    func testChunkedHashMatchesWholeDataDigest() throws {
+        let data = Data("same content across chunks".utf8)
+        var chunks = [Data(data.prefix(3)), Data(data.dropFirst(3)), Data()]
+        let actual = try DuplicateFileFinder.hashChunks(read: { chunks.removeFirst() })
+        let expected = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        XCTAssertEqual(actual, expected)
+    }
+
+    func testCancellationAfterSecondReadStopsBeforeAnotherChunk() {
+        var reads = 0
+        XCTAssertThrowsError(try DuplicateFileFinder.hashChunks(read: {
+            reads += 1
+            return Data(repeating: 1, count: 1024)
+        }, checkCancellation: {
+            if reads == 2 { throw CancellationError() }
+        })) { error in
+            XCTAssertTrue(error is CancellationError)
+        }
+        XCTAssertEqual(reads, 2)
+    }
+
     func testFindsDuplicateGroupsByContentHashNotNameOrSizeOnly() throws {
         let root = try makeTemporaryDirectory()
         let first = try writeFile(root.appending(path: "a/report.txt"), contents: "same")
