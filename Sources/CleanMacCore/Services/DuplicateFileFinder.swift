@@ -52,9 +52,12 @@ public struct DuplicateFileFinder: Sendable {
                     try Task.checkCancellation()
                     // At or below the prefix window the prefix already digests the whole
                     // file, so the second read would recompute the same hash.
-                    let wholeFileHash = sizeBytes <= Self.prefixHashByteCount
-                        ? prefixHash
-                        : contentHash(for: candidate.url)
+                    let wholeFileHash: String?
+                    if sizeBytes <= Self.prefixHashByteCount {
+                        wholeFileHash = prefixHash
+                    } else {
+                        wholeFileHash = try cancellableContentHash(for: candidate.url)
+                    }
                     guard let expectedSnapshot = candidate.scanSnapshot,
                           let hash = wholeFileHash,
                           snapshotReader.snapshot(at: candidate.url) == expectedSnapshot else {
@@ -95,13 +98,39 @@ public struct DuplicateFileFinder: Sendable {
     private static let prefixHashByteCount = 64 * 1_024
 
     func contentHash(for url: URL) -> String? {
-        // Memory-map when safe so two same-size multi-gigabyte files are not both pulled
-        // fully into RAM just to be compared.
-        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else {
+        try? cancellableContentHash(for: url)
+    }
+
+    private func cancellableContentHash(for url: URL) throws -> String? {
+        try Task.checkCancellation()
+        guard let handle = try? FileHandle(forReadingFrom: url) else {
             return nil
         }
-        let digest = SHA256.hash(data: data)
-        return digest.map { String(format: "%02x", $0) }.joined()
+        defer { try? handle.close() }
+        do {
+            return try Self.hashChunks(read: { try handle.read(upToCount: 1024 * 1024) })
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            // Preserve the scan's policy of skipping unreadable/disappearing files.
+            return nil
+        }
+    }
+
+    // The production reader bounds each allocation; injectable closures make mid-read
+    // cancellation deterministic without relying on disk speed or task scheduling.
+    static func hashChunks(
+        read: () throws -> Data?,
+        checkCancellation: () throws -> Void = { try Task.checkCancellation() }
+    ) throws -> String {
+        var hasher = SHA256()
+        while true {
+            try checkCancellation()
+            guard let data = try read(), !data.isEmpty else { break }
+            try checkCancellation()
+            hasher.update(data: data)
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
     private func contentHash(for url: URL, upTo byteCount: Int) -> String? {
